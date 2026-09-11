@@ -77,7 +77,7 @@
         next.setDate(next.getDate() + 7)
         thisdate.value = next  // 整体替换
         selectedSlot.value = []
-    } 
+    }
 
     function resetWeek() {
         thisdate.value = new Date()
@@ -181,14 +181,9 @@
             console.log("取消选择", slottime.id)
         } else {
             selectedSlot.value.push(slotTimeStr(slottime))
-            console.log(selectedSlot.value)       
+            console.log(selectedSlot.value)
         }
     }
-    function isSelected(slottime: slotTime): boolean {
-        return selectedSlot.value.includes(slotTimeStr(slottime))
-    }
-
-
 
 </script>
 
