@@ -167,10 +167,6 @@
         )
     }
 
-    function isPastBlock(slottime: slotTime): boolean {
-        return isPastDay(slottime.date)
-    }
-
     const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
     function toggleSelect(slottime: slotTime) {
