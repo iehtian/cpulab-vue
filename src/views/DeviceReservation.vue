@@ -24,11 +24,21 @@
                         <div class="grid-cell grid-corner week-header"></div>
                         <div v-for="(d, i) in 7" :key="`d-${i}`" class="grid-cell grid-day week-header">
                             <div class="day-wd">{{ weekdayLabels[i] }}</div>
-                            <div class="day-date">{{ weekdays[i] }}</div>
+                            <div class="day-date">{{ weekDays[i] }}</div>
                         </div>
-                        <div v-for="(d, i) in 8 * 32" :key="`d-${i}`" class="grid-cell grid-corner booking-slot">
-                            <div v-if="slotTimesStr[i]" class="slot-time">{{ slotTimesStr[i] }}</div>
-                            <div v-else class="slot-time">{{ d }}</div>
+
+                        <div v-for="(label, i) in timeLabels" :key="`h-${i}`" class="grid-cell grid-hour"
+                            :style="{ gridRow: i + 1 }">
+                            <div class=" slot-time">{{ label }}</div>
+                        </div>
+
+                        <div v-for="slottime in slotTimes" :key="`d-${slottime.date}-${slottime.id}`"
+                            class="grid-cell grid-corner booking-slot" :class="[{
+                                'ispast': isPastBlock(slottime),
+                                'selected': isSelected(slottime),
+                            }
+                            ]" @click="toggleSelect(slottime)">
+                            <div class="slot-time">{{ slottime.id }}</div>
                         </div>
 
                     </div>
@@ -42,84 +52,142 @@
 </template>
 
 <script setup lang="ts">
+    interface slotTime {
+        date: Date
+        id: number
+    }
+
     import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
     import { computed, ref } from 'vue'
-    const thisdata = ref(new Date())
+    const thisdate = ref(new Date())
+    const newdate = new Date(thisdate.value)
+    newdate.setDate(newdate.getDate() - newdate.getDay() + 1)
+    thisdate.value = newdate
+    const selectedSlot = ref<string[]>([])
 
     function prevWeek() {
-        const next = new Date(thisdata.value)
+        const next = new Date(thisdate.value)
         next.setDate(next.getDate() - 7)
-        thisdata.value = next  // 整体替换
+        thisdate.value = next  // 整体替换
+        selectedSlot.value = []
     }
 
     function nextWeek() {
-        const next = new Date(thisdata.value)
+        const next = new Date(thisdate.value)
         next.setDate(next.getDate() + 7)
-        thisdata.value = next  // 整体替换
-    }
+        thisdate.value = next  // 整体替换
+        selectedSlot.value = []
+    } 
 
     function resetWeek() {
-        thisdata.value = new Date()
-    }
-
-    function getWeekRange(data: Date): string {
-        const weekdata: number = data.getDay()
-        const before = new Date(data)
-        before.setDate(data.getDate() - weekdata)
-        const weekstart: string = before.toLocaleDateString()
-        const after = new Date(data)
-        after.setDate(data.getDate() + 6 - weekdata)
-        const weekend: string = after.toLocaleDateString()
-        return `${weekstart} - ${weekend}`
-    }
-
-    function getWeekDays(data: Date): string[] {
-        const weekdata: number = data.getDay()
-        const before = new Date(data)
-        before.setDate(data.getDate() - weekdata)
-        const weekdays: Date[] = []
-        for (let i = 0; i < 7; i++) {
-            weekdays.push(new Date(before))
-            before.setDate(before.getDate() + 1)
-        }
-        const weekdaysStr: string[] = []
-        weekdays.forEach((d) => {
-            const str = d.toLocaleDateString()
-            weekdaysStr.push(str.slice(5, str.length))
-        })
-        return weekdaysStr
+        thisdate.value = new Date()
+        selectedSlot.value = []
     }
 
     const weekRange = computed(() => {
-        return getWeekRange(thisdata.value)
+        const weekstart: string = dateStr(thisdate.value)
+        const after = new Date(thisdate.value)
+        after.setDate(after.getDate() + 7)
+        const weekend: string = dateStr(after)
+        return `${weekstart} - ${weekend}`
     })
-    const weekdays = computed(() => {
-        return getWeekDays(thisdata.value)
+
+    const weekDays = computed(() => {
+        const tmp = new Date(thisdate.value)
+        const weekdaysStr: string[] = []
+        for (let i = 0; i < 7; i++) {
+            weekdaysStr.push(dateStr(tmp))
+            tmp.setDate(tmp.getDate() + 1)
+        }
+        return weekdaysStr
     })
-    const slotTimesStr = computed(() => {
+
+    // 不依赖响应式数据，模块加载时计算一次即可
+    const timeLabels: string[] = (() => {
         const times: string[] = []
-        const start = {
-            Hour: 8,
-            Minute: '00'
-        }
-        const end = {
-            Hour: 8,
-            Minute: '30'
-        }
+        const start = { Hour: 8, Minute: '00' }
+        const end = { Hour: 8, Minute: '00' }
         for (let i = 0; i < 32; i++) {
-            times.push(`${start.Hour}:${start.Minute} - ${end.Hour}:${end.Minute}`)
             const hour = i % 2 + 8 + Math.floor(i / 2)
-            const minute = i % 2 === 0 ? '00' : '30'
+            const minute = i % 2 === 0 ? '30' : '00'
             start.Hour = end.Hour
             start.Minute = end.Minute
             end.Hour = hour
             end.Minute = minute
-            times.push('', '', '', '', '', '', '') // 剩余 7 列占位
+            times.push(`${start.Hour}: ${start.Minute} - ${end.Hour}: ${end.Minute}`)
         }
+        return times
+    })()
+
+
+    function dateStr(d: Date): string {
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${d.getFullYear()}-${m}-${day}`
+    }
+
+    function slotTimeStr(slottime: slotTime): string {
+        return `${dateStr(slottime.date)} ${slottime.id}`
+    }
+
+
+    const slotTimes = computed(() => {
+        const tmp = new Date(thisdate.value)
+        const times: slotTime[] = []
+        const date: Date[] = []
+        for (let i = 0; i < 7; i++) {
+            const start = new Date(tmp)
+            tmp.setDate(tmp.getDate() + 1)
+            date.push(start)
+        }
+
+        for (let i = 0; i < 32; i++) {
+            for (const d of date) {
+                times.push({ date: d, id: i })
+            }
+        }
+
         return times
     })
 
-    const weekdayLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    function isPastDay(d: Date): boolean {
+        const t = new Date()
+        t.setHours(0, 0, 0, 0)
+        const dd = new Date(d)
+        dd.setHours(0, 0, 0, 0)
+        return dd.getTime() < t.getTime()
+    }
+
+    function isToday(d: Date): boolean {
+        const t = new Date()
+        return (
+            d.getDate() === t.getDate() &&
+            d.getMonth() === t.getMonth() &&
+            d.getFullYear() === t.getFullYear()
+        )
+    }
+
+    function isPastBlock(slottime: slotTime): boolean {
+        return isPastDay(slottime.date)
+    }
+
+    const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+
+    function toggleSelect(slottime: slotTime) {
+        if (selectedSlot.value.includes(slotTimeStr(slottime))) {
+            console.log(selectedSlot.value)
+            selectedSlot.value = selectedSlot.value.filter((s) => s !== slotTimeStr(slottime))
+            console.log(selectedSlot.value)
+            console.log("取消选择", slottime.id)
+        } else {
+            selectedSlot.value.push(slotTimeStr(slottime))
+            console.log(selectedSlot.value)       
+        }
+    }
+    function isSelected(slottime: slotTime): boolean {
+        return selectedSlot.value.includes(slotTimeStr(slottime))
+    }
+
 
 
 </script>
@@ -170,5 +238,14 @@
 
     .el-main {
         background-color: #e9eef3;
+    }
+
+    .ispast {
+        background: red;
+    }
+
+    .selected {
+        background: var(--el-color-primary);
+        border: 1px solid var(--el-color-primary);
     }
 </style>
