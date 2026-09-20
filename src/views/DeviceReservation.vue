@@ -28,7 +28,7 @@
                         </div>
 
                         <div v-for="(label, i) in timeLabels" :key="`h-${i}`" class="grid-cell grid-hour"
-                            :style="{ gridRow: i + 1 }">
+                            :style="{ gridRow: i + 2 }">
                             <div class=" slot-time">{{ label }}</div>
                         </div>
 
@@ -165,6 +165,14 @@
             d.getMonth() === t.getMonth() &&
             d.getFullYear() === t.getFullYear()
         )
+    }
+
+    function isSelected(slottime: slotTime): boolean {
+        return selectedSlot.value.includes(slotTimeStr(slottime))
+    }
+
+    function isPastBlock(slottime: slotTime): boolean {
+        return isPastDay(slottime.date)
     }
 
     const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
