@@ -1,0 +1,514 @@
+import logging
+from contextlib import contextmanager
+
+import psycopg2
+from log_config import logger
+
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "user_order_user",
+    "password": "user_order_pass",
+    "database": "user_order",
+    "port": 5434,
+}
+
+USER_TABLE = "users"
+BOOKING_TABLE = "bookings"
+PLANS_TABLE = "date_plans"
+
+
+def get_db_connection():
+    return psycopg2.connect(**DB_CONFIG)
+
+
+@contextmanager
+def get_connection():
+    conn = get_db_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+# -------- 用户相关 --------
+def user_index_exists(index_name=USER_TABLE):
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT to_regclass(%s)", (f"public.{index_name}",))
+        exists = cur.fetchone()[0] is not None
+    return exists
+
+
+def create_user_index():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            # 创建用户表，使用 SERIAL 作为主键
+            # fmt: off
+            cur.execute(
+                rf"""
+                CREATE TABLE IF NOT EXISTS {USER_TABLE} (
+                    id SERIAL PRIMARY KEY,
+                    password TEXT NOT NULL,
+                    user_name TEXT UNIQUE NOT NULL,
+                    color TEXT NOT NULL,
+                    email TEXT CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{{2,}}$'),
+                    phone TEXT CHECK (phone ~* '^1[3-9]\d{{9}}$'),
+                    created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours')
+                )
+                """
+            )
+            # fmt: on
+
+            # 为常用查询字段创建索引
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_{USER_TABLE}_user_name ON {USER_TABLE}(user_name)"
+            )
+            conn.commit()
+        logger.info(f"Table '{USER_TABLE}' ensured.")
+
+
+def upsert_user(user_name, password=None, color=None, email=None, phone=None):
+    """插入或更新用户信息"""
+    # 构建字段列表
+    insert_fields = ["user_name"]
+    insert_values = [user_name]
+    update_clauses = []
+
+    # 动态添加字段
+    if password:
+        insert_fields.append("password")
+        insert_values.append(password)
+        update_clauses.append("password = EXCLUDED.password")
+
+    if color:
+        insert_fields.append("color")
+        insert_values.append(color)
+        update_clauses.append("color = EXCLUDED.color")
+
+    if email:
+        insert_fields.append("email")
+        insert_values.append(email)
+        update_clauses.append("email = EXCLUDED.email")
+
+    if phone:
+        insert_fields.append("phone")
+        insert_values.append(phone)
+        update_clauses.append("phone = EXCLUDED.phone")
+
+    if not update_clauses:
+        raise ValueError("没有提供要更新的字段")
+
+    # 构建 SQL
+    placeholders = ", ".join(["%s"] * len(insert_fields))
+    sql = f"""
+        INSERT INTO {USER_TABLE} ({", ".join(insert_fields)})
+        VALUES ({placeholders})
+        ON CONFLICT (user_name) DO UPDATE
+        SET {", ".join(update_clauses)}
+        RETURNING id
+    """
+
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, tuple(insert_values))
+        user_id = cur.fetchone()[0]
+        conn.commit()
+
+    logger.info(f"Upserted user '{user_name}' (id={user_id})")
+    return user_id
+
+
+def _row_to_user(row):
+    """将数据库行转换为用户字典，字段顺序与 SELECT 对齐"""
+    return {
+        "id": row[0],
+        "user_name": row[1],
+        "password": row[2],
+        "color": row[3],
+        "email": row[4],
+        "phone": row[5],
+        "created_at": row[6].isoformat() if row[6] else None,
+    }
+
+
+def search_user_by_name(user_name):
+    """根据用户名查询用户"""
+    sql = f"""
+        SELECT id, user_name, password, color, email, phone, created_at
+        FROM {USER_TABLE}
+        WHERE user_name = %s
+    """
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (user_name,))
+            row = cur.fetchone()
+            logging.debug(
+                f"search_user_by_name('{user_name}') returned {'1 row' if row else '0 rows'}"
+            )
+    return _row_to_user(row) if row else None
+
+
+# -------- 预约相关 --------
+def create_booking_index():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            # 创建预约表
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {BOOKING_TABLE} (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    instrument_id TEXT NOT NULL,
+                    booking_date DATE NOT NULL,
+                    time_slot_id INTEGER NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT fk_user 
+                        FOREIGN KEY (user_id) 
+                        REFERENCES {USER_TABLE}(id) 
+                        ON DELETE CASCADE,
+                    CONSTRAINT unique_time_slot 
+                        UNIQUE (instrument_id, booking_date, time_slot_id)
+                )
+                """
+            )
+            # 创建索引优化查询
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_user_id ON {BOOKING_TABLE}(user_id)"
+            )
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_date ON {BOOKING_TABLE}(booking_date)"
+            )
+            cur.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_instrument_date ON {BOOKING_TABLE}(instrument_id, booking_date)"
+            )
+            conn.commit()
+    logger.info(f"Table '{BOOKING_TABLE}' ensured.")
+
+
+def upsert_booking(user_name, instrument_id, date, time_slot_id):
+    """插入预约，通过 user_name 获取 user_id"""
+    # 先根据 user_name 查询 user_id
+    get_user_sql = f"SELECT id FROM {USER_TABLE} WHERE user_name = %s"
+
+    insert_sql = f"""
+        INSERT INTO {BOOKING_TABLE}
+            (user_id, instrument_id, booking_date, time_slot_id)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id
+    """
+    logging.info(
+        f"Creating booking -> "
+        f"{{'user_name': {user_name}, 'instrument_id': {instrument_id}, "
+        f"'date': {date}, 'time_slot_id': {time_slot_id}}}"
+    )
+    with get_connection() as conn, conn.cursor() as cur:
+        # 获取 user_id
+        cur.execute(get_user_sql, (user_name,))
+        result = cur.fetchone()
+
+        if result is None:
+            raise ValueError(f"用户 '{user_name}' 不存在")
+
+        user_id = result[0]
+
+        # 插入预约
+        cur.execute(insert_sql, (user_id, instrument_id, date, time_slot_id))
+        booking_id = cur.fetchone()[0]
+        conn.commit()
+
+    logger.info(
+        f"Created booking id={booking_id} -> "
+        f"{{'user_name': {user_name}, 'user_id': {user_id}, "
+        f"'instrument_id': {instrument_id}, 'date': {date}, "
+        f"'time_slot_id': {time_slot_id}}}"
+    )
+    return booking_id
+
+
+def _row_to_booking(row):
+    """将数据库行转换为预约字典
+
+    期望行格式: (id, user_id, instrument_id, booking_date, time_slot_id, user_name)
+    """
+
+    return {
+        "id": row[0],
+        "user_id": row[1],
+        "instrument_id": row[2],
+        "date": row[3].isoformat() if row[3] else None,
+        "time_slot_id": row[4] if len(row) > 4 else None,
+        "user_name": row[5] if len(row) > 5 else None,
+    }
+
+
+def search_booking_by_date(instrument_id, date):
+    """查询某仪器某日期的所有预约（关联用户信息）"""
+    sql = f"""
+        SELECT b.id, b.user_id, b.instrument_id, b.booking_date, 
+               b.time_slot_id,
+               u.user_name, u.color
+        FROM {BOOKING_TABLE} b
+        JOIN {USER_TABLE} u ON b.user_id = u.id
+        WHERE b.instrument_id = %s AND b.booking_date = %s
+        ORDER BY b.time_slot_id
+    """
+    with get_connection() as conn, conn.cursor() as cur:
+        logging.info(f"Executing SQL: {sql} with params: {(instrument_id, date)}")
+        cur.execute(sql, (instrument_id, date))
+        rows = cur.fetchall()
+
+    # 包含用户信息的结果
+    results = []
+    for row in rows:
+        booking = _row_to_booking(row[:6])  # 前7个字段包含 user_name
+        booking["color"] = row[6]  # 添加颜色信息
+        results.append(booking)
+    return results
+
+
+def search_booking_by_user_and_date(user_id, date):
+    """查询某人某日期的所有预约"""
+    sql = f"""
+        SELECT b.id, b.user_id, b.instrument_id, b.booking_date, 
+               b.time_slot_id, u.user_name
+        FROM {BOOKING_TABLE} b
+        JOIN {USER_TABLE} u ON b.user_id = u.id
+        WHERE b.user_id = %s AND b.booking_date = %s
+        ORDER BY b.time_slot_id
+    """
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (user_id, date))
+        rows = cur.fetchall()
+        logger.info(f"Found bookings for user_id={user_id}, date={date}: {rows}")
+    return [_row_to_booking(row) for row in rows]
+
+
+def search_booking_users_by_range(instrument_id, start_date, end_date):
+    """查询某仪器在 [start_date, end_date]（含端点）内预约过的去重用户名与颜色，按用户名排序。"""
+    sql = f"""
+        SELECT DISTINCT u.user_name, u.color
+        FROM {BOOKING_TABLE} b
+        JOIN {USER_TABLE} u ON b.user_id = u.id
+        WHERE b.instrument_id = %s
+          AND b.booking_date BETWEEN %s AND %s
+        ORDER BY u.user_name
+    """
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (instrument_id, start_date, end_date))
+        rows = cur.fetchall()
+
+    logger.info(
+        f"Found bookers for instrument_id={instrument_id}, range={start_date}~{end_date}: {rows}"
+    )
+    return [{"user_name": row[0], "color": row[1]} for row in rows]
+
+
+def delete_booking_by_id(booking_id):
+    """删除预约"""
+    sql = f"DELETE FROM {BOOKING_TABLE} WHERE id = %s"
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (booking_id,))
+        conn.commit()
+    logger.info(f"Deleted booking id={booking_id}")
+
+
+def delete_bookings_by_dates(instrument_id, date_list):
+    """删除某仪器在指定日期列表的所有预约"""
+    sql = f"DELETE FROM {BOOKING_TABLE} WHERE instrument_id = %s AND booking_date = ANY(%s)"
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (instrument_id, date_list))
+        conn.commit()
+    logger.info(
+        f"Deleted bookings for instrument_id={instrument_id} on dates={date_list}"
+    )
+
+
+def delete_bookings_by_slots(instrument_id, date, slots):
+    """删除某仪器在指定日期的指定时间段预约"""
+    if not slots:
+        return 0
+
+    sql = f"""
+        DELETE FROM {BOOKING_TABLE}
+        WHERE instrument_id = %s
+          AND booking_date = %s
+          AND time_slot_id = ANY(%s)
+    """
+
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (instrument_id, date, slots))
+        deleted = cur.rowcount
+        conn.commit()
+
+    logger.info(
+        f"Deleted {deleted} bookings for instrument_id={instrument_id} on date={date} slots={slots}"
+    )
+    return deleted
+
+
+# -------- 每日计划相关 --------
+def create_date_plan_index():
+    """创建每日计划表与索引"""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {PLANS_TABLE} (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    date DATE NOT NULL,
+                    plan TEXT,
+                    status INTEGER DEFAULT 0,
+                    remark TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT fk_user
+                        FOREIGN KEY (user_id)
+                        REFERENCES {USER_TABLE}(id)
+                        ON DELETE CASCADE
+                )
+                """
+            )
+
+            # 优化按用户+日期查询，并保证同一用户同一天只有一条记录
+            cur.execute(
+                f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{PLANS_TABLE}_user_date ON {PLANS_TABLE}(user_id, date)"
+            )
+            conn.commit()
+    logger.info(f"Table '{PLANS_TABLE}' ensured.")
+
+
+def get_dateinfo(user_name: str, date: str) -> list[tuple]:
+    """根据 user_name 和 date 查询 plan / status / remark"""
+    sql = f"""
+        SELECT dp.plan, dp.status, dp.remark
+        FROM {PLANS_TABLE} dp
+        JOIN {USER_TABLE} u ON dp.user_id = u.id
+        WHERE u.user_name = %s AND dp.date = %s
+    """
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (user_name, date))
+        results = cur.fetchall()
+
+    logger.debug(
+        "查询每日计划 | user_name=%s, date=%s, count=%d", user_name, date, len(results)
+    )
+    return results
+
+
+def get_all_dateinfo_by_date(date: str, skip_names=None) -> list[dict]:
+    """按日期查询所有用户每日计划，返回结构与接口层一致。"""
+    sql = f"""
+        SELECT u.user_name, dp.plan, dp.status, dp.remark
+        FROM {USER_TABLE} u
+        LEFT JOIN {PLANS_TABLE} dp
+          ON dp.user_id = u.id
+         AND dp.date = %s
+        ORDER BY u.user_name
+    """
+
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (date,))
+        rows = cur.fetchall()
+
+    skip_set = set(skip_names or [])
+    grouped = {}
+    for user_name, plan, status, remark in rows:
+        if user_name in skip_set:
+            continue
+
+        if user_name not in grouped:
+            grouped[user_name] = {"user": user_name, "info": []}
+
+        if plan is not None or status is not None or remark is not None:
+            grouped[user_name]["info"].append((plan, status, remark))
+
+    results = list(grouped.values())
+    logger.debug("查询所有用户每日计划 | date={}, users={}", date, len(results))
+    return results
+
+
+def upsert_plan_field(user_name: str, date: str, field: str, value) -> None:
+    """根据是否已有记录插入或更新指定字段。"""
+    allowed_fields = {"plan", "status", "remark"}
+    if field not in allowed_fields:
+        raise ValueError(f"不支持的字段: {field}")
+
+    if field == "status":
+        if isinstance(value, bool):
+            value = 1 if value else 0
+        if isinstance(value, str):
+            value = value.strip()
+        if value not in {0, 1, 2, "0", "1", "2"}:
+            raise ValueError(f"status 只能是 0、1 或 2，收到: {value}")
+        value = int(value)
+
+    get_user_sql = f"SELECT id FROM {USER_TABLE} WHERE user_name = %s"
+
+    check_sql = f"""
+        SELECT dp.id FROM {PLANS_TABLE} dp
+        JOIN {USER_TABLE} u ON dp.user_id = u.id
+        WHERE u.user_name = %s AND dp.date = %s
+    """
+
+    update_sql = f"""
+        UPDATE {PLANS_TABLE}
+        SET {field} = %s,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    """
+
+    insert_sql = f"""
+        INSERT INTO {PLANS_TABLE} (user_id, date, {field})
+        VALUES (%s, %s, %s)
+    """
+
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(get_user_sql, (user_name,))
+        row = cur.fetchone()
+        if row is None:
+            raise ValueError(f"用户 '{user_name}' 不存在")
+        user_id = row[0]
+
+        cur.execute(check_sql, (user_name, date))
+        existing = cur.fetchone()
+
+        if existing:
+            cur.execute(update_sql, (value, existing[0]))
+        else:
+            cur.execute(insert_sql, (user_id, date, value))
+
+        conn.commit()
+
+    logger.info(
+        "每日计划更新成功 | user_name=%s, date=%s, field=%s", user_name, date, field
+    )
+
+
+def delete_user_data(user_name: str) -> None:
+    """删除某用户的全部 date_plans 记录"""
+    sql = f"""
+        DELETE FROM {PLANS_TABLE}
+        WHERE user_id = (SELECT id FROM {USER_TABLE} WHERE user_name = %s)
+    """
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (user_name,))
+        conn.commit()
+    logger.info("user_name={} 的每日计划数据已删除", user_name)
+
+
+# -------- 初始化 --------
+def initialize_database():
+    try:
+        create_user_index()
+        create_booking_index()
+        create_date_plan_index()
+        return True
+    except Exception as e:
+        logger.error(f"数据库初始化失败: {e}")
+        return False
+
+
+if __name__ == "__main__":
+    if initialize_database():
+        logger.info("数据库初始化成功")
+    else:
+        logger.error("数据库初始化失败")
