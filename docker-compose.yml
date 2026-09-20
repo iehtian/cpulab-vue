@@ -1,0 +1,26 @@
+services:
+  cpulab-db:
+    image: postgres:latest
+    container_name: cpulab-db
+    environment:
+      POSTGRES_PASSWORD: cpulab_pass
+      POSTGRES_DB: cpulab
+      POSTGRES_USER: cpulab_user
+    ports:
+      - '5434:5432'
+    volumes:
+      - cpulab-db-data:/var/lib/postgresql
+      - ./wal_archive:/var/lib/postgresql/wal_archive   # 新增：WAL 归档目录
+      - ./backups:/var/lib/postgresql/backups           # 新增：base backup 目录
+    command: >
+      postgres
+      -c wal_level=logical
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c archive_mode=on
+      -c archive_command='test ! -f /var/lib/postgresql/wal_archive/%f && cp %p /var/lib/postgresql/wal_archive/%f'
+      -c archive_timeout=600
+    restart: unless-stopped
+
+volumes:
+  cpulab-db-data:
