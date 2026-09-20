@@ -1,48 +1,39 @@
-# cpulab-vue
+# cpulab
 
-This template should help get you started developing with Vue 3 in Vite.
+CPU 实验室管理平台（前后端分离 monorepo）。
 
-## Recommended IDE Setup
+## 目录结构
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+```
+cpulab-vue/
+├── frontend/   # Vue 3 + Vite + TypeScript 前端
+├── backend/   # Flask 后端（待补充）
+├── .gitignore
+└── README.md
+```
 
-## Recommended Browser Setup
+## 前端
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+技术栈：Vue 3 · Vite · TypeScript · Pinia · Vue Router · Element Plus · Axios
 
 ```sh
+cd frontend
 npm install
+npm run dev        # 开发服务器，/api 代理到 http://localhost:8010
+npm run build      # 类型检查 + 生产构建
+npm run test:unit  # 单元测试（Vitest）
 ```
 
-### Compile and Hot-Reload for Development
+推荐 IDE：[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)（禁用 Vetur）。
+
+## 后端
+
+Flask 服务（待补充）。开发约定监听 `http://localhost:8010`，与前端 Vite 代理对齐，见 [frontend/vite.config.ts](frontend/vite.config.ts)。
 
 ```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+flask run --port 8010
 ```

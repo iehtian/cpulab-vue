@@ -37,3 +37,34 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+instance/
+*.egg-info/
+.eggs/
+dist-packages/
+build/
+develop-eggs/
+
+# Flask
+instance/settings.py
+.flaskenv
+.env
+

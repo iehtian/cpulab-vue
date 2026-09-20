@@ -1,54 +1,45 @@
 <template>
     <div class="device-reservation">
-        <h1>Device Reservation</h1>
-        <el-container>
-            <el-aside width="200px">Aside</el-aside>
-            <el-main>
-                <el-card>
-                    <div style="display: flex; justify-content: space-between; align-items: center">
-                        <el-text>{{ weekRange }}</el-text>
-                        <el-button-group class="mb-4">
-                            <el-button type="primary" :icon="ArrowLeft" @click="prevWeek">Previous</el-button>
-                            <el-button type="primary" @click="resetWeek">This</el-button>
-                            <el-button type="primary" @click="nextWeek">
-                                Next<el-icon class="el-icon--right">
-                                    <ArrowRight />
-                                </el-icon>
-                            </el-button>
-                        </el-button-group>
-                    </div>
-                </el-card>
-                <div class="grid-scroll">
-                    <div class="week-grid">
-                        <!-- 表头：左上角 + 7 天 -->
-                        <div class="grid-cell grid-corner week-header"></div>
-                        <div v-for="(d, i) in 7" :key="`d-${i}`" class="grid-cell grid-day week-header">
-                            <div class="day-wd">{{ weekdayLabels[i] }}</div>
-                            <div class="day-date">{{ weekDays[i] }}</div>
-                        </div>
-
-                        <div v-for="(label, i) in timeLabels" :key="`h-${i}`" class="grid-cell grid-hour"
-                            :style="{ gridRow: i + 2 }">
-                            <div class=" slot-time">{{ label }}</div>
-                        </div>
-
-                        <div v-for="slottime in slotTimes" :key="`d-${slottime.date}-${slottime.id}`"
-                            class="grid-cell grid-corner booking-slot" :class="[{
-                                'ispast': isPastBlock(slottime),
-                                'selected': isSelected(slottime),
-                            }
-                            ]" @click="toggleSelect(slottime)">
-                            <div class="slot-time">{{ slottime.id }}</div>
-                        </div>
-
-                    </div>
+        <el-card>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+                <el-date-picker v-model="thisdate" type="week" format="YYYY-MM-DD" placeholder="请选择周" />
+                <el-button-group class="mb-4">
+                    <el-button type="primary" :icon="ArrowLeft" @click="prevWeek">Previous</el-button>
+                    <el-button type="primary" @click="resetWeek">This</el-button>
+                    <el-button type="primary" @click="nextWeek">
+                        Next<el-icon class="el-icon--right">
+                            <ArrowRight />
+                        </el-icon>
+                    </el-button>
+                </el-button-group>
+            </div>
+        </el-card>
+        <div class="grid-scroll">
+            <div class="week-grid">
+                <!-- 表头：左上角 + 7 天 -->
+                <div class="grid-cell grid-corner week-header"></div>
+                <div v-for="(d, i) in 7" :key="`d-${i}`" class="grid-cell grid-day week-header">
+                    <div class="day-wd">{{ weekdayLabels[i] }}</div>
+                    <div class="day-date">{{ weekDays[i] }}</div>
                 </div>
-            </el-main>
-            <el-aside width="200px">Aside</el-aside>
-        </el-container>
 
+                <div v-for="(label, i) in timeLabels" :key="`h-${i}`" class="grid-cell grid-hour"
+                    :style="{ gridRow: i + 2 }">
+                    <div class="slot-time">{{ label }}</div>
+                </div>
+
+                <div v-for="slottime in slotTimes" :key="`d-${slottime.date}-${slottime.id}`"
+                    class="grid-cell grid-corner booking-slot" :class="[
+                        {
+                            ispast: isPastBlock(slottime),
+                            selected: isSelected(slottime),
+                        },
+                    ]" @click="toggleSelect(slottime)">
+                    <div class="slot-time">{{ slottime.id }}</div>
+                </div>
+            </div>
+        </div>
     </div>
-
 </template>
 
 <script setup lang="ts">
@@ -68,14 +59,14 @@
     function prevWeek() {
         const next = new Date(thisdate.value)
         next.setDate(next.getDate() - 7)
-        thisdate.value = next  // 整体替换
+        thisdate.value = next // 整体替换
         selectedSlot.value = []
     }
 
     function nextWeek() {
         const next = new Date(thisdate.value)
         next.setDate(next.getDate() + 7)
-        thisdate.value = next  // 整体替换
+        thisdate.value = next // 整体替换
         selectedSlot.value = []
     }
 
@@ -108,7 +99,7 @@
         const start = { Hour: 8, Minute: '00' }
         const end = { Hour: 8, Minute: '00' }
         for (let i = 0; i < 32; i++) {
-            const hour = i % 2 + 8 + Math.floor(i / 2)
+            const hour = (i % 2) + 8 + Math.floor(i / 2)
             const minute = i % 2 === 0 ? '30' : '00'
             start.Hour = end.Hour
             start.Minute = end.Minute
@@ -119,7 +110,6 @@
         return times
     })()
 
-
     function dateStr(d: Date): string {
         const m = String(d.getMonth() + 1).padStart(2, '0')
         const day = String(d.getDate()).padStart(2, '0')
@@ -129,7 +119,6 @@
     function slotTimeStr(slottime: slotTime): string {
         return `${dateStr(slottime.date)} ${slottime.id}`
     }
-
 
     const slotTimes = computed(() => {
         const tmp = new Date(thisdate.value)
@@ -182,13 +171,13 @@
             console.log(selectedSlot.value)
             selectedSlot.value = selectedSlot.value.filter((s) => s !== slotTimeStr(slottime))
             console.log(selectedSlot.value)
-            console.log("取消选择", slottime.id)
+            console.log('取消选择', slottime.id)
         } else {
             selectedSlot.value.push(slotTimeStr(slottime))
             console.log(selectedSlot.value)
         }
     }
-
+    import 'dayjs/locale/zh-cn'
 </script>
 
 <style>
@@ -224,7 +213,6 @@
         top: 0;
         background: var(--el-bg-color);
     }
-
 
     .booking-slot {
         background: var(--el-fill-color-light);
