@@ -24,7 +24,11 @@ const httpErrorMessage: Record<number, string> = {
 service.interceptors.request.use(
   function (config) {
     // 在发送请求之前做些什么
-    config.headers["Content-Type"] = "application/json"
+    config.headers['Content-Type'] = 'application/json'
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
 
     return config
   },

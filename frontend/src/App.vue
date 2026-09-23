@@ -37,9 +37,6 @@
 
 <script setup lang="ts">
   import { RouterLink, RouterView } from 'vue-router'
-  import HelloWorld from './components/HelloWorld.vue'
-  import ButtonExample from './components/button.vue'
-  import OnedayExample from './components/oneday.vue'
   import Regiester from './components/Regiester.vue'
   import { ref } from 'vue'
   import router from './router/index.ts'
