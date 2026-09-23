@@ -1,6 +1,6 @@
 import random
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import bcrypt
 import database as db_api
@@ -132,9 +132,9 @@ def save_info():
                 date,
                 slots_ids,
             )
-            return jsonify({
-                "error": "Missing required fields: date, slots, user_name"
-            }), 400
+            return jsonify(
+                {"error": "Missing required fields: date, slots, user_name"}
+            ), 400
 
         if not isinstance(slots_ids, list) or len(slots_ids) == 0:
             logger.warning(
@@ -164,9 +164,9 @@ def save_info():
                         date,
                         slot,
                     )
-                    return jsonify({
-                        "error": f"Time slot {slot} is already booked"
-                    }), 409
+                    return jsonify(
+                        {"error": f"Time slot {slot} is already booked"}
+                    ), 409
 
         successful_slots = []
         for slot in slots_ids:
@@ -181,11 +181,13 @@ def save_info():
             successful_slots,
             len(successful_slots),
         )
-        return jsonify({
-            "success": True,
-            "message": f"Successfully booked {len(successful_slots)} time slots for {current_user_name} on {date}",
-            "booked_slots": successful_slots,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Successfully booked {len(successful_slots)} time slots for {current_user_name} on {date}",
+                "booked_slots": successful_slots,
+            }
+        )
 
     except Exception as e:
         logger.exception("保存预约时发生异常: {}", e)
@@ -257,11 +259,13 @@ def cancel_booking():
             slots,
             deleted_count,
         )
-        return jsonify({
-            "success": True,
-            "message": f"Successfully cancelled {deleted_count} time slots on {date}",
-            "cancelled_slots": list(slots),
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Successfully cancelled {deleted_count} time slots on {date}",
+                "cancelled_slots": list(slots),
+            }
+        )
 
     except Exception as e:
         logger.exception("取消预约时发生异常: {}", e)
@@ -350,9 +354,9 @@ def get_user_bookings():
         instrument = request.args.get("instrument")
 
         if not date or not instrument:
-            return jsonify({
-                "error": "Date and instrument parameters are required"
-            }), 400
+            return jsonify(
+                {"error": "Date and instrument parameters are required"}
+            ), 400
 
         current_user_name = get_jwt_identity()
         user = db_api.search_user_by_name(current_user_name)
@@ -386,9 +390,7 @@ def get_booking_users_by_range():
     end = request.args.get("end")
 
     if not start or not end:
-        logger.warning(
-            "查询预约用户失败 - 缺少参数: start=%s, end=%s", start, end
-        )
+        logger.warning("查询预约用户失败 - 缺少参数: start=%s, end=%s", start, end)
         return jsonify({"error": "start and end parameters are required"}), 400
 
     try:
@@ -433,9 +435,17 @@ def get_register_info():
     email = data.get("email")
     phone = data.get("phone")
 
-    if not user_name or not password:
-        logger.warning("注册失败 - 缺少必要字段: user_name={}", user_name)
-        return jsonify({"error": "Missing required fields: user_name, password"}), 400
+    if not user_name or not password or not email or not phone:
+        logger.warning(
+            "注册失败 - 缺少必要字段: user_name={}, password={}, email={}, phone={}",
+            user_name,
+            password,
+            email,
+            phone,
+        )
+        return jsonify(
+            {"error": "Missing required fields: user_name, password, email, phone"}
+        ), 400
 
     if db_api.search_user_by_name(user_name):
         logger.warning("注册失败 - 用户名 [{}] 已存在", user_name)
@@ -449,11 +459,13 @@ def get_register_info():
         identity=user_name, additional_claims={"color": user_color}
     )
     logger.info("新用户注册成功 | 用户名: [{}]", user_name)
-    return jsonify({
-        "success": True,
-        "user": {"user_name": user_name, "color": user_color},
-        "access_token": access_token,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "user": {"user_name": user_name, "color": user_color},
+            "access_token": access_token,
+        }
+    )
 
 
 @app.route("/api/check-auth", methods=["GET"])
@@ -468,14 +480,16 @@ def check_auth():
             return jsonify({"logged_in": False, "message": "User not found"}), 401
 
         logger.debug("用户 [{}] 认证检查通过", current_user_name)
-        return jsonify({
-            "logged_in": True,
-            "user": {
-                "user_name": user["user_name"],
-                "id": user["id"],
-                "color": user.get("color", "#FEE2E2"),
-            },
-        })
+        return jsonify(
+            {
+                "logged_in": True,
+                "user": {
+                    "user_name": user["user_name"],
+                    "id": user["id"],
+                    "color": user.get("color", "#FEE2E2"),
+                },
+            }
+        )
 
     except Exception as e:
         logger.exception("认证检查时发生异常: {}", e)
@@ -508,30 +522,19 @@ def login():
     )
     logger.info("用户 [{}] 登录成功", user_name)
 
-    response = jsonify({
-        "success": True,
-        "message": "登录成功",
-        "access_token": access_token,
-        "user": {
-            "user_name": user["user_name"],
-            "color": user.get("color", "#FEE2E2"),
-        },
-    })
+    response = jsonify(
+        {
+            "success": True,
+            "message": "登录成功",
+            "access_token": access_token,
+            "user": {
+                "user_name": user["user_name"],
+                "color": user.get("color", "#FEE2E2"),
+            },
+        }
+    )
     set_cookie_with_defaults(response, "user_name", user["user_name"])
     return response
-
-
-@app.route("/api/logout", methods=["POST"])
-@jwt_required()
-def logout():
-    """用户登出"""
-    try:
-        current_user_name = get_jwt_identity()
-        logger.info("用户 [{}] 已登出", current_user_name)
-        return jsonify({"success": True, "message": "已登出"})
-    except Exception as e:
-        logger.exception("登出时发生异常: {}", e)
-        return jsonify({"success": False, "message": "Logout failed"}), 500
 
 
 @app.route("/api/refresh", methods=["POST"])
@@ -798,7 +801,9 @@ def dygx_delete_api():
         if date is None or start_row is None or half_hours is None:
             return jsonify({"error": "date, start_row, half_hours are required"}), 400
 
-        result, error = dygx_delete(storage_state, date, int(start_row), int(half_hours))
+        result, error = dygx_delete(
+            storage_state, date, int(start_row), int(half_hours)
+        )
         if error == "expired":
             return jsonify({"error": "expired"}), 401
         if error:

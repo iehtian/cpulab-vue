@@ -6,10 +6,10 @@ from log_config import logger
 
 DB_CONFIG = {
     "host": "localhost",
-    "user": "user_order_user",
-    "password": "user_order_pass",
-    "database": "user_order",
-    "port": 5434,
+    "user": "cpulab_user",
+    "password": "cpulab_pass",
+    "database": "cpulab",
+    "port": 5435,
 }
 
 USER_TABLE = "users"
