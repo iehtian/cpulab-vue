@@ -1,5 +1,5 @@
 import service from '@/utils/request'
-async function getBookings(instrument, date) {
+async function getBookings(instrument: string, date: Date) {
   try {
     const response = await service.get(`/api/bookings/${instrument}/${date}`)
 
@@ -12,7 +12,7 @@ async function getBookings(instrument, date) {
   }
 }
 
-async function submitBookings(instrument, submitData) {
+async function submitBookings(instrument: string, submitData: { date: Date; slots: number[] }) {
   const thisDate = submitData.date
   const slots = submitData.slots
 
@@ -37,7 +37,7 @@ async function submitBookings(instrument, submitData) {
   }
 }
 
-async function cancelBookings(instrument, cancelData) {
+async function cancelBookings(instrument: string, cancelData: { date: Date; slots: string[] }) {
   const thisDate = cancelData.date
   const slots = cancelData.slots
 
