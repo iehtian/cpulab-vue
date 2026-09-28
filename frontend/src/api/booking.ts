@@ -1,15 +1,14 @@
 import service from '@/utils/request'
-async function getBookings(instrument: string, date: Date) {
-  try {
-    const response = await service.get(`/api/bookings/${instrument}/${date}`)
 
-    const data = response.data
-    console.log('获取的预约数据:', data)
+export interface BookingInfo {
+  color: string
+  user_name: string
+}
 
-    return data.bookings || {}
-  } catch (error) {
-    console.error('获取已预约时间段时出错:', error)
-  }
+async function getBookings(instrument: string, date: string): Promise<Record<number, BookingInfo>> {
+  const response = await service.get(`/api/bookings?instrument=${instrument}&date=${date}`)
+  const data = response.data
+  return data.bookings || {}
 }
 
 async function submitBookings(instrument: string, submitData: { date: Date; slots: number[] }) {

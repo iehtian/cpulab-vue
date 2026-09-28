@@ -3,7 +3,7 @@
     <el-card>
       <div style="display: flex; justify-content: space-between; align-items: center">
         <el-date-picker
-          v-model="thisdate"
+          v-model="Monday"
           type="week"
           format="YYYY-MM-DD"
           placeholder="请选择周"
@@ -61,14 +61,17 @@
             {
               ispast: isPastBlock(slottime),
               selected: isSelected(slottime),
+              // is_ordered: is_order(slottime),
             },
           ]"
+          :style="{ 'background-color': ordered[slottime.date]?.[slottime.id]?.color }"
           @click="toggleSelect(slottime)"
         >
-          <div class="slot-time">{{ slottime.id }}</div>
+          <div class="slot-time">{{ ordered[slottime.date]?.[slottime.id]?.user_name }}</div>
         </div>
       </div>
     </div>
+    <div>order: {{ ordered }}</div>
     <Transition>
       <confirmbuton
         v-if="selectedSlot.length"
@@ -84,41 +87,46 @@ interface slotTime {
   date: number
   id: number
 }
+
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import confirmbuton from '@/components/ReservationConfirm.vue'
-const thisdate = ref(new Date())
-const newdate = new Date(thisdate.value)
-newdate.setDate(newdate.getDate() - newdate.getDay() + 1)
-thisdate.value = newdate
+const today = ref(new Date())
+const Monday = ref(new Date())
+const d = new Date(today.value) // 复制而非用数字构造
+d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+Monday.value = d
+
 const selectedSlot = ref<number[][]>([])
 
 function prevWeek() {
-  const next = new Date(thisdate.value)
+  const next = new Date(Monday.value)
   next.setDate(next.getDate() - 7)
-  thisdate.value = next // 整体替换
+  Monday.value = next // 整体替换
   selectedSlot.value = []
 }
 
 function nextWeek() {
-  const next = new Date(thisdate.value)
+  const next = new Date(Monday.value)
   next.setDate(next.getDate() + 7)
-  thisdate.value = next // 整体替换
+  Monday.value = next // 整体替换
   selectedSlot.value = []
 }
 
 function resetWeek() {
-  thisdate.value = new Date()
-  selectedSlot.value = []
+  // Monday.value = new Date()
+  // selectedSlot.value = []
 }
 
 const weekDays = computed(() => {
-  const tmp = new Date(thisdate.value)
+  const tmp = new Date(Monday.value)
+  console.log(tmp)
   const weekdays: Date[] = []
   for (let i = 0; i < 7; i++) {
     weekdays.push(new Date(tmp))
     tmp.setDate(tmp.getDate() + 1)
   }
+  console.log(weekdays)
   return weekdays
 })
 
@@ -200,7 +208,8 @@ function toggleSelect(slottime: slotTime) {
   }
 }
 import 'dayjs/locale/zh-cn'
-import { submitBookings } from '@/api/booking'
+import { submitBookings, getBookings } from '@/api/booking'
+import type { BookingInfo } from '@/api/booking'
 const sbumit = () => {
   for (let i = 0; i < 7; i++) {
     const slots = (selectedSlot.value[i] ??= [])
@@ -211,10 +220,51 @@ const sbumit = () => {
     }
   }
 }
-const arr = ref<number[]>([])
-arr.value.push(2)
-console.log(arr)
-console.log(arr.value)
+
+const ordered = ref<Record<number, BookingInfo>[]>([])
+
+function sortBookings(bookings: Record<number, BookingInfo>[]): Record<number, BookingInfo>[] {
+  const res: Record<number, BookingInfo>[] = []
+  for (const date of bookings) {
+    const sortedObj = Object.fromEntries(
+      Object.entries(date).sort(([a], [b]) => a.localeCompare(b)),
+    )
+    res.push(sortedObj)
+  }
+  return res
+}
+
+function duplicateremoval(bookings: Record<number, BookingInfo>[]) {
+  for (const date of bookings) {
+    let user_nameSet = ''
+    for (const [_, value] of Object.entries(date)) {
+      if (value.user_name !== user_nameSet) {
+        user_nameSet = value.user_name
+      } else {
+        value.user_name = ''
+      }
+    }
+  }
+}
+
+function fetchBookings() {
+  const pormise_week = []
+  for (const days of weekDays.value) {
+    pormise_week.push(getBookings('a', dateStr(days)))
+  }
+  Promise.all(pormise_week).then((res) => {
+    console.log(res)
+    const sortedRes = sortBookings(res)
+    duplicateremoval(sortedRes)
+    ordered.value = sortedRes
+  })
+}
+
+function is_order(slottime: slotTime) {
+  return Object.hasOwn(ordered.value.at(slottime.date) ?? {}, slottime.id)
+}
+
+watch(weekDays, fetchBookings, { immediate: true })
 </script>
 
 <style>
@@ -238,7 +288,6 @@ console.log(arr.value)
 
 .grid-scroll {
   max-height: 70vh;
-  /* 或固定 px，比如 560px */
   overflow-y: auto;
   /* 内容超出就在框架内滚 */
   border: var(--el-border);
@@ -273,11 +322,14 @@ console.log(arr.value)
   border: 1px solid var(--el-color-primary);
 }
 
+.is_ordered {
+  background: #f56c6c !important;
+}
+
 .grid-hour {
   background: #eaf2ff;
 }
 
-/* 下面我们会解释这些 class 是做什么的 */
 .v-enter-active,
 .v-leave-active {
   transition: opacity 0.5s ease;

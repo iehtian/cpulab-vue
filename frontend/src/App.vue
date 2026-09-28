@@ -22,15 +22,8 @@
           index="device"
           :popper-offset="0"
         >
-          <template #title>设备预约</template>
+          <template #title>仪器设备</template>
           <el-menu-item index="/Cell-room">细胞房</el-menu-item>
-          <el-sub-menu
-            index="dev"
-            :popper-offset="0"
-          >
-            <template #title>设备预约</template>
-            <el-menu-item index="/Cell-roo">细胞房</el-menu-item>
-          </el-sub-menu>
         </el-sub-menu>
         <el-sub-menu
           index="user"
@@ -57,11 +50,11 @@
     </el-header>
 
     <el-container>
-      <el-aside width="200px"></el-aside>
+      <el-aside width="150px"></el-aside>
       <el-main>
         <RouterView />
       </el-main>
-      <el-aside width="200px"></el-aside>
+      <el-aside width="150px"></el-aside>
     </el-container>
   </el-container>
 
