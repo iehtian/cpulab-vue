@@ -68,3 +68,5 @@ instance/settings.py
 .flaskenv
 .env
 
+backend/config.py
+
