@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/Cell-room',
       name: 'Cell-room',
-      component: () => import('../views/DeviceReservation.vue'),
+      component: () => import('../views/CellRoom.vue'),
     },
     {
       path: '/User',

@@ -267,7 +267,7 @@ function is_order(slottime: slotTime) {
 watch(weekDays, fetchBookings, { immediate: true })
 </script>
 
-<style>
+<style scoped>
 .week-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);

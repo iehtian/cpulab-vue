@@ -1,12 +1,12 @@
 <template>
-  <el-container>
-    <el-header>
+  <el-container direction="vertical">
+    <!-- <el-header v-if="!isMobile">
       <el-menu
-        :default-active="activeIndex"
         class="el-menu-demo"
         :ellipsis="false"
         mode="horizontal"
         @select="handleSelect"
+        :menu-trigger="isMobile ? 'click' : 'hover'"
       >
         <el-menu-item
           index="/"
@@ -47,14 +47,21 @@
           >
         </el-sub-menu>
       </el-menu>
-    </el-header>
+    </el-header> -->
 
+    <Title v-model:key="currentKey" />
     <el-container>
-      <el-aside width="150px"></el-aside>
+      <el-aside
+        v-if="!isMobile"
+        width="150px"
+      ></el-aside>
       <el-main>
-        <RouterView />
+        <!-- <RouterView /> -->
       </el-main>
-      <el-aside width="150px"></el-aside>
+      <el-aside
+        v-if="!isMobile"
+        width="150px"
+      ></el-aside>
     </el-container>
   </el-container>
 
@@ -65,29 +72,32 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import Regiester from './components/Regiester.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import router from './router/index.ts'
 import Login from '@/components/Login.vue'
+import { useViewportStore } from '@/stores/viewport.ts'
+import Title from '@/components/Title.vue'
 
-const activeIndex = ref('1')
+const viewportStore = useViewportStore()
+const isMobile = viewportStore.isMobile
+
 const RegiesterVisible = ref(false)
 const LoginVisible = ref(false)
-
-const handleSelect = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath)
-  activeIndex.value = key
-  if (key === '/Cell-room') {
+const currentKey = ref('')
+watch(currentKey, (newKey) => {
+  if (newKey === '/Cell-room') {
     router.push('/Cell-room')
-  } else if (key === '/User') {
+  } else if (newKey === '/User') {
     router.push('/User')
-  } else if (key === '/register') {
+  } else if (newKey === '/register') {
     RegiesterVisible.value = true
-  } else if (key === '/login') {
+  } else if (newKey === '/login') {
     LoginVisible.value = true
-  } else if (key === '/logout') {
+  } else if (newKey === '/logout') {
     checkStore.logout()
   }
-}
+})
+
 import { useCheckStore } from './stores/user.ts'
 const checkStore = useCheckStore()
 </script>
@@ -104,19 +114,5 @@ const checkStore = useCheckStore()
   gap: 12px;
 }
 
-.el-menu--horizontal > .el-menu-item:nth-child(1) {
-  margin-right: auto;
-}
 
-/* 取消 Logo 菜单项点击后的激活高亮（主题色文字与底部边框） */
-.el-menu--horizontal > .logo-menu-item.is-active {
-  color: var(--el-menu-text-color);
-  border-bottom-color: transparent;
-}
-
-.el-menu--horizontal > .logo-menu-item:hover,
-.el-menu--horizontal > .logo-menu-item:focus {
-  color: var(--el-menu-text-color);
-  background-color: transparent;
-}
 </style>
