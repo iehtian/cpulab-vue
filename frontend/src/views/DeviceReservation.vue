@@ -5,14 +5,14 @@
         <el-date-picker
           v-model="Monday"
           type="week"
-          format="YYYY-MM-DD"
+          format="[Week] ww"
           placeholder="请选择周"
         />
         <el-button-group class="mb-4">
           <el-button
             type="primary"
             :icon="ArrowLeft"
-            @click="prevWeek"
+            @click="changeweek(-7)"
             >Previous</el-button
           >
           <el-button
@@ -22,7 +22,7 @@
           >
           <el-button
             type="primary"
-            @click="nextWeek"
+            @click="changeweek(7)"
           >
             Next<el-icon class="el-icon--right">
               <ArrowRight />
@@ -83,33 +83,24 @@
 </template>
 
 <script setup lang="ts">
-interface slotTime {
-  date: number
-  id: number
-}
-
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { computed, ref, watch } from 'vue'
 import confirmbuton from '@/components/ReservationConfirm.vue'
+import { changeDate, dateStr,timeLabels } from '@/utils/date'
+import type { slotTime } from '@/utils/date'
+
 const today = ref(new Date())
 const Monday = ref(new Date())
 const d = new Date(today.value) // 复制而非用数字构造
-d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+const week_offset: number = d.getDate() - ((d.getDay() + 6) % 7)
+d.setDate(week_offset)
 Monday.value = d
 
 const selectedSlot = ref<number[][]>([])
 
-function prevWeek() {
-  const next = new Date(Monday.value)
-  next.setDate(next.getDate() - 7)
-  Monday.value = next // 整体替换
-  selectedSlot.value = []
-}
-
-function nextWeek() {
-  const next = new Date(Monday.value)
-  next.setDate(next.getDate() + 7)
-  Monday.value = next // 整体替换
+function changeweek(offset: number) {
+  const d = changeDate(Monday.value, offset)
+  Monday.value = d
   selectedSlot.value = []
 }
 
@@ -130,28 +121,7 @@ const weekDays = computed(() => {
   return weekdays
 })
 
-// 不依赖响应式数据，模块加载时计算一次即可
-const timeLabels: string[] = (() => {
-  const times: string[] = []
-  const start = { Hour: 8, Minute: '00' }
-  const end = { Hour: 8, Minute: '00' }
-  for (let i = 0; i < 32; i++) {
-    const hour = (i % 2) + 8 + Math.floor(i / 2)
-    const minute = i % 2 === 0 ? '30' : '00'
-    start.Hour = end.Hour
-    start.Minute = end.Minute
-    end.Hour = hour
-    end.Minute = minute
-    times.push(`${start.Hour}: ${start.Minute} - ${end.Hour}: ${end.Minute}`)
-  }
-  return times
-})()
 
-function dateStr(d: Date): string {
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${m}-${day}`
-}
 
 const slotTimes = computed(() => {
   const times: slotTime[] = []
@@ -192,11 +162,18 @@ function isPastBlock(slottime: slotTime): boolean {
 }
 
 const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+import { useCheckStore } from '@/stores/user.ts'
+
+const checkStore = useCheckStore()
 
 function toggleSelect(slottime: slotTime) {
   if (isPastBlock(slottime)) {
     return
   }
+  if (!checkStore.loggedIn) {
+    return
+  }
+
   const arr = (selectedSlot.value[slottime.date] ??= [])
   console.log(arr)
   const idx = arr.indexOf(slottime.id)

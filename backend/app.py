@@ -435,13 +435,12 @@ def get_register_info():
     email = data.get("email")
     phone = data.get("phone")
 
-    if not user_name or not password or not email or not phone:
+    if not user_name or not password or not email:
         logger.warning(
-            "注册失败 - 缺少必要字段: user_name={}, password={}, email={}, phone={}",
+            "注册失败 - 缺少必要字段: user_name={}, password={}, email={}",
             user_name,
             password,
             email,
-            phone,
         )
         return jsonify(
             {"error": "Missing required fields: user_name, password, email, phone"}

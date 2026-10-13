@@ -1,54 +1,8 @@
 <template>
-  <el-container direction="vertical">
-    <!-- <el-header v-if="!isMobile">
-      <el-menu
-        class="el-menu-demo"
-        :ellipsis="false"
-        mode="horizontal"
-        @select="handleSelect"
-        :menu-trigger="isMobile ? 'click' : 'hover'"
-      >
-        <el-menu-item
-          index="/"
-          class="logo-menu-item"
-        >
-          <img
-            alt="Vue logo"
-            style="width: 30px; height: 30px"
-            class="logo"
-            src="./assets/科研管理.svg"
-        /></el-menu-item>
-        <el-sub-menu
-          index="device"
-          :popper-offset="0"
-        >
-          <template #title>仪器设备</template>
-          <el-menu-item index="/Cell-room">细胞房</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu
-          index="user"
-          :popper-offset="0"
-        >
-          <template #title>个人中心</template>
-          <el-menu-item
-            v-if="!checkStore.loggedIn"
-            index="/register"
-            >注册</el-menu-item
-          >
-          <el-menu-item
-            v-if="!checkStore.loggedIn"
-            index="/login"
-            >登录</el-menu-item
-          >
-          <el-menu-item
-            v-if="checkStore.loggedIn"
-            index="/logout"
-            >退出登录</el-menu-item
-          >
-        </el-sub-menu>
-      </el-menu>
-    </el-header> -->
-
+  <el-container
+    direction="vertical"
+    v-if="!isMobile"
+  >
     <Title v-model:key="currentKey" />
     <el-container>
       <el-aside
@@ -56,17 +10,32 @@
         width="150px"
       ></el-aside>
       <el-main>
-        <!-- <RouterView /> -->
+        <RouterView />
       </el-main>
       <el-aside
         v-if="!isMobile"
         width="150px"
       ></el-aside>
     </el-container>
+    <Regiester v-model:visible="RegiesterVisible" />
+    <Login v-model:visible="LoginVisible" />
   </el-container>
-
-  <Regiester v-model:visible="RegiesterVisible" />
-  <Login v-model:visible="LoginVisible" />
+  <van-nav-bar title="标题" />
+<router-view />
+  <van-tabbar route>
+    <van-tabbar-item
+      replace
+      to="/Cell-room"
+      icon="home-o"
+      >标签</van-tabbar-item
+    >  
+        <van-tabbar-item
+      replace
+      to="/User"
+      icon="search"
+      >标签</van-tabbar-item
+    >  
+  </van-tabbar>
 </template>
 
 <script setup lang="ts">
@@ -113,6 +82,4 @@ const checkStore = useCheckStore()
   align-items: center;
   gap: 12px;
 }
-
-
 </style>

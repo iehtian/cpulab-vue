@@ -11,12 +11,7 @@ const router = createRouter({
     {
       path: '/User',
       name: 'User',
-      component: () => import('../views/User.vue'),
-    },
-    {
-      path: '/DeviceReservation_bak',
-      name: 'DeviceReservation_bak',
-      component: () => import('../views/DeviceReservation_bak.vue'),
+      component: () => import('../views/MobileUser.vue'),
     },
   ],
 })
