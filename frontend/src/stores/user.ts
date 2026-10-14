@@ -4,7 +4,7 @@ import service from '@/utils/request'
 
 export const useCheckStore = defineStore('check', () => {
   const loggedIn = ref(false)
-  const userInfo = ref(null)
+  const userName = ref('')
   const loaded = ref(false)
 
   async function checkAuth() {
@@ -14,9 +14,10 @@ export const useCheckStore = defineStore('check', () => {
 
     try {
       const data = await res.data
+      console.log('解析认证响应:', data)
       if (data) {
         loggedIn.value = !!data.logged_in
-        userInfo.value = data
+        if (!!data.user_name) userName.value = data.user_name
       }
       loaded.value = true
     } catch (error) {
@@ -51,9 +52,9 @@ export const useCheckStore = defineStore('check', () => {
   function logout() {
     localStorage.removeItem('access_token')
     loggedIn.value = false
-    userInfo.value = null
+    userName.value = ''
     loaded.value = true
   }
 
-  return { loggedIn, userInfo, loaded, checkAuth, login, register, logout }
+  return { loggedIn, userName, loaded, checkAuth, login, register, logout }
 })

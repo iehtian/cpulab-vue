@@ -1,6 +1,6 @@
 <template>
-  <DeviceReservation v-if="!isMobile" />
-  <DeviceReservation_mobile v-else />
+  <!-- <DeviceReservation v-if="!isMobile" /> -->
+  <DeviceReservation_mobile />
 </template>
 <script setup lang="ts">
 import DeviceReservation from '@/views/DeviceReservation.vue'
