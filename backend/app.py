@@ -479,16 +479,7 @@ def check_auth():
             return jsonify({"logged_in": False, "message": "User not found"}), 401
 
         logger.debug("用户 [{}] 认证检查通过", current_user_name)
-        return jsonify(
-            {
-                "logged_in": True,
-                "user": {
-                    "user_name": user["user_name"],
-                    "id": user["id"],
-                    "color": user.get("color", "#FEE2E2"),
-                },
-            }
-        )
+        return jsonify({"logged_in": True, "user_name": user["user_name"]})
 
     except Exception as e:
         logger.exception("认证检查时发生异常: {}", e)

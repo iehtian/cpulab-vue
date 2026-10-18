@@ -86,8 +86,9 @@
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { computed, ref, watch } from 'vue'
 import confirmbuton from '@/components/ReservationConfirm.vue'
-import { changeDate, dateStr,timeLabels } from '@/utils/date'
-import type { slotTime } from '@/utils/date'
+import { changeDate, dateStr, timeLabels } from '@/utils/date'
+import type { SlotTime } from '@/composables/useSlotTime'
+import { useSlotTime } from '@/composables/useSlotTime'
 
 const today = ref(new Date())
 const Monday = ref(new Date())
@@ -121,10 +122,8 @@ const weekDays = computed(() => {
   return weekdays
 })
 
-
-
 const slotTimes = computed(() => {
-  const times: slotTime[] = []
+  const times: SlotTime[] = []
   for (let i = 0; i < 32; i++) {
     for (let j = 0; j < 7; j++) {
       times.push({ date: j, id: i })
@@ -133,40 +132,17 @@ const slotTimes = computed(() => {
   return times
 })
 
-function isPastDay(d: number): boolean {
-  const t = new Date()
-  t.setHours(0, 0, 0, 0)
-  const dd = new Date(weekDays.value.at(d)!)
-  dd.setHours(0, 0, 0, 0)
-  return dd.getTime() < t.getTime()
-}
-
-function isToday(d: Date): boolean {
-  const t = new Date()
-  return (
-    d.getDate() === t.getDate() &&
-    d.getMonth() === t.getMonth() &&
-    d.getFullYear() === t.getFullYear()
-  )
-}
-
-function isSelected(slottime: slotTime): boolean {
-  return selectedSlot.value.at(slottime.date)?.includes(slottime.id) ?? false
-}
-
-function isPastBlock(slottime: slotTime): boolean {
-  const end = new Date(weekDays.value.at(slottime.date)!)
-  const slot = slottime.id + 1
-  end.setHours(8 + Math.floor(slot / 2), slot % 2 === 0 ? 0 : 30, 0, 0)
-  return end.getTime() <= Date.now() || isPastDay(slottime.date)
-}
+const { isPastDay, isToday, isPastBlock, isSelected } = useSlotTime(
+  weekDays,
+  selectedSlot,
+)
 
 const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 import { useCheckStore } from '@/stores/user.ts'
 
 const checkStore = useCheckStore()
 
-function toggleSelect(slottime: slotTime) {
+function toggleSelect(slottime: SlotTime) {
   if (isPastBlock(slottime)) {
     return
   }
@@ -237,7 +213,7 @@ function fetchBookings() {
   })
 }
 
-function is_order(slottime: slotTime) {
+function is_order(slottime: SlotTime) {
   return Object.hasOwn(ordered.value.at(slottime.date) ?? {}, slottime.id)
 }
 

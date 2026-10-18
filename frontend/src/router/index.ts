@@ -13,6 +13,16 @@ const router = createRouter({
       name: 'User',
       component: () => import('../views/MobileUser.vue'),
     },
+    {
+      path: '/Manager',
+      name: 'Manager',
+      component: () => import('../views/Manager.vue'),
+    },
+    {
+      path: '/Spaces',
+      name: 'Spaces',
+      component: () => import('../views/Spaces.vue'),
+    },
   ],
 })
 

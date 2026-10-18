@@ -20,21 +20,33 @@
     <Regiester v-model:visible="RegiesterVisible" />
     <Login v-model:visible="LoginVisible" />
   </el-container>
-  <van-nav-bar title="标题" />
-<router-view />
+
+  <van-nav-bar
+    title="标题"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
+  <router-view />
   <van-tabbar route>
     <van-tabbar-item
       replace
       to="/Cell-room"
       icon="home-o"
       >标签</van-tabbar-item
-    >  
-        <van-tabbar-item
+    >
+    <van-tabbar-item
       replace
       to="/User"
       icon="search"
       >标签</van-tabbar-item
-    >  
+    >
+    <van-tabbar-item
+      replace
+      to="/Manager"
+      icon="search"
+      >标签</van-tabbar-item
+    >
   </van-tabbar>
 </template>
 
@@ -69,6 +81,7 @@ watch(currentKey, (newKey) => {
 
 import { useCheckStore } from './stores/user.ts'
 const checkStore = useCheckStore()
+const onClickLeft = () => history.back()
 </script>
 
 <style scoped>

@@ -60,7 +60,7 @@ export function useSlotTime(
   }
 
   function isSelected(slottime: SlotTime): boolean {
-    if (bookingSlots.value.length === 0 || cancelingSlots.value.length === 0) return false
+    if (bookingSlots.value.length === 0 && cancelingSlots.value.length === 0) return false
     return isin(slottime, bookingSlots.value) || isin(slottime, cancelingSlots.value)
   }
 
