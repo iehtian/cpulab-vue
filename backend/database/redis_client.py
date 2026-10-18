@@ -212,7 +212,7 @@ def initialize_database():
         create_user_index()
         create_booking_index()
         return True
-    except Exception as e:
+    except redis.RedisError as e:
         print(f"数据库初始化失败: {e}")
         return False
 

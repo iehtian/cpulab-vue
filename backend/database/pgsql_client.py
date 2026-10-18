@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 
 import psycopg2
@@ -136,50 +135,48 @@ def search_user_by_name(user_name):
         FROM {USER_TABLE}
         WHERE user_name = %s
     """
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, (user_name,))
-            row = cur.fetchone()
-            logging.debug(
-                f"search_user_by_name('{user_name}') returned {'1 row' if row else '0 rows'}"
-            )
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(sql, (user_name,))
+        row = cur.fetchone()
+        logger.debug(
+            f"search_user_by_name('{user_name}') returned {'1 row' if row else '0 rows'}"
+        )
     return _row_to_user(row) if row else None
 
 
 # -------- 预约相关 --------
 def create_booking_index():
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            # 创建预约表
-            cur.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {BOOKING_TABLE} (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    instrument_id TEXT NOT NULL,
-                    booking_date DATE NOT NULL,
-                    time_slot_id INTEGER NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    CONSTRAINT fk_user 
-                        FOREIGN KEY (user_id) 
-                        REFERENCES {USER_TABLE}(id) 
-                        ON DELETE CASCADE,
-                    CONSTRAINT unique_time_slot 
-                        UNIQUE (instrument_id, booking_date, time_slot_id)
-                )
-                """
+    with get_connection() as conn, conn.cursor() as cur:
+        # 创建预约表
+        cur.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {BOOKING_TABLE} (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                instrument_id TEXT NOT NULL,
+                booking_date DATE NOT NULL,
+                time_slot_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES {USER_TABLE}(id)
+                    ON DELETE CASCADE,
+                CONSTRAINT unique_time_slot
+                    UNIQUE (instrument_id, booking_date, time_slot_id)
             )
-            # 创建索引优化查询
-            cur.execute(
-                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_user_id ON {BOOKING_TABLE}(user_id)"
-            )
-            cur.execute(
-                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_date ON {BOOKING_TABLE}(booking_date)"
-            )
-            cur.execute(
-                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_instrument_date ON {BOOKING_TABLE}(instrument_id, booking_date)"
-            )
-            conn.commit()
+            """
+        )
+        # 创建索引优化查询
+        cur.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_user_id ON {BOOKING_TABLE}(user_id)"
+        )
+        cur.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_date ON {BOOKING_TABLE}(booking_date)"
+        )
+        cur.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_instrument_date ON {BOOKING_TABLE}(instrument_id, booking_date)"
+        )
+        conn.commit()
     logger.info(f"Table '{BOOKING_TABLE}' ensured.")
 
 
@@ -194,7 +191,7 @@ def upsert_booking(user_name, instrument_id, date, time_slot_id):
         VALUES (%s, %s, %s, %s)
         RETURNING id
     """
-    logging.info(
+    logger.info(
         f"Creating booking -> "
         f"{{'user_name': {user_name}, 'instrument_id': {instrument_id}, "
         f"'date': {date}, 'time_slot_id': {time_slot_id}}}"
@@ -251,7 +248,7 @@ def search_booking_by_date(instrument_id, date):
         ORDER BY b.time_slot_id
     """
     with get_connection() as conn, conn.cursor() as cur:
-        logging.info(f"Executing SQL: {sql} with params: {(instrument_id, date)}")
+        logger.info(f"Executing SQL: {sql} with params: {(instrument_id, date)}")
         cur.execute(sql, (instrument_id, date))
         rows = cur.fetchall()
 
@@ -347,32 +344,31 @@ def delete_bookings_by_slots(instrument_id, date, slots):
 # -------- 每日计划相关 --------
 def create_date_plan_index():
     """创建每日计划表与索引"""
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {PLANS_TABLE} (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    date DATE NOT NULL,
-                    plan TEXT,
-                    status INTEGER DEFAULT 0,
-                    remark TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    CONSTRAINT fk_user
-                        FOREIGN KEY (user_id)
-                        REFERENCES {USER_TABLE}(id)
-                        ON DELETE CASCADE
-                )
-                """
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {PLANS_TABLE} (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                date DATE NOT NULL,
+                plan TEXT,
+                status INTEGER DEFAULT 0,
+                remark TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_user
+                    FOREIGN KEY (user_id)
+                    REFERENCES {USER_TABLE}(id)
+                    ON DELETE CASCADE
             )
+            """
+        )
 
-            # 优化按用户+日期查询，并保证同一用户同一天只有一条记录
-            cur.execute(
-                f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{PLANS_TABLE}_user_date ON {PLANS_TABLE}(user_id, date)"
-            )
-            conn.commit()
+        # 优化按用户+日期查询，并保证同一用户同一天只有一条记录
+        cur.execute(
+            f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{PLANS_TABLE}_user_date ON {PLANS_TABLE}(user_id, date)"
+        )
+        conn.commit()
     logger.info(f"Table '{PLANS_TABLE}' ensured.")
 
 
@@ -502,7 +498,7 @@ def initialize_database():
         create_booking_index()
         create_date_plan_index()
         return True
-    except Exception as e:
+    except psycopg2.Error as e:
         logger.error(f"数据库初始化失败: {e}")
         return False
 

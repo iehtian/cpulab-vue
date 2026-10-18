@@ -3,6 +3,15 @@ from datetime import datetime
 from pathlib import Path
 
 import bcrypt
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    get_jwt_identity,
+    jwt_required,
+)
+
 import database as db_api
 import verify_code
 from config import SKIP_NAMES, Config
@@ -12,14 +21,6 @@ from dygx import (
     dygx_fetch_with_state,
     dygx_modify,
     dygx_run_with_login,
-)
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
-from flask_jwt_extended import (
-    JWTManager,
-    create_access_token,
-    get_jwt_identity,
-    jwt_required,
 )
 from log_config import logger
 
@@ -70,7 +71,7 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed_password: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
-    except Exception as e:
+    except ValueError as e:
         logger.error("密码验证异常: {}", e)
         return False
 
@@ -189,7 +190,7 @@ def save_info():
             }
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("保存预约时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -267,7 +268,7 @@ def cancel_booking():
             }
         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("取消预约时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -307,7 +308,7 @@ def update_daily_plan():
         )
         return jsonify({"success": True, "updated": updated})
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("更新每日计划时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -376,7 +377,7 @@ def get_user_bookings():
         )
         return jsonify(times)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("获取用户预约信息时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -418,7 +419,7 @@ def get_booking_users_by_range():
             len(users),
         )
         return jsonify({"users": users})
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("查询预约用户时发生异常: %s", e, exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -481,7 +482,7 @@ def check_auth():
         logger.debug("用户 [{}] 认证检查通过", current_user_name)
         return jsonify({"logged_in": True, "user_name": user["user_name"]})
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("认证检查时发生异常: {}", e)
         return jsonify({"logged_in": False, "message": "Invalid token"}), 401
 
@@ -545,7 +546,7 @@ def refresh():
         logger.debug("用户 [{}] Token 刷新成功", current_user_name)
         return jsonify({"success": True, "access_token": new_token})
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("刷新 Token 时发生异常: {}", e)
         return jsonify({"success": False, "message": "Token refresh failed"}), 500
 
@@ -563,7 +564,7 @@ def get_all_daily_plans():
         logger.debug("查询所有用户每日计划 | 日期: {} | 共 {} 条", date, len(res))
         return jsonify({"success": True, "data": res})
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("获取所有用户每日计划时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -632,7 +633,7 @@ def update_profile():
         )
         return jsonify({"success": True, "message": "Profile updated successfully"})
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("更新个人信息时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -675,7 +676,7 @@ def send_reset_code():
 
         return jsonify({"success": True, "message": "Reset code sent"})
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("发送重置验证码时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -696,7 +697,7 @@ def dygx_fetch_api():
         if error:
             return jsonify({"error": error}), 400
         return jsonify(result), 200
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("DYGX fetch 时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -728,7 +729,7 @@ def dygx_book_api():
         if error:
             return jsonify({"error": error}), 400
         return jsonify(result), 200
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("DYGX book 时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -771,7 +772,7 @@ def dygx_modify_api():
         if error:
             return jsonify({"error": error}), 400
         return jsonify(result), 200
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("DYGX modify 时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -799,7 +800,7 @@ def dygx_delete_api():
         if error:
             return jsonify({"error": error}), 400
         return jsonify(result), 200
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("DYGX delete 时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
@@ -818,7 +819,7 @@ def dygx_run_login_api():
         if not response.ok:
             return jsonify({"error": response.error}), 400
         return jsonify(response.storage_state), 200
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.exception("DYGX run (login) 时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
