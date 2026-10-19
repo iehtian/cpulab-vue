@@ -8,8 +8,8 @@ from log_config import logger
 bp = Blueprint("spaces", __name__)
 
 
-@bp.route("/space/upsert", methods=["POST"])
-def upsert_space_api():
+@bp.route("/space/add", methods=["POST"])
+def add_space_api():
     """添加或更新空间信息"""
     try:
         data = request.get_json()
@@ -18,14 +18,29 @@ def upsert_space_api():
         if not name:
             return jsonify({"error": "Space name is required"}), 400
 
-        db_api.upsert_space(name)
-        logger.info("空间信息已添加/更新 | 名称: {}", name)
+        db_api.add_space(name)
+        logger.info("空间信息已添加| 名称: {}", name)
         return jsonify(
-            {"success": True, "message": "Space information upserted successfully"}
+            {"success": True, "message": "Space information added successfully"}
         ), 200
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息添加/更新时发生异常: {}", e)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@bp.route("/space/delete/<int:space_id>", methods=["DELETE"])
+def delete_space_api(space_id):
+    """根据空间 ID 删除空间信息"""
+    try:
+        db_api.delete_space_by_id(space_id)
+        logger.info("空间信息已删除 | ID: {}", space_id)
+        return jsonify(
+            {"success": True, "message": "Space information deleted successfully"}
+        ), 200
+
+    except Exception as e:  # noqa: BLE001
+        logger.exception("空间信息删除时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
 
 

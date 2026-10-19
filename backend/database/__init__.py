@@ -22,7 +22,7 @@ from .reservation import (
     upsert_booking,
     upsert_plan_field,
 )
-from .space import get_all_spaces, upsert_space
+from .space import add_space, delete_space_by_id, get_all_spaces
 from .user import create_user_index, search_user_by_name, upsert_user
 
 __version__ = "2.0.0"
@@ -48,6 +48,7 @@ __all__ = [
     "upsert_booking",
     "upsert_plan_field",
     "upsert_user",
-    "upsert_space",
+    "add_space",
+    "delete_space_by_id",
     "get_all_spaces",
 ]

@@ -26,13 +26,14 @@
             <van-icon
               name="ellipsis"
               class="more-icon"
-              @click.stop="showActions = true"
+              @click.stop="((showActions = true), (selectedSpaceId = space.id))"
             /> </template
         ></van-cell>
       </van-cell-group>
 
       <van-action-sheet
         v-model:show="showActions"
+        v-model:id="selectedSpaceId"
         :actions="actions"
         cancel-text="取消"
         close-on-click-action
@@ -56,11 +57,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { getAllSpaces, addSpace } from '@/api/manager.ts'
+import { getAllSpaces, addSpace, deleteSpaceById } from '@/api/manager.ts'
+import { showDialog } from 'vant'
 const isMobile = ref(false)
 const show = ref(false)
 const showActions = ref(false)
 const spaceName = ref('')
+const selectedSpaceId = ref<number | null>(null)
 interface Space {
   id: number
   name: string
@@ -72,8 +75,28 @@ const actions = [
   { name: '删除', color: '#ee0a24' },
 ]
 const onSelect = (action: { name: string }) => {
-  console.log('选择了:', action.name)
-  // 在这里根据 action.name 处理对应逻辑
+  console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
+  if (action.name === '编辑') {
+    // 编辑逻辑
+  } else if (action.name === '删除') {
+    // 删除逻辑
+    showDialog({
+      title: '确认删除',
+      message: '删除后无法恢复，是否继续？',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+    }).then(async () => {
+      if (selectedSpaceId.value !== null) {
+        try {
+          await deleteSpaceById(selectedSpaceId.value)
+          spaces.value = spaces.value.filter((space) => space.id !== selectedSpaceId.value)
+          console.log('删除空间成功:', selectedSpaceId.value)
+        } catch (err) {
+          console.error('删除空间失败:', err)
+        }
+      }
+    })
+  }
 }
 
 onMounted(async () => {
@@ -97,6 +120,9 @@ const onConfirmAdd = async () => {
   try {
     await addSpace(spaceName.value)
     spaceName.value = '' // 成功后重置
+    getAllSpaces().then((res) => {
+      spaces.value = res
+    })
   } catch (err) {
     console.error('添加空间失败:', err)
     return false // 失败也阻止关闭

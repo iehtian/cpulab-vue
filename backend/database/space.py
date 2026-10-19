@@ -30,7 +30,7 @@ def create_space():
     logger.info(f"Table '{SPACE_TABLE}' ensured.")
 
 
-def upsert_space(name):
+def add_space(name):
     """插入或更新空间信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
@@ -44,17 +44,16 @@ def upsert_space(name):
         conn.commit()
 
 
-def get_space_by_name(name):
-    """根据名称获取空间信息"""
+def delete_space_by_id(space_id):
+    """根据空间 ID 删除空间信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             f"""
-            SELECT * FROM {SPACE_TABLE} WHERE name = %s
+            DELETE FROM {SPACE_TABLE} WHERE id = %s
             """,
-            (name,),
+            (space_id,),
         )
-        space = cur.fetchone()
-    return space
+        conn.commit()
 
 
 def get_all_spaces():

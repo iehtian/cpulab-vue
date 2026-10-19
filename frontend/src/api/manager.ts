@@ -6,8 +6,12 @@ async function getAllSpaces(): Promise<Array<{ id: number; name: string }>> {
   return data.spaces || []
 }
 
-async function addSpace(name: string): Promise<void> {
-  await service.post(`/api/space/upsert`, { name })
+async function deleteSpaceById(id: number): Promise<void> {
+  await service.delete(`/api/space/delete/${id}`)
 }
 
-export { getAllSpaces, addSpace }
+async function addSpace(name: string): Promise<void> {
+  await service.post(`/api/space/add`, { name })
+}
+
+export { getAllSpaces, addSpace, deleteSpaceById }
