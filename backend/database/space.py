@@ -5,6 +5,16 @@ from database.pgsql_config import (
 from log_config import logger
 
 
+def _row_to_dict(row):
+    """将数据库行转换为字典"""
+    if row is None:
+        return None
+    return {
+        "id": row[0],
+        "name": row[1],
+    }
+
+
 def create_space():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
@@ -52,8 +62,11 @@ def get_all_spaces():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             f"""
-            SELECT * FROM {SPACE_TABLE} ORDER BY created_at DESC
+            SELECT id, name FROM {SPACE_TABLE} ORDER BY created_at DESC
             """
         )
         spaces = cur.fetchall()
-    return spaces
+        results = []
+        for space in spaces:
+            results.append(_row_to_dict(space))
+    return results

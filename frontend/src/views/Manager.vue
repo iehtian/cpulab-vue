@@ -10,12 +10,14 @@
     </div>
     <router-view />
     <div class="container space">
-      ><van-cell-group>
+      <van-cell-group>
         <van-cell title="空间管理">
           <template #value> <div @click="onAddSpace">添加空间</div> </template>
         </van-cell>
         <van-cell
-          title="单元格"
+          v-for="space in spaces"
+          :key="space.id"
+          :title="space.name"
           value="内容"
           label="描述信息"
           to="/Spaces"
@@ -28,6 +30,7 @@
             /> </template
         ></van-cell>
       </van-cell-group>
+
       <van-action-sheet
         v-model:show="showActions"
         :actions="actions"
@@ -35,15 +38,35 @@
         close-on-click-action
         @select="onSelect"
       />
+      <van-dialog
+        v-model:show="show"
+        title="添加空间"
+        show-cancel-button
+        @confirm="onConfirmAdd"
+      >
+        <van-field
+          v-model="spaceName"
+          label="空间名称"
+          placeholder="请输入空间名称"
+        />
+      </van-dialog>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { getAllSpaces } from '@/api/manager.ts'
+import { getAllSpaces, addSpace } from '@/api/manager.ts'
 const isMobile = ref(false)
+const show = ref(false)
 const showActions = ref(false)
+const spaceName = ref('')
+interface Space {
+  id: number
+  name: string
+}
+const spaces = ref<Space[]>([])
+
 const actions = [
   { name: '编辑', color: '#1989fa' },
   { name: '删除', color: '#ee0a24' },
@@ -52,18 +75,33 @@ const onSelect = (action: { name: string }) => {
   console.log('选择了:', action.name)
   // 在这里根据 action.name 处理对应逻辑
 }
-const onAddSpace = () => {
-  console.log('添加空间按钮被点击')
-  // 在这里处理添加空间的逻辑
-}
+
 onMounted(async () => {
   try {
     const res = await getAllSpaces()
     console.log('获取空间列表成功:', res)
+    spaces.value = res
   } catch (err) {
     console.error('获取空间列表失败:', err)
   }
 })
+
+const onAddSpace = () => {
+  show.value = true
+}
+const onConfirmAdd = async () => {
+  if (!spaceName.value.trim()) {
+    // 空名称时不关闭弹窗：vant 中可在 @confirm 里返回 false 阻止关闭
+    return false
+  }
+  try {
+    await addSpace(spaceName.value)
+    spaceName.value = '' // 成功后重置
+  } catch (err) {
+    console.error('添加空间失败:', err)
+    return false // 失败也阻止关闭
+  }
+}
 </script>
 
 <style scoped>

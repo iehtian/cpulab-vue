@@ -6,4 +6,8 @@ async function getAllSpaces(): Promise<Array<{ id: number; name: string }>> {
   return data.spaces || []
 }
 
-export { getAllSpaces }
+async function addSpace(name: string): Promise<void> {
+  await service.post(`/api/space/upsert`, { name })
+}
+
+export { getAllSpaces, addSpace }

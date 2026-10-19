@@ -19,7 +19,7 @@ def upsert_space_api():
             return jsonify({"error": "Space name is required"}), 400
 
         db_api.upsert_space(name)
-        logger.info("空间信息已添加/更新 | 名称: %s", name)
+        logger.info("空间信息已添加/更新 | 名称: {}", name)
         return jsonify(
             {"success": True, "message": "Space information upserted successfully"}
         ), 200
