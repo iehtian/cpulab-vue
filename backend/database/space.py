@@ -61,7 +61,7 @@ def get_all_spaces():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             f"""
-            SELECT id, name FROM {SPACE_TABLE} ORDER BY created_at DESC
+            SELECT id, name FROM {SPACE_TABLE} ORDER BY created_at ASC
             """
         )
         spaces = cur.fetchall()

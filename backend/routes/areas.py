@@ -27,3 +27,14 @@ def add_area_api():
     except Exception as e:  # noqa: BLE001
         logger.exception("区域信息添加/更新时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500
+
+
+@bp.route("/area/all/<int:space_id>", methods=["GET"])
+def get_area_api(space_id):
+    """获取区域信息"""
+    try:
+        area_info = db_api.get_areas_by_space(space_id)
+        return jsonify({"success": True, "data": area_info}), 200
+    except Exception as e:  # noqa: BLE001
+        logger.exception("获取区域信息时发生异常: {}", e)
+        return jsonify({"error": "Internal server error"}), 500

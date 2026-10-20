@@ -3,39 +3,42 @@
     v-model:show="show"
     :title="title"
     show-cancel-button
-    @confirm="onConfirm"
+    :before-close="beforeClose"
   >
     <van-field
-      v-model="spaceName"
-      label="空间名称"
-      placeholder="请输入空间名称"
+      v-model="inputValue"
+      :label="label"
+      :placeholder="placeholder"
     />
   </van-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+
 const props = defineProps({
-  title: {
-    type: String,
-    default: '添加空间',
-  },
-  show: {
-    type: Boolean,
-    default: false,
-  },
-  onConfirm_it: {
-    type: Function,
-    required: true,
-  },
+  title: { type: String, default: '' },
+  label: { type: String, default: '' },
+  initialValue: { type: String, default: '' },
+  placeholder: { type: String, default: '' },
 })
 
-const emit = defineEmits(['update:show'])
+const emit = defineEmits<{
+  (e: 'confirm', value: string): void
+}>()
 
-const spaceName = ref('')
-const onConfirm = () => {
-  props.onConfirm_it(spaceName.value)
-  spaceName.value = ''
-  emit('update:show', false)
+const show = defineModel<boolean>({ default: false })
+
+// 受控的输入值 + 初始值（编辑场景可回显）
+const inputValue = ref('')
+watch(show, (v) => {
+  if (v) inputValue.value = props.initialValue
+})
+
+const beforeClose = (action: string) => {
+  if (action === 'cancel') return true
+  if (!inputValue.value.trim()) return false // 空值不关闭
+  emit('confirm', inputValue.value)
+  return true
 }
 </script>

@@ -39,18 +39,13 @@
         close-on-click-action
         @select="onSelect"
       />
-      <van-dialog
+      <DialogField
         v-model:show="show"
-        title="添加空间"
-        show-cancel-button
-        @confirm="onConfirmAdd"
-      >
-        <van-field
-          v-model="spaceName"
-          label="空间名称"
-          placeholder="请输入空间名称"
-        />
-      </van-dialog>
+        :title="dialogConfig.title"
+        :label="dialogConfig.label"
+        :placeholder="dialogConfig.placeholder"
+        @confirm="onDialogConfirm"
+      />
     </div>
     <van-popup
       v-model:show="showpopup"
@@ -63,7 +58,7 @@
       <van-button
         plain
         type="primary"
-        @click="showpopup = false"
+        @click="onAddZone"
         >添加分区</van-button
       >
       <van-button
@@ -75,9 +70,10 @@
   </div>
 </template>
 <script setup lang="ts">
+import DialogField from '@/components/DialogField.vue'
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { getAllSpaces, addSpace, deleteSpaceById } from '@/api/manager.ts'
+import { getAllSpaces, addSpace, deleteSpaceById, addArea, getAreasBySpace } from '@/api/manager.ts'
 import { showDialog } from 'vant'
 const isMobile = ref(false)
 const show = ref(false)
@@ -100,6 +96,13 @@ const onSelect = (action: { name: string }) => {
   console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
   if (action.name === '布局管理') {
     // 布局管理逻辑
+    getAreasBySpace(selectedSpaceId.value!)
+      .then((res) => {
+        console.log('获取分区列表成功:', res)
+      })
+      .catch((err) => {
+        console.error('获取分区列表失败:', err)
+      })
     showpopup.value = true
   } else if (action.name === '编辑') {
     // 编辑逻辑
@@ -124,6 +127,15 @@ const onSelect = (action: { name: string }) => {
   }
 }
 
+const onDialogConfirm = async (value: string) => {
+  if (dialogMode.value === 'addSpace') {
+    await confirmAddSpace(value)
+  } else if (dialogMode.value === 'addZone') {
+    await confirmAddZone(value)
+  }
+  show.value = false
+}
+
 onMounted(async () => {
   try {
     const res = await getAllSpaces()
@@ -134,23 +146,47 @@ onMounted(async () => {
   }
 })
 
+const dialogConfig = ref({
+  title: '添加空间',
+  label: '空间名称',
+  placeholder: '请输入空间名称',
+})
+const dialogMode = ref<'addSpace' | 'addZone' | 'editSpace'>('addSpace')
+
 const onAddSpace = () => {
+  dialogMode.value = 'addSpace'
+  dialogConfig.value = { title: '添加空间', label: '空间名称', placeholder: '请输入空间名称' }
   show.value = true
 }
-const onConfirmAdd = async () => {
-  if (!spaceName.value.trim()) {
-    // 空名称时不关闭弹窗：vant 中可在 @confirm 里返回 false 阻止关闭
-    return false
-  }
+const onAddZone = () => {
+  dialogMode.value = 'addZone'
+  dialogConfig.value = { title: '添加分区', label: '分区名称', placeholder: '请输入分区名称' }
+  show.value = true
+}
+
+async function confirmAddSpace(spaceName: string): Promise<void> {
   try {
-    await addSpace(spaceName.value)
-    spaceName.value = '' // 成功后重置
+    await addSpace(spaceName)
     getAllSpaces().then((res) => {
       spaces.value = res
     })
   } catch (err) {
     console.error('添加空间失败:', err)
-    return false // 失败也阻止关闭
+  }
+}
+
+async function confirmAddZone(zoneName: string): Promise<void> {
+  // 这里可以添加调用后端接口的逻辑来添加分区
+  console.log('添加分区:', zoneName)
+  try {
+    if (selectedSpaceId.value !== null) {
+      await addArea(null, selectedSpaceId.value, zoneName)
+      console.log('添加分区成功:', zoneName)
+    } else {
+      console.error('未选择空间，无法添加分区')
+    }
+  } catch (err) {
+    console.error('添加分区失败:', err)
   }
 }
 </script>

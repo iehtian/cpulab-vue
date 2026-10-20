@@ -5,7 +5,7 @@ Database operations package.
 
 """
 
-from .area import add_area
+from .area import add_area, get_areas_by_space
 from .pgsql_client import initialize_database
 from .pgsql_config import get_connection, get_db_connection
 from .reservation import (
@@ -45,6 +45,8 @@ __all__ = [
     "upsert_booking",
     "upsert_plan_field",
     "upsert_user",
+    "add_area",
+    "get_areas_by_space",
     "add_space",
     "delete_space_by_id",
     "get_all_spaces",

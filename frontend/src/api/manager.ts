@@ -18,4 +18,12 @@ async function addArea(parentId: number | null, spaceId: number, name: string): 
   await service.post(`/api/area/add`, { parentId, spaceId, name })
 }
 
-export { getAllSpaces, addSpace, deleteSpaceById, addArea }
+async function getAreasBySpace(
+  spaceId: number,
+): Promise<Array<{ id: number; name: string; parentId: number | null }>> {
+  const response = await service.get(`/api/area/all/${spaceId}`)
+  const data = response.data
+  return data.areas || []
+}
+
+export { getAllSpaces, addSpace, deleteSpaceById, addArea, getAreasBySpace }
