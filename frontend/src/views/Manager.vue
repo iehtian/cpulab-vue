@@ -52,6 +52,26 @@
         />
       </van-dialog>
     </div>
+    <van-popup
+      v-model:show="showpopup"
+      position="bottom"
+    >
+      <div class="container">
+        <h3>布局管理</h3>
+        <p>这里是布局管理的内容，可以根据需要进行布局设置。</p>
+      </div>
+      <van-button
+        plain
+        type="primary"
+        @click="showpopup = false"
+        >添加分区</van-button
+      >
+      <van-button
+        type="primary"
+        @click="showpopup = false"
+        >关闭</van-button
+      >
+    </van-popup>
   </div>
 </template>
 <script setup lang="ts">
@@ -63,6 +83,7 @@ const isMobile = ref(false)
 const show = ref(false)
 const showActions = ref(false)
 const spaceName = ref('')
+const showpopup = ref(false)
 const selectedSpaceId = ref<number | null>(null)
 interface Space {
   id: number
@@ -71,12 +92,16 @@ interface Space {
 const spaces = ref<Space[]>([])
 
 const actions = [
+  { name: '布局管理', color: '#1989fa' },
   { name: '编辑', color: '#1989fa' },
   { name: '删除', color: '#ee0a24' },
 ]
 const onSelect = (action: { name: string }) => {
   console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
-  if (action.name === '编辑') {
+  if (action.name === '布局管理') {
+    // 布局管理逻辑
+    showpopup.value = true
+  } else if (action.name === '编辑') {
     // 编辑逻辑
   } else if (action.name === '删除') {
     // 删除逻辑

@@ -5,11 +5,10 @@ Database operations package.
 
 """
 
+from .area import add_area
 from .pgsql_client import initialize_database
 from .pgsql_config import get_connection, get_db_connection
 from .reservation import (
-    create_booking_index,
-    create_date_plan_index,
     delete_booking_by_id,
     delete_bookings_by_dates,
     delete_bookings_by_slots,
@@ -23,15 +22,13 @@ from .reservation import (
     upsert_plan_field,
 )
 from .space import add_space, delete_space_by_id, get_all_spaces
-from .user import create_user_index, search_user_by_name, upsert_user
+from .user import search_user_by_name, upsert_user
 
 __version__ = "2.0.0"
 __author__ = "Order Management System"
 
 __all__ = [
-    "create_booking_index",
-    "create_date_plan_index",
-    "create_user_index",
+    "add_area",
     "delete_booking_by_id",
     "delete_bookings_by_dates",
     "delete_bookings_by_slots",
