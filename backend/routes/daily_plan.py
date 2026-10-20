@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request
 import database as db_api
 from config import SKIP_NAMES
 from log_config import logger
+from utils.helpers import fail
 
 bp = Blueprint("daily_plan", __name__)
 
@@ -21,7 +22,7 @@ def update_daily_plan():
             logger.warning(
                 "更新每日计划失败 - 缺少字段: user_name=%s, date=%s", user_name, date
             )
-            return jsonify({"error": "Missing required fields: user_name, date"}), 400
+            return fail("Missing required fields: user_name, date")
 
         field_key_map = {"plan": "plan", "status": "status", "remark": "remark"}
 
@@ -34,7 +35,7 @@ def update_daily_plan():
 
         if not updated:
             logger.warning("用户 [{}] 更新每日计划失败 - 无有效字段", user_name)
-            return jsonify({"error": "No updatable fields provided"}), 400
+            return fail("No updatable fields provided")
 
         logger.info(
             "用户 [%s] 更新每日计划 | 日期: %s | 更新字段: %s",
@@ -42,11 +43,11 @@ def update_daily_plan():
             date,
             updated,
         )
-        return jsonify({"success": True, "updated": updated})
+        return jsonify({"updated": updated})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("更新每日计划时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/daily_plan/all", methods=["GET"])
@@ -55,13 +56,13 @@ def get_all_daily_plans():
     try:
         date = request.args.get("date")
         if not date:
-            return jsonify({"error": "Date parameter is required"}), 400
+            return fail("Date parameter is required")
 
         res = db_api.get_all_dateinfo_by_date(date, SKIP_NAMES)
 
         logger.debug("查询所有用户每日计划 | 日期: {} | 共 {} 条", date, len(res))
-        return jsonify({"success": True, "data": res})
+        return jsonify({"data": res})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("获取所有用户每日计划时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)

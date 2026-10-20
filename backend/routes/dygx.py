@@ -10,6 +10,7 @@ from dygx import (
     dygx_run_with_login,
 )
 from log_config import logger
+from utils.helpers import fail
 
 bp = Blueprint("dygx", __name__)
 
@@ -21,18 +22,18 @@ def dygx_fetch_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return jsonify({"error": "storage_state is required"}), 400
+            return fail("storage_state is required")
 
         date = data.get("date")
         result, error = dygx_fetch_with_state(storage_state, date)
         if error == "expired":
-            return jsonify({"error": "expired"}), 401
+            return fail("expired", 401)
         if error:
-            return jsonify({"error": error}), 400
+            return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX fetch 时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/dygx_book", methods=["POST"])
@@ -42,13 +43,13 @@ def dygx_book_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return jsonify({"error": "storage_state is required"}), 400
+            return fail("storage_state is required")
 
         date = data.get("date")
         start_row = data.get("start_row")
         half_hours = data.get("half_hours")
         if date is None or start_row is None or half_hours is None:
-            return jsonify({"error": "date, start_row, half_hours are required"}), 400
+            return fail("date, start_row, half_hours are required")
 
         result, error = dygx_book(
             storage_state,
@@ -60,11 +61,11 @@ def dygx_book_api():
             count=str(data.get("count") or "1"),
         )
         if error:
-            return jsonify({"error": error}), 400
+            return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX book 时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/dygx_modify", methods=["POST"])
@@ -74,7 +75,7 @@ def dygx_modify_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return jsonify({"error": "storage_state is required"}), 400
+            return fail("storage_state is required")
 
         date = data.get("date")
         start_row = data.get("start_row")
@@ -82,14 +83,9 @@ def dygx_modify_api():
         new_start_row = data.get("new_start_row")
         new_half_hours = data.get("new_half_hours")
         if None in (date, start_row, half_hours, new_start_row, new_half_hours):
-            return (
-                jsonify(
-                    {
-                        "error": "date, start_row, half_hours, "
-                        "new_start_row, new_half_hours are required"
-                    }
-                ),
-                400,
+            return fail(
+                "date, start_row, half_hours, "
+                "new_start_row, new_half_hours are required"
             )
 
         result, error = dygx_modify(
@@ -101,13 +97,13 @@ def dygx_modify_api():
             int(new_half_hours),
         )
         if error == "expired":
-            return jsonify({"error": "expired"}), 401
+            return fail("expired", 401)
         if error:
-            return jsonify({"error": error}), 400
+            return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX modify 时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/dygx_delete", methods=["POST"])
@@ -117,25 +113,25 @@ def dygx_delete_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return jsonify({"error": "storage_state is required"}), 400
+            return fail("storage_state is required")
 
         date = data.get("date")
         start_row = data.get("start_row")
         half_hours = data.get("half_hours")
         if date is None or start_row is None or half_hours is None:
-            return jsonify({"error": "date, start_row, half_hours are required"}), 400
+            return fail("date, start_row, half_hours are required")
 
         result, error = dygx_delete(
             storage_state, date, int(start_row), int(half_hours)
         )
         if error == "expired":
-            return jsonify({"error": "expired"}), 401
+            return fail("expired", 401)
         if error:
-            return jsonify({"error": error}), 400
+            return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX delete 时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/dygx_run/login", methods=["POST"])
@@ -146,12 +142,12 @@ def dygx_run_login_api():
         username = data.get("username")
         password = data.get("password")
         if not username or not password:
-            return jsonify({"error": "Username and password are required"}), 400
+            return fail("Username and password are required")
 
         response = dygx_run_with_login(username, password)
         if not response.ok:
-            return jsonify({"error": response.error}), 400
+            return fail(response.error)
         return jsonify(response.storage_state), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX run (login) 时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)

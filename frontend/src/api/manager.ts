@@ -15,7 +15,7 @@ async function addSpace(name: string): Promise<void> {
 }
 
 async function addZone(parentId: number | null, spaceId: number, name: string): Promise<void> {
-  await service.post(`/api/zone/add`, { parentId, spaceId, name })
+  await service.post(`/api/zone/add`, { parent_id: parentId, space_id: spaceId, name })
 }
 
 async function getZonesBySpace(

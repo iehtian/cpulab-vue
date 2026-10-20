@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 
 import database as db_api
 from log_config import logger
+from utils.helpers import fail
 
 bp = Blueprint("spaces", __name__)
 
@@ -16,17 +17,15 @@ def add_space_api():
         name = data.get("name")
 
         if not name:
-            return jsonify({"error": "Space name is required"}), 400
+            return fail("Space name is required")
 
         db_api.add_space(name)
         logger.info("空间信息已添加| 名称: {}", name)
-        return jsonify(
-            {"success": True, "message": "Space information added successfully"}
-        ), 200
+        return jsonify({"message": "Space information added successfully"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息添加/更新时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/space/delete/<int:space_id>", methods=["DELETE"])
@@ -35,13 +34,11 @@ def delete_space_api(space_id):
     try:
         db_api.delete_space_by_id(space_id)
         logger.info("空间信息已删除 | ID: {}", space_id)
-        return jsonify(
-            {"success": True, "message": "Space information deleted successfully"}
-        ), 200
+        return jsonify({"message": "Space information deleted successfully"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息删除时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)
 
 
 @bp.route("/space/all", methods=["GET"])
@@ -50,8 +47,8 @@ def get_all_spaces_api():
     try:
         spaces = db_api.get_all_spaces()
         logger.debug("查询所有空间信息 | 共 {} 条", len(spaces))
-        return jsonify({"success": True, "spaces": spaces}), 200
+        return jsonify({"spaces": spaces})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("查询所有空间信息时发生异常: {}", e)
-        return jsonify({"error": "Internal server error"}), 500
+        return fail("Internal server error", 500)

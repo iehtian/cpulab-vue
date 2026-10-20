@@ -45,7 +45,7 @@ service.interceptors.response.use(
     // 对响应数据做点什么
     return response
   },
-  function (error: AxiosError<{ message?: string; msg?: string }>) {
+  function (error: AxiosError<{ message?: string }>) {
     // 超出 2xx 范围的状态码都会触发该函数。
     // 请求被主动取消时不提示错误
     if (axios.isCancel(error)) {
@@ -53,7 +53,7 @@ service.interceptors.response.use(
     }
 
     // 优先使用后端返回的错误信息
-    const backendMessage = error.response?.data?.message || error.response?.data?.msg
+    const backendMessage = error.response?.data?.message
 
     if (error.response) {
       const { status } = error.response
