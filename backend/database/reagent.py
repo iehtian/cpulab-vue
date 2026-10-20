@@ -1,5 +1,5 @@
 from database.pgsql_config import (
-    AREA_TABLE,
+    ZONE_TABLE,
     REAGENT_TABLE,
     get_connection,
 )
@@ -12,10 +12,10 @@ def create_reagent():
             f"""
             CREATE TABLE IF NOT EXISTS {REAGENT_TABLE} (
                 id SERIAL PRIMARY KEY,
-                area_id INTEGER REFERENCES {AREA_TABLE}(id) ON DELETE CASCADE,
+                zone_id INTEGER REFERENCES {ZONE_TABLE}(id) ON DELETE CASCADE,
                 name TEXT NOT NULL ,
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
-                UNIQUE (area_id, name)
+                UNIQUE (zone_id, name)
             )
             """
         )

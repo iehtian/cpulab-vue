@@ -73,7 +73,7 @@
 import DialogField from '@/components/DialogField.vue'
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { getAllSpaces, addSpace, deleteSpaceById, addArea, getAreasBySpace } from '@/api/manager.ts'
+import { getAllSpaces, addSpace, deleteSpaceById, addZone, getZonesBySpace } from '@/api/manager.ts'
 import { showDialog } from 'vant'
 const isMobile = ref(false)
 const show = ref(false)
@@ -96,7 +96,7 @@ const onSelect = (action: { name: string }) => {
   console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
   if (action.name === '布局管理') {
     // 布局管理逻辑
-    getAreasBySpace(selectedSpaceId.value!)
+    getZonesBySpace(selectedSpaceId.value!)
       .then((res) => {
         console.log('获取分区列表成功:', res)
       })
@@ -180,7 +180,7 @@ async function confirmAddZone(zoneName: string): Promise<void> {
   console.log('添加分区:', zoneName)
   try {
     if (selectedSpaceId.value !== null) {
-      await addArea(null, selectedSpaceId.value, zoneName)
+      await addZone(null, selectedSpaceId.value, zoneName)
       console.log('添加分区成功:', zoneName)
     } else {
       console.error('未选择空间，无法添加分区')

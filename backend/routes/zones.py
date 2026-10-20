@@ -3,11 +3,11 @@ from flask import Blueprint, jsonify, request
 import database as db_api
 from log_config import logger
 
-bp = Blueprint("areas", __name__)
+bp = Blueprint("zones", __name__)
 
 
-@bp.route("/area/add", methods=["POST"])
-def add_area_api():
+@bp.route("/zone/add", methods=["POST"])
+def add_zone_api():
     """添加或更新区域信息"""
     try:
         data = request.get_json()
@@ -16,12 +16,12 @@ def add_area_api():
         name = data.get("name")
 
         if not space_id or not name:
-            return jsonify({"error": "Space ID and area name are required"}), 400
+            return jsonify({"error": "Space ID and zone name are required"}), 400
 
-        db_api.add_area(parent_id, space_id, name)
+        db_api.add_zone(parent_id, space_id, name)
         logger.info("区域信息已添加| 名称: {}", name)
         return jsonify(
-            {"success": True, "message": "Area information added successfully"}
+            {"success": True, "message": "Zone information added successfully"}
         ), 200
 
     except Exception as e:  # noqa: BLE001
@@ -29,12 +29,12 @@ def add_area_api():
         return jsonify({"error": "Internal server error"}), 500
 
 
-@bp.route("/area/all/<int:space_id>", methods=["GET"])
-def get_area_api(space_id):
+@bp.route("/zone/all/<int:space_id>", methods=["GET"])
+def get_zone_api(space_id):
     """获取区域信息"""
     try:
-        area_info = db_api.get_areas_by_space(space_id)
-        return jsonify({"success": True, "data": area_info}), 200
+        zone_info = db_api.get_zones_by_space(space_id)
+        return jsonify({"success": True, "data": zone_info}), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("获取区域信息时发生异常: {}", e)
         return jsonify({"error": "Internal server error"}), 500

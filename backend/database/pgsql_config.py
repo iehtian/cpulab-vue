@@ -14,7 +14,7 @@ USER_TABLE = "users"
 BOOKING_TABLE = "bookings"
 PLANS_TABLE = "date_plans"
 SPACE_TABLE = "spaces"
-AREA_TABLE = "areas"
+ZONE_TABLE = "zones"
 REAGENT_TABLE = "reagents"
 
 

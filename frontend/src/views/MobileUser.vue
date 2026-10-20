@@ -7,7 +7,7 @@
       <van-cell-group inset class="user-card">
         <van-cell title="用户名" :value="displayName" />
       </van-cell-group>
-      <div class="btn-area">
+      <div class="btn-zone">
         <van-button round block type="danger" @click="checkStore.logout()">
           退出登录
         </van-button>
@@ -45,7 +45,7 @@
             ]"
           />
         </van-cell-group>
-        <div class="btn-area">
+        <div class="btn-zone">
           <van-button round block type="primary" native-type="submit">
             {{ isRegister ? '注册并登录' : '登录' }}
           </van-button>
@@ -108,7 +108,7 @@ async function onSubmit() {
   padding-top: 16px;
 }
 
-.btn-area {
+.btn-zone {
   margin: 24px 16px 0;
 }
 
