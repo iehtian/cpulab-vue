@@ -18,12 +18,19 @@ async function addZone(parentId: number | null, spaceId: number, name: string): 
   await service.post(`/api/zone/add`, { parent_id: parentId, space_id: spaceId, name })
 }
 
-async function getZonesBySpace(
-  spaceId: number,
-): Promise<Array<{ id: number; name: string; parentId: number | null }>> {
+interface Zone {
+  id: number
+  name: string
+  parent_id: number
+  sort_order: number | null
+  children?: Zone[]
+}
+
+async function getZonesBySpace(spaceId: number): Promise<Array<Zone>> {
   const response = await service.get(`/api/zone/all/${spaceId}`)
   const data = response.data
   return data.zones || []
 }
 
 export { getAllSpaces, addSpace, deleteSpaceById, addZone, getZonesBySpace }
+export type { Zone }

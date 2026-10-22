@@ -55,6 +55,23 @@
         <h3>布局管理</h3>
         <p>这里是布局管理的内容，可以根据需要进行布局设置。</p>
       </div>
+      <div
+        class="container"
+        v-for="area in areas"
+      >
+        <van-cell
+          :key="area.id"
+          :title="area.name"
+          value="内容"
+        />
+
+        <van-button
+          plain
+          type="primary"
+          @click="onAddZone(area.id)"
+          >添加分区</van-button
+        >
+      </div>
       <van-button
         plain
         type="primary"
@@ -81,28 +98,35 @@ const showActions = ref(false)
 const spaceName = ref('')
 const showpopup = ref(false)
 const selectedSpaceId = ref<number | null>(null)
+const areas = ref<Zone[]>([])
 interface Space {
   id: number
   name: string
 }
 const spaces = ref<Space[]>([])
 
+import type { Zone } from '@/api/manager.ts'
+
 const actions = [
   { name: '布局管理', color: '#1989fa' },
   { name: '编辑', color: '#1989fa' },
   { name: '删除', color: '#ee0a24' },
 ]
+
+const getZonesBySpace_ = async (spaceId: number) => {
+  try {
+    const res = await getZonesBySpace(spaceId)
+    console.log('获取分区列表成功:', res)
+    areas.value = res
+  } catch (err) {
+    console.error('获取分区列表失败:', err)
+  }
+}
 const onSelect = (action: { name: string }) => {
   console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
   if (action.name === '布局管理') {
     // 布局管理逻辑
-    getZonesBySpace(selectedSpaceId.value!)
-      .then((res) => {
-        console.log('获取分区列表成功:', res)
-      })
-      .catch((err) => {
-        console.error('获取分区列表失败:', err)
-      })
+    getZonesBySpace_(selectedSpaceId.value!)
     showpopup.value = true
   } else if (action.name === '编辑') {
     // 编辑逻辑
@@ -127,14 +151,63 @@ const onSelect = (action: { name: string }) => {
   }
 }
 
-const onDialogConfirm = async (value: string) => {
-  if (dialogMode.value === 'addSpace') {
-    await confirmAddSpace(value)
-  } else if (dialogMode.value === 'addZone') {
-    await confirmAddZone(value)
-  }
-  show.value = false
+interface DialogOptions {
+  title: string
+  label: string
+  placeholder: string
+  initialValue?: string
+  onSubmit: (value: string) => Promise<void>
 }
+
+const dialogConfig = ref<DialogOptions>({
+  title: '',
+  label: '',
+  placeholder: '',
+  onSubmit: async () => {},
+})
+
+function openDialog(options: DialogOptions) {
+  dialogConfig.value = options
+  show.value = true
+}
+
+// 唯一入口：DialogField 的 confirm 事件
+const onDialogConfirm = async (value: string) => {
+  try {
+    await dialogConfig.value.onSubmit(value)
+  } catch (err) {
+    console.error('操作失败:', err)
+  } finally {
+    show.value = false
+  }
+}
+
+const refreshSpaces = async () => {
+  spaces.value = await getAllSpaces()
+}
+
+const onAddSpace = () =>
+  openDialog({
+    title: '添加空间',
+    label: '空间名称',
+    placeholder: '请输入空间名称',
+    onSubmit: async (name) => {
+      await addSpace(name)
+      await refreshSpaces()
+    },
+  })
+
+const onAddZone = (parentId: number | null) =>
+  openDialog({
+    title: '添加分区',
+    label: '分区名称',
+    placeholder: '请输入分区名称',
+    onSubmit: async (name) => {
+      if (selectedSpaceId.value === null) return
+      await addZone(parentId, selectedSpaceId.value, name)
+      await getZonesBySpace_(selectedSpaceId.value)
+    },
+  })
 
 onMounted(async () => {
   try {
@@ -145,50 +218,6 @@ onMounted(async () => {
     console.error('获取空间列表失败:', err)
   }
 })
-
-const dialogConfig = ref({
-  title: '添加空间',
-  label: '空间名称',
-  placeholder: '请输入空间名称',
-})
-const dialogMode = ref<'addSpace' | 'addZone' | 'editSpace'>('addSpace')
-
-const onAddSpace = () => {
-  dialogMode.value = 'addSpace'
-  dialogConfig.value = { title: '添加空间', label: '空间名称', placeholder: '请输入空间名称' }
-  show.value = true
-}
-const onAddZone = () => {
-  dialogMode.value = 'addZone'
-  dialogConfig.value = { title: '添加分区', label: '分区名称', placeholder: '请输入分区名称' }
-  show.value = true
-}
-
-async function confirmAddSpace(spaceName: string): Promise<void> {
-  try {
-    await addSpace(spaceName)
-    getAllSpaces().then((res) => {
-      spaces.value = res
-    })
-  } catch (err) {
-    console.error('添加空间失败:', err)
-  }
-}
-
-async function confirmAddZone(zoneName: string): Promise<void> {
-  // 这里可以添加调用后端接口的逻辑来添加分区
-  console.log('添加分区:', zoneName)
-  try {
-    if (selectedSpaceId.value !== null) {
-      await addZone(null, selectedSpaceId.value, zoneName)
-      console.log('添加分区成功:', zoneName)
-    } else {
-      console.error('未选择空间，无法添加分区')
-    }
-  } catch (err) {
-    console.error('添加分区失败:', err)
-  }
-}
 </script>
 
 <style scoped>
@@ -197,7 +226,7 @@ async function confirmAddZone(zoneName: string): Promise<void> {
 }
 .container {
   background-color: aliceblue;
-  border-radius: 8px;
+  border-radius: 16px;
 }
 .nav_buttons {
   display: grid;
@@ -210,6 +239,12 @@ async function confirmAddZone(zoneName: string): Promise<void> {
 }
 .more-icon {
   transform: rotate(90deg);
+  font-size: 18px;
+  color: #969799;
+  padding: 4px;
+}
+.down2up {
+  transform: rotate(180deg);
   font-size: 18px;
   color: #969799;
   padding: 4px;
