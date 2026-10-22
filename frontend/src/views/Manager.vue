@@ -55,23 +55,12 @@
         <h3>布局管理</h3>
         <p>这里是布局管理的内容，可以根据需要进行布局设置。</p>
       </div>
-      <div
-        class="container"
+      <ZoneNode
         v-for="area in areas"
-      >
-        <van-cell
-          :key="area.id"
-          :title="area.name"
-          value="内容"
-        />
-
-        <van-button
-          plain
-          type="primary"
-          @click="onAddZone(area.id)"
-          >添加分区</van-button
-        >
-      </div>
+        :key="area.id"
+        :area="area"
+        @add="onAddZone"
+      />
       <van-button
         plain
         type="primary"
@@ -92,6 +81,7 @@ import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { getAllSpaces, addSpace, deleteSpaceById, addZone, getZonesBySpace } from '@/api/manager.ts'
 import { showDialog } from 'vant'
+import ZoneNode from '@/components/ZoneNode.vue'
 const isMobile = ref(false)
 const show = ref(false)
 const showActions = ref(false)
