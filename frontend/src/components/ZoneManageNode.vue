@@ -18,13 +18,13 @@
         :key="child.id"
         :area="child"
         :depth="depth + 1"
-        @add="(id) => $emit('add', id)"
+        @add="onAdd"
       />
     </div>
     <van-button
       plain
       type="primary"
-      @click="$emit('add', area.id)"
+      @click="onAdd(area.id)"
       v-if="depth < 1"
     >
       添加分区
@@ -49,9 +49,10 @@ withDefaults(
   },
 )
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'add', parentId: number): void
 }>()
+const onAdd = (id: number) => emit('add', id)
 </script>
 
 <style scoped>

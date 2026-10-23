@@ -8,7 +8,6 @@
         >朴素按钮</van-button
       >
     </div>
-    <router-view />
     <div class="container space">
       <van-cell-group>
         <van-cell title="空间管理">
@@ -20,7 +19,7 @@
           :title="space.name"
           value="内容"
           label="描述信息"
-          to="/Spaces"
+          :to="{ name: 'Spaces', params: { id: space.id } }"
         >
           <template #right-icon>
             <van-icon
@@ -81,7 +80,7 @@ import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { getAllSpaces, addSpace, deleteSpaceById, addZone, getZonesBySpace } from '@/api/manager.ts'
 import { showDialog } from 'vant'
-import ZoneNode from '@/components/ZoneNode.vue'
+import ZoneNode from '@/components/ZoneManageNode.vue'
 const isMobile = ref(false)
 const show = ref(false)
 const showActions = ref(false)
