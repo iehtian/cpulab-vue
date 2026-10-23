@@ -19,7 +19,7 @@ const router = createRouter({
       component: () => import('../views/Manager.vue'),
     },
     {
-      path: '/Spaces',
+      path: '/Spaces/:id',
       name: 'Spaces',
       component: () => import('../views/Spaces.vue'),
     },

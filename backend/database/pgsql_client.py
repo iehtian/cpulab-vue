@@ -1,10 +1,10 @@
 import psycopg2
 
-from database.zone import create_zone
-from database.reagent import create_reagent
+from database.reagents import create_reagent
 from database.reservation import create_booking_index, create_date_plan_index
 from database.space import create_space
 from database.user import create_user_index
+from database.zone import create_zone
 from log_config import logger
 
 
