@@ -4,7 +4,10 @@
       v-model="searchKeyword"
       placeholder="请输入搜索关键词"
     />
-    <ZoneDisplayNode :zones="zones" />
+    <ZoneDisplayNode
+      v-model:zoneid="selectedZoneId"
+      :zones="zones"
+    />
   </div>
   <van-submit-bar
     style="bottom: 50px"
@@ -57,7 +60,7 @@
 
       <van-button
         type="primary"
-        @click="showBottom = false"
+        @click="onAddReagent"
         >提交</van-button
       >
       <van-button
@@ -96,11 +99,12 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
 const id = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
-import { getZonesBySpace } from '@/api/manager.ts'
+import { getZonesBySpace, upsertReagent, getReagentsByZone } from '@/api/manager.ts'
 import type { Zone } from '@/api/manager.ts'
 const zones = ref<Zone[]>([])
 const searchKeyword = ref('')
 const showBottom = ref(false)
+const selectedZoneId = ref<number>(0)
 // 入库表单字段
 const reagentName = ref('')
 const casNumber = ref('')
@@ -131,6 +135,36 @@ const minDate = new Date()
 const onDateConfirm = () => {
   expiryDateText.value = expiryDate.value.join('-')
   showDatePicker.value = false
+}
+
+const onAddReagent = () => {
+  // 这里可以调用 API 提交入库信息
+  console.log('提交入库信息:', {
+    reagentName: reagentName.value,
+    casNumber: casNumber.value,
+    specification: specification.value,
+    category: category.value,
+    expiryDate: expiryDateText.value,
+  })
+  upsertReagent(
+    id,
+    reagentName.value,
+    casNumber.value,
+    category.value,
+    null,
+    null,
+    specification.value,
+    expiryDateText.value,
+  )
+  // 提交后清空表单
+  reagentName.value = ''
+  casNumber.value = ''
+  specification.value = ''
+  category.value = '1'
+  categoryText.value = '普通试剂'
+  expiryDate.value = []
+  expiryDateText.value = ''
+  showBottom.value = false
 }
 onMounted(() => {
   getZonesBySpace(id).then((res) => {

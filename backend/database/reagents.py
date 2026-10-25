@@ -14,6 +14,8 @@ def create_reagent():
                 id SERIAL PRIMARY KEY,
                 zone_id INTEGER REFERENCES {ZONE_TABLE}(id) ON DELETE CASCADE,
                 name TEXT NOT NULL,
+                CAS_number TEXT,
+                expiry_date DATE,
                 -- 试剂类别: 1=普通试剂, 2=危化品, 3=生物试剂, 4=色谱级试剂
                 category INTEGER NOT NULL,
                 -- 仅色谱级试剂(category=4)使用, 其余类别必须为 NULL
@@ -33,21 +35,37 @@ def create_reagent():
 
 
 def upsert_reagent(
-    zone_id, name, category, capacity=None, bottle_count=None, specification=None
+    zone_id,
+    name,
+    category,
+    CAS_number=None,
+    capacity=None,
+    bottle_count=None,
+    specification=None,
+    expiry_date=None,
 ):
     """插入或更新试剂信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             f"""
-            INSERT INTO {REAGENT_TABLE} (zone_id, name, category, capacity, bottle_count, specification)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO {REAGENT_TABLE} (zone_id, name, CAS_number, category, capacity, bottle_count, specification, expiry_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (zone_id, name) DO UPDATE SET
                 category = EXCLUDED.category,
                 capacity = EXCLUDED.capacity,
                 bottle_count = EXCLUDED.bottle_count,
                 specification = EXCLUDED.specification
             """,
-            (zone_id, name, category, capacity, bottle_count, specification),
+            (
+                zone_id,
+                name,
+                CAS_number,
+                category,
+                capacity,
+                bottle_count,
+                specification,
+                expiry_date,
+            ),
         )
         conn.commit()
 
