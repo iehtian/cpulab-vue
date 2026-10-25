@@ -44,6 +44,7 @@ async function upsertReagent(
   await service.post(`/api/reagent/upsert`, {
     zone_id: zoneId,
     name,
+    CAS_number,
     category,
     capacity,
     bottle_count,

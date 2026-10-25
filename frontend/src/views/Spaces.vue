@@ -147,14 +147,14 @@ const onAddReagent = () => {
     expiryDate: expiryDateText.value,
   })
   upsertReagent(
-    id,
+    selectedZoneId.value,
     reagentName.value,
     casNumber.value,
     category.value,
     null,
     null,
     specification.value,
-    expiryDateText.value,
+    expiryDateText.value || null,
   )
   // 提交后清空表单
   reagentName.value = ''

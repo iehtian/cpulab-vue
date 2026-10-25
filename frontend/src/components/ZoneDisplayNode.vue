@@ -14,7 +14,7 @@
   </van-tabs>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watchEffect } from 'vue'
 import type { Zone } from '@/api/manager.ts'
 
 defineOptions({
@@ -29,9 +29,9 @@ const emit = defineEmits<{
 }>()
 
 const active = ref(0)
-watch(active, (idx) => {
-  const zone = props.zones[idx]
-  // 选中的是叶子节点（没有子分区）才把 id 往上抛
+watchEffect(() => {
+  // 自动追踪读取到的所有响应式依赖：active 和 props.zones
+  const zone = props.zones[active.value]
   if (zone && !zone.children?.length) {
     emit('update:zoneid', zone.id)
   }
