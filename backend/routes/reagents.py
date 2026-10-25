@@ -52,7 +52,7 @@ def upsert_reagent_api():
         return fail("Internal server error", 500)
 
 
-@bp.route("/reagents/<int:zone_id>", methods=["GET"])
+@bp.route("/reagent/all/<int:zone_id>", methods=["GET"])
 def get_reagents_by_zone_api(zone_id):
     """根据区域 ID 获取试剂信息"""
     try:

@@ -75,7 +75,7 @@ def get_reagents_by_zone(zone_id):
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             f"""
-            SELECT id, zone_id, name, category, capacity, bottle_count, specification
+            SELECT id, zone_id, name, CAS_number, category, capacity, bottle_count, specification, expiry_date
             FROM {REAGENT_TABLE}
             WHERE zone_id = %s
             """,
@@ -87,10 +87,12 @@ def get_reagents_by_zone(zone_id):
                 "id": row[0],
                 "zone_id": row[1],
                 "name": row[2],
-                "category": row[3],
-                "capacity": float(row[4]) if row[4] is not None else None,
-                "bottle_count": row[5],
-                "specification": row[6],
+                "CAS_number": row[3],
+                "category": row[4],
+                "capacity": float(row[5]) if row[5] is not None else None,
+                "bottle_count": row[6],
+                "specification": row[7],
+                "expiry_date": row[8].isoformat() if row[8] is not None else None,
             }
             for row in rows
         ]

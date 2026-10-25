@@ -31,11 +31,23 @@ async function getZonesBySpace(spaceId: number): Promise<Array<Zone>> {
   const data = response.data
   return data.zones || []
 }
+interface Reagent {
+  id: number
+  zone_id: number
+  name: string
+  CAS_number: string | null
+  category: number
+  capacity: number | null
+  bottle_count: number | null
+  specification: string | null
+  expiry_date: string | null
+}
+
 async function upsertReagent(
   zoneId: number,
   name: string,
   CAS_number: string | null,
-  category: string,
+  category: number,
   capacity: number | null,
   bottle_count: number | null,
   specification: string,
@@ -53,9 +65,7 @@ async function upsertReagent(
   })
 }
 
-async function getReagentsByZone(
-  zoneId: number,
-): Promise<Array<{ id: number; name: string; quantity: number }>> {
+async function getReagentsByZone(zoneId: number): Promise<Reagent[]> {
   const response = await service.get(`/api/reagent/all/${zoneId}`)
   const data = response.data
   return data.reagents || []
@@ -70,4 +80,4 @@ export {
   upsertReagent,
   getReagentsByZone,
 }
-export type { Zone }
+export type { Zone, Reagent }
