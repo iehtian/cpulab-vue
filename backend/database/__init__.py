@@ -8,7 +8,12 @@ Database operations package.
 from .pgsql_client import initialize_database
 from .pgsql_config import get_connection, get_db_connection
 from .reagent_usage import add_reagent_usage, get_reagent_usage
-from .reagents import get_reagents_by_zone, update_open_date, upsert_reagent
+from .reagents import (
+    delete_reagent_by_id,
+    get_reagents_by_zone,
+    update_open_date,
+    upsert_reagent,
+)
 from .reservation import (
     delete_booking_by_id,
     delete_bookings_by_dates,
@@ -57,4 +62,5 @@ __all__ = [
     "add_reagent_usage",
     "get_reagent_usage",
     "update_open_date",
+    "delete_reagent_by_id",
 ]

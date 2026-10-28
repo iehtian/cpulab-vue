@@ -53,7 +53,9 @@
         >标记需要补货</van-button
       >
       <van-button
-        type="danger"
+        plain
+        type="primary"
+        :disabled="!!current?.open_date"
         @click="handleOpen()"
         >开瓶贴标</van-button
       >
@@ -64,22 +66,30 @@
       >
       <van-button
         type="danger"
-        @click="showPopup = false"
+        @click="showDelete = true"
         >删除</van-button
       >
     </div>
   </van-popup>
+  <DeleteDialog
+    v-model:visible="showDelete"
+    @confirm="confirmDelete"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { type Reagent } from '@/api/manager.ts'
 import { openReagentById, deleteReagentById } from '@/api/manager.ts'
-
+import DeleteDialog from '@/components/DeleteDialog.vue'
 const props = defineProps<{ reagents: Reagent[] }>()
-
+const showDelete = ref(false)
 const showPopup = ref(false)
 const current = ref<Reagent | null>(null)
+
+const emit = defineEmits<{
+  updateReagents: []
+}>()
 
 function showDetail(r: Reagent) {
   current.value = r
@@ -106,12 +116,24 @@ const handleDelete = async (id: number) => {
 
 const handleOpen = async () => {
   try {
-    await openReagentById(current.value?.id || -1, new Date().toISOString())
+    await openReagentById(current.value?.id || -1, new Date().toISOString()).then(() => {
+      emit('updateReagents') // 通知父组件更新试剂列表
+    })
     // 开瓶成功后可以触发一个事件或更新父组件的状态
     // 例如 emit('reagentOpened', id)
     showPopup.value = false // 关闭弹层
   } catch (error) {
     console.error('开瓶失败:', error)
+  }
+}
+
+const confirmDelete = async () => {
+  if (current.value) {
+    await handleDelete(current.value.id).then(() => {
+      emit('updateReagents') // 通知父组件更新试剂列表
+    })
+    showDelete.value = false
+    showPopup.value = false // 关闭详情弹层
   }
 }
 </script>

@@ -8,7 +8,10 @@
       v-model:zoneid="selectedZoneId"
       :zones="zones"
     />
-    <Reagment :reagents="reagents" />
+    <Reagment
+      :reagents="reagents"
+      @updateReagents="updateReagents"
+    />
   </div>
   <van-submit-bar
     style="bottom: 50px"
@@ -183,4 +186,11 @@ onMounted(() => {
     zones.value = res
   })
 })
+
+const updateReagents = () => {
+  getReagentsByZone(selectedZoneId.value).then((res) => {
+    console.log('更新试剂数据:', res)
+    reagents.value = res
+  })
+}
 </script>

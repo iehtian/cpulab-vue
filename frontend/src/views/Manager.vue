@@ -72,6 +72,10 @@
         >关闭</van-button
       >
     </van-popup>
+    <DeleteDialog
+      v-model:show="showDelete"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -79,7 +83,6 @@ import DialogField from '@/components/DialogField.vue'
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { getAllSpaces, addSpace, deleteSpaceById, addZone, getZonesBySpace } from '@/api/manager.ts'
-import { showDialog } from 'vant'
 import ZoneNode from '@/components/ZoneManageNode.vue'
 const isMobile = ref(false)
 const show = ref(false)
@@ -95,6 +98,7 @@ interface Space {
 const spaces = ref<Space[]>([])
 
 import type { Zone } from '@/api/manager.ts'
+import DeleteDialog from '@/components/DeleteDialog.vue'
 
 const actions = [
   { name: '布局管理', color: '#1989fa' },
@@ -111,6 +115,23 @@ const getZonesBySpace_ = async (spaceId: number) => {
     console.error('获取分区列表失败:', err)
   }
 }
+
+const showDelete = ref(false)
+const confirmDelete = async () => {
+  if (selectedSpaceId.value !== null) {
+    try {
+      await deleteSpaceById(selectedSpaceId.value)
+      console.log('删除空间成功:', selectedSpaceId.value)
+      // 删除成功后刷新空间列表
+      spaces.value = await getAllSpaces()
+    } catch (err) {
+      console.error('删除空间失败:', err)
+    } finally {
+      showDelete.value = false
+    }
+  }
+}
+
 const onSelect = (action: { name: string }) => {
   console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
   if (action.name === '布局管理') {
@@ -121,22 +142,7 @@ const onSelect = (action: { name: string }) => {
     // 编辑逻辑
   } else if (action.name === '删除') {
     // 删除逻辑
-    showDialog({
-      title: '确认删除',
-      message: '删除后无法恢复，是否继续？',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-    }).then(async () => {
-      if (selectedSpaceId.value !== null) {
-        try {
-          await deleteSpaceById(selectedSpaceId.value)
-          spaces.value = spaces.value.filter((space) => space.id !== selectedSpaceId.value)
-          console.log('删除空间成功:', selectedSpaceId.value)
-        } catch (err) {
-          console.error('删除空间失败:', err)
-        }
-      }
-    })
+    showDelete.value = true
   }
 }
 

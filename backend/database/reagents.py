@@ -84,6 +84,7 @@ def upsert_reagent(
 
         conn.commit()
 
+
 def update_open_date(reagent_id, open_date):
     """更新试剂的开瓶贴标日期"""
     with get_connection() as conn, conn.cursor() as cur:
@@ -127,3 +128,16 @@ def get_reagents_by_zone(zone_id):
             for row in rows
         ]
         return reagents
+
+
+def delete_reagent_by_id(reagent_id):
+    """根据试剂 ID 删除试剂信息"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
+            DELETE FROM {REAGENT_TABLE}
+            WHERE id = %s
+            """,
+            (reagent_id,),
+        )
+        conn.commit()

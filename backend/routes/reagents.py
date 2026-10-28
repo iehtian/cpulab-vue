@@ -89,3 +89,15 @@ def get_reagents_by_zone_api(zone_id):
     except Exception as e:  # noqa: BLE001
         logger.exception("获取试剂信息时发生异常: {}", e)
         return fail("Internal server error", 500)
+
+
+@bp.route("/reagent/delete/<int:reagent_id>", methods=["DELETE"])
+def delete_reagent_by_id_api(reagent_id):
+    """根据试剂 ID 删除试剂信息"""
+    try:
+        db_api.delete_reagent_by_id(reagent_id)
+        logger.info("试剂信息已删除| 试剂ID: {}".format(reagent_id))
+        return jsonify({"message": "Reagent information deleted successfully"})
+    except Exception as e:  # noqa: BLE001
+        logger.exception("删除试剂信息时发生异常: {}", e)
+        return fail("Internal server error", 500)
