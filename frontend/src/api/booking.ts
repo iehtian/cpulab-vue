@@ -5,13 +5,18 @@ export interface BookingInfo {
   user_name: string
 }
 
-async function getBookings(instrument: string, date: string): Promise<Record<number, BookingInfo>> {
-  const response = await service.get(`/api/bookings?instrument=${instrument}&date=${date}`)
-  const data = response.data
-  return data.bookings || {}
+export async function getBookings(
+  instrument: string,
+  date: string,
+): Promise<Record<number, BookingInfo>> {
+  const response = await service.get('/api/bookings', { params: { instrument, date } })
+  return response.data.bookings || {}
 }
 
-async function submitBookings(instrument: string, submitData: { date: Date; slots: number[] }) {
+export async function submitBookings(
+  instrument: string,
+  submitData: { date: Date; slots: number[] },
+) {
   const thisDate = submitData.date
   const slots = submitData.slots
 
@@ -36,7 +41,10 @@ async function submitBookings(instrument: string, submitData: { date: Date; slot
   }
 }
 
-async function cancelBookings(instrument: string, cancelData: { date: Date; slots: number[] }) {
+export async function cancelBookings(
+  instrument: string,
+  cancelData: { date: Date; slots: number[] },
+) {
   const thisDate = cancelData.date
   const slots = cancelData.slots
 
@@ -55,5 +63,3 @@ async function cancelBookings(instrument: string, cancelData: { date: Date; slot
     return false
   }
 }
-
-export { getBookings, submitBookings, cancelBookings }

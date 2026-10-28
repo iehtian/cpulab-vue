@@ -3,12 +3,12 @@
     <van-nav-bar title="我的" />
 
     <!-- 已登录 -->
-    <template v-if="checkStore.loggedIn">
+    <template v-if="userStore.loggedIn">
       <van-cell-group inset class="user-card">
         <van-cell title="用户名" :value="displayName" />
       </van-cell-group>
       <div class="btn-zone">
-        <van-button round block type="danger" @click="checkStore.logout()">
+        <van-button round block type="danger" @click="userStore.logout()">
           退出登录
         </van-button>
       </div>
@@ -61,9 +61,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
-import { useCheckStore } from '@/stores/user.ts'
+import { useUserStore } from '@/stores/user.ts'
 
-const checkStore = useCheckStore()
+const userStore = useUserStore()
 
 const isRegister = ref(false)
 const username = ref('')
@@ -73,7 +73,7 @@ const email = ref('')
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const displayName = computed(() => {
-  const info = checkStore.userInfo as { user_name?: string } | null
+  const info = userStore.userInfo as { user_name?: string } | null
   return info?.user_name ?? '已登录用户'
 })
 
@@ -84,10 +84,10 @@ function toggleMode() {
 async function onSubmit() {
   try {
     if (isRegister.value) {
-      await checkStore.register(username.value, email.value, '', password.value)
+      await userStore.register(username.value, email.value, '', password.value)
       showSuccessToast('注册成功')
     } else {
-      await checkStore.login(username.value, password.value)
+      await userStore.login(username.value, password.value)
       showSuccessToast('登录成功')
     }
   } catch (error) {

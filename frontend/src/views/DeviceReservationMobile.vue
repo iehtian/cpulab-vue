@@ -4,7 +4,7 @@
       <van-cell
         class="date-cell"
         :value="dateStr(date)"
-        @click="show = true"
+        @click="showCalendar = true"
       >
         <template #icon>
           <van-button
@@ -25,9 +25,9 @@
         </template>
       </van-cell>
       <van-calendar
-        v-model:show="show"
+        v-model:show="showCalendar"
         :show-confirm="false"
-        @confirm="onConfirm"
+        @confirm="onDateConfirm"
       />
     </div>
   </el-card>
@@ -41,14 +41,14 @@
           {
             ispast: isPastBlock({ date: 0, id: id - 1 }),
             selected: isSelected({ date: 0, id: id - 1 }),
-            // is_ordered: is_order(id),
+            // is_ordered: isBookedByOther(id),
           },
         ]"
         @click="toggleSelect(id - 1)"
-        :style="{ 'background-color': ordered?.[id - 1]?.color }"
+        :style="{ 'background-color': dayBookings?.[id - 1]?.color }"
       >
         <div class="slot-time">
-          {{ ordered?.[id - 1]?.user_name ?? timeLabels.at(id - 1) }}
+          {{ dayBookings?.[id - 1]?.user_name ?? timeLabels.at(id - 1) }}
         </div>
       </div>
     </div>
@@ -69,33 +69,24 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { changeDate, dateStr, timeLabels } from '@/utils/date.ts'
-import { getBookings, submitBookings, cancelBookings } from '@/api/booking.ts'
+import { changeDate, dateStr, timeLabels } from '@/utils/date'
+import { getBookings, submitBookings, cancelBookings } from '@/api/booking'
 import type { BookingInfo } from '@/api/booking'
 import { useSlotTime } from '@/composables/useSlotTime'
-const show = ref(false)
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+
 const date = ref(new Date())
+const showCalendar = ref(false)
 const bookingSlots = ref<number[]>([]) // 待新预约
 const cancelingSlots = ref<number[]>([]) // 待取消
-
-const ordered = ref<Record<number, BookingInfo>>({})
+const dayBookings = ref<Record<number, BookingInfo>>({})
 
 const dateList = computed(() => [date.value])
 const { isPastBlock, isSelected } = useSlotTime(dateList, bookingSlots, cancelingSlots)
-import { useCheckStore } from '@/stores/user.ts'
 
-const checkStore = useCheckStore()
-
-function cancel_order(id: number) {
-  const index = cancelingSlots.value.indexOf(id)
-  if (index === -1) {
-    cancelingSlots.value.push(id)
-  } else {
-    cancelingSlots.value.splice(index, 1)
-  }
-}
-
-function submit_order(id: number) {
+function toggleBookingSlot(id: number) {
   const index = bookingSlots.value.indexOf(id)
   if (index === -1) {
     bookingSlots.value.push(id)
@@ -104,65 +95,65 @@ function submit_order(id: number) {
   }
 }
 
+function toggleCancelingSlot(id: number) {
+  const index = cancelingSlots.value.indexOf(id)
+  if (index === -1) {
+    cancelingSlots.value.push(id)
+  } else {
+    cancelingSlots.value.splice(index, 1)
+  }
+}
+
+function isBookedByOther(id: number) {
+  if (dayBookings.value.hasOwnProperty(id)) {
+    return dayBookings.value[id]?.user_name !== userStore.userName
+  }
+  return false
+}
+
+function isOwnBooking(id: number) {
+  if (dayBookings.value.hasOwnProperty(id)) {
+    return dayBookings.value[id]?.user_name === userStore.userName
+  }
+  return false
+}
+
 function toggleSelect(id: number) {
-  if (!checkStore.loggedIn || isPastBlock({ date: 0, id: id }) || is_order(id)) {
+  if (!userStore.loggedIn || isPastBlock({ date: 0, id: id }) || isBookedByOther(id)) {
     return
   }
-  if (is_cancel(id)) {
-    cancel_order(id)
+  if (isOwnBooking(id)) {
+    toggleCancelingSlot(id)
   } else {
-    submit_order(id)
+    toggleBookingSlot(id)
   }
 }
 
-function fetchBookings() {
-  console.log(date.value)
-  const pormise_day = getBookings('a', dateStr(date.value))
-  pormise_day.then((res) => {
-    ordered.value = res
-    console.log(res)
-  })
-}
-watch(date, fetchBookings, { immediate: true })
-function is_order(id: number) {
-  if (ordered.value.hasOwnProperty(id)) {
-    return ordered.value[id]?.user_name !== checkStore.userName
-  }
-  return false
+async function fetchBookings() {
+  dayBookings.value = await getBookings('a', dateStr(date.value))
 }
 
-function is_cancel(id: number) {
-  if (ordered.value.hasOwnProperty(id)) {
-    return ordered.value[id]?.user_name === checkStore.userName
-  }
-  return false
-}
-
-const submit = () => {
-  const pormise_day = submitBookings('a', {
+const submit = async () => {
+  await submitBookings('a', {
     date: date.value,
     slots: bookingSlots.value,
   })
-  pormise_day.then((res: any) => {
-    // 刷新页面
-    window.location.reload()
-  })
+  // 刷新页面
+  window.location.reload()
 }
 
-const cancel = () => {
-  const pormise_day = cancelBookings('a', {
+const cancel = async () => {
+  await cancelBookings('a', {
     date: date.value,
     slots: cancelingSlots.value,
   })
-  pormise_day.then((res: any) => {
-    // 刷新页面
-    window.location.reload()
-  })
+  // 刷新页面
+  window.location.reload()
 }
 
-const onConfirm = (selectedDate: Date) => {
+const onDateConfirm = (selectedDate: Date) => {
   date.value = selectedDate
-  show.value = false
+  showCalendar.value = false
 }
 
 function changeSelectedDate(offset: number) {
@@ -170,6 +161,8 @@ function changeSelectedDate(offset: number) {
   bookingSlots.value = []
   cancelingSlots.value = []
 }
+
+watch(date, fetchBookings, { immediate: true })
 </script>
 
 <style scoped>

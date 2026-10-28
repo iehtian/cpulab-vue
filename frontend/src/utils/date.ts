@@ -1,5 +1,4 @@
 function changeDate(oldDate: Date, offset: number): Date {
-  //   return date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1/$2/$3');
   const newDate = new Date(oldDate)
   newDate.setDate(newDate.getDate() + offset)
   return newDate
@@ -11,10 +10,14 @@ function dateStr(d: Date): string {
   return `${d.getFullYear()}-${m}-${day}`
 }
 
-export interface slotTime {
-  date: number
-  id: number
+function getMonday(date: Date): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d
 }
+
+const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+
 // 不依赖响应式数据，模块加载时计算一次即可
 const timeLabels: string[] = (() => {
   const times: string[] = []
@@ -32,4 +35,4 @@ const timeLabels: string[] = (() => {
   return times
 })()
 
-export { changeDate, dateStr, timeLabels}
+export { changeDate, dateStr, getMonday, timeLabels, weekdayLabels }

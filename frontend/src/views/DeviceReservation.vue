@@ -3,7 +3,7 @@
     <el-card>
       <div style="display: flex; justify-content: space-between; align-items: center">
         <el-date-picker
-          v-model="Monday"
+          v-model="monday"
           type="week"
           format="[Week] ww"
           placeholder="请选择周"
@@ -12,7 +12,7 @@
           <el-button
             type="primary"
             :icon="ArrowLeft"
-            @click="changeweek(-7)"
+            @click="changeWeek(-7)"
             >Previous</el-button
           >
           <el-button
@@ -22,7 +22,7 @@
           >
           <el-button
             type="primary"
-            @click="changeweek(7)"
+            @click="changeWeek(7)"
           >
             Next<el-icon class="el-icon--right">
               <ArrowRight />
@@ -61,65 +61,52 @@
             {
               ispast: isPastBlock(slottime),
               selected: isSelected(slottime),
-              // is_ordered: is_order(slottime),
+              // is_ordered: isBooked(slottime),
             },
           ]"
-          :style="{ 'background-color': ordered[slottime.date]?.[slottime.id]?.color }"
+          :style="{ 'background-color': bookedSlots[slottime.date]?.[slottime.id]?.color }"
           @click="toggleSelect(slottime)"
         >
-          <div class="slot-time">{{ ordered[slottime.date]?.[slottime.id]?.user_name }}</div>
+          <div class="slot-time">{{ bookedSlots[slottime.date]?.[slottime.id]?.user_name }}</div>
         </div>
       </div>
     </div>
-    <div>order: {{ ordered }}</div>
     <Transition>
-      <confirmbuton
-        v-if="selectedSlot.length"
-        :selectedSlot="selectedSlot"
-        @confirm="sbumit()"
-      ></confirmbuton>
+      <ReservationConfirm
+        v-if="selectedSlots.length"
+        :selected-slot="selectedSlots"
+        @confirm="submit"
+      ></ReservationConfirm>
     </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { computed, ref, watch } from 'vue'
-import confirmbuton from '@/components/ReservationConfirm.vue'
-import { changeDate, dateStr, timeLabels } from '@/utils/date'
-import type { SlotTime } from '@/composables/useSlotTime'
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import ReservationConfirm from '@/components/ReservationConfirm.vue'
+import { changeDate, dateStr, getMonday, timeLabels, weekdayLabels } from '@/utils/date'
+import { getBookings, submitBookings } from '@/api/booking'
+import type { BookingInfo } from '@/api/booking'
 import { useSlotTime } from '@/composables/useSlotTime'
+import type { SlotTime } from '@/composables/useSlotTime'
+import { useUserStore } from '@/stores/user'
+import 'dayjs/locale/zh-cn'
 
-const today = ref(new Date())
-const Monday = ref(new Date())
-const d = new Date(today.value) // 复制而非用数字构造
-const week_offset: number = d.getDate() - ((d.getDay() + 6) % 7)
-d.setDate(week_offset)
-Monday.value = d
+const userStore = useUserStore()
 
-const selectedSlot = ref<number[][]>([])
-
-function changeweek(offset: number) {
-  const d = changeDate(Monday.value, offset)
-  Monday.value = d
-  selectedSlot.value = []
-}
-
-function resetWeek() {
-  // Monday.value = new Date()
-  // selectedSlot.value = []
-}
+const monday = ref(getMonday(new Date()))
+const selectedSlots = ref<number[][]>([])
+const bookedSlots = ref<Record<number, BookingInfo>[]>([])
 
 const weekDays = computed(() => {
-  const tmp = new Date(Monday.value)
-  console.log(tmp)
-  const weekdays: Date[] = []
+  const days: Date[] = []
+  const current = new Date(monday.value)
   for (let i = 0; i < 7; i++) {
-    weekdays.push(new Date(tmp))
-    tmp.setDate(tmp.getDate() + 1)
+    days.push(new Date(current))
+    current.setDate(current.getDate() + 1)
   }
-  console.log(weekdays)
-  return weekdays
+  return days
 })
 
 const slotTimes = computed(() => {
@@ -132,49 +119,44 @@ const slotTimes = computed(() => {
   return times
 })
 
-const { isPastDay, isToday, isPastBlock, isSelected } = useSlotTime(
-  weekDays,
-  selectedSlot,
-)
+const { isPastBlock, isSelected } = useSlotTime(weekDays, selectedSlots)
 
-const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-import { useCheckStore } from '@/stores/user.ts'
+function changeWeek(offset: number) {
+  monday.value = changeDate(monday.value, offset)
+  selectedSlots.value = []
+}
 
-const checkStore = useCheckStore()
+function resetWeek() {
+  // monday.value = new Date()
+  // selectedSlots.value = []
+}
 
 function toggleSelect(slottime: SlotTime) {
   if (isPastBlock(slottime)) {
     return
   }
-  if (!checkStore.loggedIn) {
+  if (!userStore.loggedIn) {
     return
   }
 
-  const arr = (selectedSlot.value[slottime.date] ??= [])
-  console.log(arr)
-  const idx = arr.indexOf(slottime.id)
-  console.log(idx)
-  if (idx > -1) {
-    arr.splice(idx, 1)
+  const daySlots = (selectedSlots.value[slottime.date] ??= [])
+  const index = daySlots.indexOf(slottime.id)
+  if (index > -1) {
+    daySlots.splice(index, 1)
   } else {
-    arr.push(slottime.id)
+    daySlots.push(slottime.id)
   }
 }
-import 'dayjs/locale/zh-cn'
-import { submitBookings, getBookings } from '@/api/booking'
-import type { BookingInfo } from '@/api/booking'
-const sbumit = () => {
+
+const submit = () => {
   for (let i = 0; i < 7; i++) {
-    const slots = (selectedSlot.value[i] ??= [])
+    const slots = (selectedSlots.value[i] ??= [])
     if (slots.length) {
       const date = weekDays.value[i]!
-      console.log({ date, slots })
       submitBookings('a', { date, slots })
     }
   }
 }
-
-const ordered = ref<Record<number, BookingInfo>[]>([])
 
 function sortBookings(bookings: Record<number, BookingInfo>[]): Record<number, BookingInfo>[] {
   const res: Record<number, BookingInfo>[] = []
@@ -187,12 +169,12 @@ function sortBookings(bookings: Record<number, BookingInfo>[]): Record<number, B
   return res
 }
 
-function duplicateremoval(bookings: Record<number, BookingInfo>[]) {
+function dedupeUserNames(bookings: Record<number, BookingInfo>[]) {
   for (const date of bookings) {
-    let user_nameSet = ''
-    for (const [_, value] of Object.entries(date)) {
-      if (value.user_name !== user_nameSet) {
-        user_nameSet = value.user_name
+    let lastUserName = ''
+    for (const [, value] of Object.entries(date)) {
+      if (value.user_name !== lastUserName) {
+        lastUserName = value.user_name
       } else {
         value.user_name = ''
       }
@@ -201,20 +183,16 @@ function duplicateremoval(bookings: Record<number, BookingInfo>[]) {
 }
 
 function fetchBookings() {
-  const pormise_week = []
-  for (const days of weekDays.value) {
-    pormise_week.push(getBookings('a', dateStr(days)))
-  }
-  Promise.all(pormise_week).then((res) => {
-    console.log(res)
-    const sortedRes = sortBookings(res)
-    duplicateremoval(sortedRes)
-    ordered.value = sortedRes
+  const requests = weekDays.value.map((day) => getBookings('a', dateStr(day)))
+  Promise.all(requests).then((res) => {
+    const sorted = sortBookings(res)
+    dedupeUserNames(sorted)
+    bookedSlots.value = sorted
   })
 }
 
-function is_order(slottime: SlotTime) {
-  return Object.hasOwn(ordered.value.at(slottime.date) ?? {}, slottime.id)
+function isBooked(slottime: SlotTime) {
+  return Object.hasOwn(bookedSlots.value.at(slottime.date) ?? {}, slottime.id)
 }
 
 watch(weekDays, fetchBookings, { immediate: true })

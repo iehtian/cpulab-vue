@@ -1,10 +1,10 @@
 <template>
   <!-- <DeviceReservation v-if="!isMobile" /> -->
-  <DeviceReservation_mobile />
+  <DeviceReservationMobile />
 </template>
 <script setup lang="ts">
 import DeviceReservation from '@/views/DeviceReservation.vue'
-import DeviceReservation_mobile from '@/views/DeviceReservation_mobile.vue'
+import DeviceReservationMobile from '@/views/DeviceReservationMobile.vue'
 import { useViewportStore } from '@/stores/viewport'
 
 const viewportStore = useViewportStore()

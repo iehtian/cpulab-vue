@@ -2,21 +2,21 @@
   <van-row>
     <van-col
       span="8"
-      v-for="r in reagents"
-      :key="r.id"
+      v-for="reagent in reagents"
+      :key="reagent.id"
     >
       <div class="reagent-container">
         <van-tag
           size="large"
-          :type="tagType(r)"
+          :type="tagType(reagent)"
           class="reagent-tag"
-          @click="showDetail(r)"
+          @click="showDetail(reagent)"
         >
-          {{ r.name }}
+          {{ reagent.name }}
           <span
-            v-if="r.bottle_count != null"
+            v-if="reagent.bottle_count != null"
             class="count"
-            >×{{ r.bottle_count }}</span
+            >×{{ reagent.bottle_count }}</span
           >
         </van-tag>
         <van-empty
@@ -30,76 +30,78 @@
 
   <!-- 详情弹层 -->
   <van-popup
-    v-model:show="showPopup"
+    v-model:show="showDetailPopup"
     round
     position="bottom"
   >
     <div
       class="detail"
-      v-if="current"
+      v-if="currentReagent"
     >
-      <h3>{{ current.name }}</h3>
-      <p>CAS 号：{{ current.CAS_number || '-' }}</p>
-      <p>规格：{{ current.specification || '-' }}</p>
-      <p>容量：{{ current.capacity ?? '-' }}</p>
-      <p>瓶数：{{ current.bottle_count ?? '-' }}</p>
-      <p>开瓶日期：{{ current.open_date || '-' }}</p>
-      <p>有效期：{{ current.expiry_date || '-' }}</p>
+      <h3>{{ currentReagent.name }}</h3>
+      <p>CAS 号：{{ currentReagent.CAS_number || '-' }}</p>
+      <p>规格：{{ currentReagent.specification || '-' }}</p>
+      <p>容量：{{ currentReagent.capacity ?? '-' }}</p>
+      <p>瓶数：{{ currentReagent.bottle_count ?? '-' }}</p>
+      <p>开瓶日期：{{ currentReagent.open_date || '-' }}</p>
+      <p>有效期：{{ currentReagent.expiry_date || '-' }}</p>
     </div>
     <div class="action-buttons">
       <van-button
         type="danger"
-        @click="showPopup = false"
+        @click="showDetailPopup = false"
         >标记需要补货</van-button
       >
       <van-button
         plain
         type="primary"
-        :disabled="!!current?.open_date"
+        :disabled="!!currentReagent?.open_date"
         @click="handleOpen()"
         >开瓶贴标</van-button
       >
       <van-button
         type="danger"
-        @click="showPopup = false"
+        @click="showDetailPopup = false"
         >编辑</van-button
       >
       <van-button
         type="danger"
-        @click="showDelete = true"
+        @click="showDeleteDialog = true"
         >删除</van-button
       >
     </div>
   </van-popup>
   <DeleteDialog
-    v-model:visible="showDelete"
+    v-model:visible="showDeleteDialog"
     @confirm="confirmDelete"
   />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { type Reagent } from '@/api/manager.ts'
-import { openReagentById, deleteReagentById } from '@/api/manager.ts'
+import { openReagentById, deleteReagentById } from '@/api/reagent'
+import type { Reagent } from '@/api/reagent'
 import DeleteDialog from '@/components/DeleteDialog.vue'
-const props = defineProps<{ reagents: Reagent[] }>()
-const showDelete = ref(false)
-const showPopup = ref(false)
-const current = ref<Reagent | null>(null)
+
+defineProps<{ reagents: Reagent[] }>()
 
 const emit = defineEmits<{
   updateReagents: []
 }>()
 
-function showDetail(r: Reagent) {
-  current.value = r
-  showPopup.value = true
+const showDetailPopup = ref(false)
+const showDeleteDialog = ref(false)
+const currentReagent = ref<Reagent | null>(null)
+
+function showDetail(reagent: Reagent) {
+  currentReagent.value = reagent
+  showDetailPopup.value = true
 }
 
 // 按有效期/数量给胶囊着色：临近过期 → warning，数量为 0 → default
-function tagType(r: Reagent): 'primary' | 'warning' | 'default' {
-  if (r.bottle_count === 0) return 'default'
-  if (r.expiry_date && new Date(r.expiry_date).getTime() - Date.now() < 30 * 86400_000)
+function tagType(reagent: Reagent): 'primary' | 'warning' | 'default' {
+  if (reagent.bottle_count === 0) return 'default'
+  if (reagent.expiry_date && new Date(reagent.expiry_date).getTime() - Date.now() < 30 * 86400_000)
     return 'warning'
   return 'primary'
 }
@@ -107,8 +109,6 @@ function tagType(r: Reagent): 'primary' | 'warning' | 'default' {
 const handleDelete = async (id: number) => {
   try {
     await deleteReagentById(id)
-    // 删除成功后可以触发一个事件或更新父组件的状态
-    // 例如 emit('reagentDeleted', id)
   } catch (error) {
     console.error('删除试剂失败:', error)
   }
@@ -116,24 +116,20 @@ const handleDelete = async (id: number) => {
 
 const handleOpen = async () => {
   try {
-    await openReagentById(current.value?.id || -1, new Date().toISOString()).then(() => {
-      emit('updateReagents') // 通知父组件更新试剂列表
-    })
-    // 开瓶成功后可以触发一个事件或更新父组件的状态
-    // 例如 emit('reagentOpened', id)
-    showPopup.value = false // 关闭弹层
+    await openReagentById(currentReagent.value?.id || -1, new Date().toISOString())
+    emit('updateReagents') // 通知父组件更新试剂列表
+    showDetailPopup.value = false
   } catch (error) {
     console.error('开瓶失败:', error)
   }
 }
 
 const confirmDelete = async () => {
-  if (current.value) {
-    await handleDelete(current.value.id).then(() => {
-      emit('updateReagents') // 通知父组件更新试剂列表
-    })
-    showDelete.value = false
-    showPopup.value = false // 关闭详情弹层
+  if (currentReagent.value) {
+    await handleDelete(currentReagent.value.id)
+    emit('updateReagents') // 通知父组件更新试剂列表
+    showDeleteDialog.value = false
+    showDetailPopup.value = false // 关闭详情弹层
   }
 }
 </script>
@@ -144,9 +140,6 @@ const confirmDelete = async () => {
   flex-wrap: wrap;
   gap: 8px;
   padding: 4px;
-}
-.reagent-tag {
-  cursor: pointer;
 }
 .count {
   opacity: 0.7;

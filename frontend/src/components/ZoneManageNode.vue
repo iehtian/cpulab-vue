@@ -33,8 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Zone } from '@/api/manager.ts'
-import { defineOptions } from 'vue'
+import type { Zone } from '@/api/zone'
 
 // script setup 下要递归引用自己，必须通过 name 选项
 defineOptions({ name: 'ZoneNode' })

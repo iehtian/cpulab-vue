@@ -25,21 +25,21 @@
             <van-icon
               name="ellipsis"
               class="more-icon"
-              @click.stop="((showActions = true), (selectedSpaceId = space.id))"
+              @click.stop="((showSpaceActions = true), (selectedSpaceId = space.id))"
             /> </template
         ></van-cell>
       </van-cell-group>
 
       <van-action-sheet
-        v-model:show="showActions"
+        v-model:show="showSpaceActions"
         v-model:id="selectedSpaceId"
-        :actions="actions"
+        :actions="spaceActions"
         cancel-text="取消"
         close-on-click-action
         @select="onSelect"
       />
       <DialogField
-        v-model:show="show"
+        v-model:show="showInputDialog"
         :title="dialogConfig.title"
         :label="dialogConfig.label"
         :placeholder="dialogConfig.placeholder"
@@ -47,14 +47,14 @@
       />
     </div>
     <van-popup
-      v-model:show="showpopup"
+      v-model:show="showZonePopup"
       position="bottom"
     >
       <div class="container">
         <h3>布局管理</h3>
         <p>这里是布局管理的内容，可以根据需要进行布局设置。</p>
       </div>
-      <ZoneNode
+      <ZoneManageNode
         v-for="area in areas"
         :key="area.id"
         :area="area"
@@ -68,83 +68,25 @@
       >
       <van-button
         type="primary"
-        @click="showpopup = false"
+        @click="showZonePopup = false"
         >关闭</van-button
       >
     </van-popup>
     <DeleteDialog
-      v-model:show="showDelete"
+      v-model:show="showDeleteDialog"
       @confirm="confirmDelete"
     />
   </div>
 </template>
 <script setup lang="ts">
-import DialogField from '@/components/DialogField.vue'
 import { ref, onMounted } from 'vue'
-import { RouterView } from 'vue-router'
-import { getAllSpaces, addSpace, deleteSpaceById, addZone, getZonesBySpace } from '@/api/manager.ts'
-import ZoneNode from '@/components/ZoneManageNode.vue'
-const isMobile = ref(false)
-const show = ref(false)
-const showActions = ref(false)
-const spaceName = ref('')
-const showpopup = ref(false)
-const selectedSpaceId = ref<number | null>(null)
-const areas = ref<Zone[]>([])
-interface Space {
-  id: number
-  name: string
-}
-const spaces = ref<Space[]>([])
-
-import type { Zone } from '@/api/manager.ts'
+import DialogField from '@/components/DialogField.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
-
-const actions = [
-  { name: '布局管理', color: '#1989fa' },
-  { name: '编辑', color: '#1989fa' },
-  { name: '删除', color: '#ee0a24' },
-]
-
-const getZonesBySpace_ = async (spaceId: number) => {
-  try {
-    const res = await getZonesBySpace(spaceId)
-    console.log('获取分区列表成功:', res)
-    areas.value = res
-  } catch (err) {
-    console.error('获取分区列表失败:', err)
-  }
-}
-
-const showDelete = ref(false)
-const confirmDelete = async () => {
-  if (selectedSpaceId.value !== null) {
-    try {
-      await deleteSpaceById(selectedSpaceId.value)
-      console.log('删除空间成功:', selectedSpaceId.value)
-      // 删除成功后刷新空间列表
-      spaces.value = await getAllSpaces()
-    } catch (err) {
-      console.error('删除空间失败:', err)
-    } finally {
-      showDelete.value = false
-    }
-  }
-}
-
-const onSelect = (action: { name: string }) => {
-  console.log('选择了:', action.name, '空间ID:', selectedSpaceId.value)
-  if (action.name === '布局管理') {
-    // 布局管理逻辑
-    getZonesBySpace_(selectedSpaceId.value!)
-    showpopup.value = true
-  } else if (action.name === '编辑') {
-    // 编辑逻辑
-  } else if (action.name === '删除') {
-    // 删除逻辑
-    showDelete.value = true
-  }
-}
+import ZoneManageNode from '@/components/ZoneManageNode.vue'
+import { getAllSpaces, addSpace, deleteSpaceById } from '@/api/space'
+import type { Space } from '@/api/space'
+import { addZone, getZonesBySpace } from '@/api/zone'
+import type { Zone } from '@/api/zone'
 
 interface DialogOptions {
   title: string
@@ -154,6 +96,20 @@ interface DialogOptions {
   onSubmit: (value: string) => Promise<void>
 }
 
+const spaceActions = [
+  { name: '布局管理', color: '#1989fa' },
+  { name: '编辑', color: '#1989fa' },
+  { name: '删除', color: '#ee0a24' },
+]
+
+const spaces = ref<Space[]>([])
+const selectedSpaceId = ref<number | null>(null)
+const areas = ref<Zone[]>([])
+
+const showSpaceActions = ref(false)
+const showInputDialog = ref(false)
+const showDeleteDialog = ref(false)
+const showZonePopup = ref(false)
 const dialogConfig = ref<DialogOptions>({
   title: '',
   label: '',
@@ -161,9 +117,25 @@ const dialogConfig = ref<DialogOptions>({
   onSubmit: async () => {},
 })
 
+const fetchSpaces = async () => {
+  try {
+    spaces.value = await getAllSpaces()
+  } catch (err) {
+    console.error('获取空间列表失败:', err)
+  }
+}
+
+const fetchZones = async (spaceId: number) => {
+  try {
+    areas.value = await getZonesBySpace(spaceId)
+  } catch (err) {
+    console.error('获取分区列表失败:', err)
+  }
+}
+
 function openDialog(options: DialogOptions) {
   dialogConfig.value = options
-  show.value = true
+  showInputDialog.value = true
 }
 
 // 唯一入口：DialogField 的 confirm 事件
@@ -173,12 +145,21 @@ const onDialogConfirm = async (value: string) => {
   } catch (err) {
     console.error('操作失败:', err)
   } finally {
-    show.value = false
+    showInputDialog.value = false
   }
 }
 
-const refreshSpaces = async () => {
-  spaces.value = await getAllSpaces()
+const onSelect = (action: { name: string }) => {
+  if (action.name === '布局管理') {
+    // 布局管理逻辑
+    fetchZones(selectedSpaceId.value!)
+    showZonePopup.value = true
+  } else if (action.name === '编辑') {
+    // 编辑逻辑
+  } else if (action.name === '删除') {
+    // 删除逻辑
+    showDeleteDialog.value = true
+  }
 }
 
 const onAddSpace = () =>
@@ -188,7 +169,7 @@ const onAddSpace = () =>
     placeholder: '请输入空间名称',
     onSubmit: async (name) => {
       await addSpace(name)
-      await refreshSpaces()
+      await fetchSpaces()
     },
   })
 
@@ -200,19 +181,23 @@ const onAddZone = (parentId: number | null) =>
     onSubmit: async (name) => {
       if (selectedSpaceId.value === null) return
       await addZone(parentId, selectedSpaceId.value, name)
-      await getZonesBySpace_(selectedSpaceId.value)
+      await fetchZones(selectedSpaceId.value)
     },
   })
 
-onMounted(async () => {
+const confirmDelete = async () => {
+  if (selectedSpaceId.value === null) return
   try {
-    const res = await getAllSpaces()
-    console.log('获取空间列表成功:', res)
-    spaces.value = res
+    await deleteSpaceById(selectedSpaceId.value)
+    await fetchSpaces()
   } catch (err) {
-    console.error('获取空间列表失败:', err)
+    console.error('删除空间失败:', err)
+  } finally {
+    showDeleteDialog.value = false
   }
-})
+}
+
+onMounted(fetchSpaces)
 </script>
 
 <style scoped>

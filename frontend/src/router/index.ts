@@ -4,22 +4,22 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/Cell-room',
-      name: 'Cell-room',
+      path: '/cell-room',
+      name: 'CellRoom',
       component: () => import('../views/CellRoom.vue'),
     },
     {
-      path: '/User',
+      path: '/user',
       name: 'User',
       component: () => import('../views/MobileUser.vue'),
     },
     {
-      path: '/Manager',
+      path: '/manager',
       name: 'Manager',
       component: () => import('../views/Manager.vue'),
     },
     {
-      path: '/Spaces/:id',
+      path: '/spaces/:id',
       name: 'Spaces',
       component: () => import('../views/Spaces.vue'),
     },

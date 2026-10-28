@@ -5,12 +5,12 @@
       placeholder="请输入搜索关键词"
     />
     <ZoneDisplayNode
-      v-model:zoneid="selectedZoneId"
+      v-model:zone-id="selectedZoneId"
       :zones="zones"
     />
-    <Reagment
+    <ReagentList
       :reagents="reagents"
-      @updateReagents="updateReagents"
+      @update-reagents="fetchReagents"
     />
   </div>
   <van-submit-bar
@@ -99,17 +99,23 @@
 </template>
 
 <script setup lang="ts">
-import Reagment from '@/components/Reagment.vue'
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
-const id = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
-import { getZonesBySpace, upsertReagent, getReagentsByZone } from '@/api/manager.ts'
-import type { Zone, Reagent } from '@/api/manager.ts'
+import ReagentList from '@/components/ReagentList.vue'
+import { getZonesBySpace } from '@/api/zone'
+import type { Zone } from '@/api/zone'
+import { upsertReagent, getReagentsByZone } from '@/api/reagent'
+import type { Reagent } from '@/api/reagent'
+
+const spaceId = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
+
 const zones = ref<Zone[]>([])
+const reagents = ref<Reagent[]>([])
+const selectedZoneId = ref<number>(0)
 const searchKeyword = ref('')
 const showBottom = ref(false)
-const selectedZoneId = ref<number>(0)
+
 // 入库表单字段
 const reagentName = ref('')
 const casNumber = ref('')
@@ -125,11 +131,6 @@ const categoryColumns = [
   { text: '生物试剂', value: 3 },
   { text: '色谱级试剂', value: 4 },
 ]
-const onCategoryConfirm = ({ selectedOptions }: any) => {
-  category.value = selectedOptions[0].value as number
-  categoryText.value = selectedOptions[0].text as string
-  showCategoryPicker.value = false
-}
 // 有效期：expiryDate 是 van-date-picker 的 v-model（[年, 月, 日] 字符串数组）
 // expiryDateText 是显示文字，提交时可直接用 'YYYY-MM-DD' 格式
 const expiryDate = ref<string[]>([])
@@ -138,30 +139,32 @@ const showDatePicker = ref(false)
 // 不允许选今天之前的日期
 const minDate = new Date()
 
+const onCategoryConfirm = ({ selectedOptions }: any) => {
+  category.value = selectedOptions[0].value as number
+  categoryText.value = selectedOptions[0].text as string
+  showCategoryPicker.value = false
+}
+
 const onDateConfirm = () => {
   expiryDateText.value = expiryDate.value.join('-')
   showDatePicker.value = false
 }
 
-const onAddReagent = () => {
-  // 这里可以调用 API 提交入库信息
-  console.log('提交入库信息:', {
-    reagentName: reagentName.value,
+const fetchReagents = async () => {
+  reagents.value = await getReagentsByZone(selectedZoneId.value)
+}
+
+const onAddReagent = async () => {
+  await upsertReagent({
+    zoneId: selectedZoneId.value,
+    name: reagentName.value,
     casNumber: casNumber.value,
-    specification: specification.value,
     category: category.value,
-    expiryDate: expiryDateText.value,
+    capacity: null,
+    bottleCount: null,
+    specification: specification.value,
+    expiryDate: expiryDateText.value || null,
   })
-  upsertReagent(
-    selectedZoneId.value,
-    reagentName.value,
-    casNumber.value,
-    category.value,
-    null,
-    null,
-    specification.value,
-    expiryDateText.value || null,
-  )
   // 提交后清空表单
   reagentName.value = ''
   casNumber.value = ''
@@ -173,24 +176,9 @@ const onAddReagent = () => {
   showBottom.value = false
 }
 
-const reagents = ref<Reagent[]>([])
-watch(selectedZoneId, (newId) => {
-  getReagentsByZone(newId).then((res) => {
-    console.log('获取试剂数据:', res)
-    reagents.value = res
-  })
-})
-onMounted(() => {
-  getZonesBySpace(id).then((res) => {
-    console.log('获取分区数据:', res)
-    zones.value = res
-  })
-})
+watch(selectedZoneId, fetchReagents)
 
-const updateReagents = () => {
-  getReagentsByZone(selectedZoneId.value).then((res) => {
-    console.log('更新试剂数据:', res)
-    reagents.value = res
-  })
-}
+onMounted(async () => {
+  zones.value = await getZonesBySpace(spaceId)
+})
 </script>

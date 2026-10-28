@@ -6,7 +6,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { useCheckStore } from './stores/user.ts'
+import { useUserStore } from './stores/user.ts'
 import Vant from 'vant'
 
 import 'element-plus/dist/index.css'
@@ -16,8 +16,8 @@ const app = createApp(App)
 
 app.use(createPinia())
 
-const checkStore = useCheckStore()
-checkStore.checkAuth()
+const userStore = useUserStore()
+userStore.checkAuth()
 
 app.use(ElementPlus, {
   locale: zhCn,

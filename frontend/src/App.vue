@@ -3,7 +3,7 @@
     direction="vertical"
     v-if="!isMobile"
   >
-    <Title v-model:key="currentKey" />
+    <AppHeader v-model:menu-key="currentKey" />
     <el-container>
       <el-aside
         v-if="!isMobile"
@@ -17,8 +17,8 @@
         width="150px"
       ></el-aside>
     </el-container>
-    <Regiester v-model:visible="RegiesterVisible" />
-    <Login v-model:visible="LoginVisible" />
+    <RegisterDialog v-model:visible="showRegisterDialog" />
+    <LoginDialog v-model:visible="showLoginDialog" />
   </el-container>
 
   <van-nav-bar
@@ -31,19 +31,19 @@
   <van-tabbar route>
     <van-tabbar-item
       replace
-      to="/Cell-room"
+      to="/cell-room"
       icon="home-o"
       >标签</van-tabbar-item
     >
     <van-tabbar-item
       replace
-      to="/User"
+      to="/user"
       icon="search"
       >标签</van-tabbar-item
     >
     <van-tabbar-item
       replace
-      to="/Manager"
+      to="/manager"
       icon="search"
       >标签</van-tabbar-item
     >
@@ -51,36 +51,36 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import Regiester from './components/Regiester.vue'
 import { ref, watch } from 'vue'
+import { RouterView } from 'vue-router'
 import router from './router/index.ts'
-import Login from '@/components/Login.vue'
+import AppHeader from '@/components/AppHeader.vue'
+import RegisterDialog from '@/components/RegisterDialog.vue'
+import LoginDialog from '@/components/LoginDialog.vue'
 import { useViewportStore } from '@/stores/viewport.ts'
-import Title from '@/components/Title.vue'
+import { useUserStore } from '@/stores/user.ts'
 
 const viewportStore = useViewportStore()
+const userStore = useUserStore()
 const isMobile = viewportStore.isMobile
 
-const RegiesterVisible = ref(false)
-const LoginVisible = ref(false)
+const showRegisterDialog = ref(false)
+const showLoginDialog = ref(false)
 const currentKey = ref('')
 watch(currentKey, (newKey) => {
-  if (newKey === '/Cell-room') {
-    router.push('/Cell-room')
-  } else if (newKey === '/User') {
-    router.push('/User')
+  if (newKey === '/cell-room') {
+    router.push('/cell-room')
+  } else if (newKey === '/user') {
+    router.push('/user')
   } else if (newKey === '/register') {
-    RegiesterVisible.value = true
+    showRegisterDialog.value = true
   } else if (newKey === '/login') {
-    LoginVisible.value = true
+    showLoginDialog.value = true
   } else if (newKey === '/logout') {
-    checkStore.logout()
+    userStore.logout()
   }
 })
 
-import { useCheckStore } from './stores/user.ts'
-const checkStore = useCheckStore()
 const onClickLeft = () => history.back()
 </script>
 

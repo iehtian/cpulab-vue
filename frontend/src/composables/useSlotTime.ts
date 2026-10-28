@@ -28,7 +28,7 @@ function slotEndMinute(id: number): number {
 export function useSlotTime(
   weekDays: ComputedRef<Date[]> | Ref<Date[]>,
   bookingSlots: Ref<number[][]> | Ref<number[]>,
-  cancelingSlots: Ref<number[][]> | Ref<number[]>,
+  cancelingSlots?: Ref<number[][]> | Ref<number[]>,
 ) {
   function isPastDay(d: Date): boolean {
     const t = new Date()
@@ -60,20 +60,19 @@ export function useSlotTime(
   }
 
   function isSelected(slottime: SlotTime): boolean {
-    if (bookingSlots.value.length === 0 && cancelingSlots.value.length === 0) return false
-    return isin(slottime, bookingSlots.value) || isin(slottime, cancelingSlots.value)
+    const canceling = cancelingSlots?.value ?? []
+    if (bookingSlots.value.length === 0 && canceling.length === 0) return false
+    return includesSlot(slottime, bookingSlots.value) || includesSlot(slottime, canceling)
   }
 
-  function isin(slottime: SlotTime, slots: number[][] | number[]) {
+  function includesSlot(slottime: SlotTime, slots: number[][] | number[]) {
     if (slots.length === 0) return false
     // 形态 1：按天分组（桌面端 `number[][]`），首项必为数组
     if (Array.isArray(slots[0])) {
       return (slots[slottime.date] as number[] | undefined)?.includes(slottime.id) ?? false
     }
     // 形态 2：扁平数组（移动端 `number[]`）
-    const res = (slots as number[]).includes(slottime.id)
-
-    return res
+    return (slots as number[]).includes(slottime.id)
   }
 
   return { isPastDay, isToday, isPastBlock, isSelected }

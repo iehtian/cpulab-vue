@@ -21,7 +21,7 @@
         :popper-offset="0"
       >
         <template #title>仪器设备</template>
-        <el-menu-item index="/Cell-room">细胞房</el-menu-item>
+        <el-menu-item index="/cell-room">细胞房</el-menu-item>
       </el-sub-menu>
       <el-sub-menu
         index="user"
@@ -29,17 +29,17 @@
       >
         <template #title>个人中心</template>
         <el-menu-item
-          v-if="!checkStore.loggedIn"
+          v-if="!userStore.loggedIn"
           index="/register"
           >注册</el-menu-item
         >
         <el-menu-item
-          v-if="!checkStore.loggedIn"
+          v-if="!userStore.loggedIn"
           index="/login"
           >登录</el-menu-item
         >
         <el-menu-item
-          v-if="checkStore.loggedIn"
+          v-if="userStore.loggedIn"
           index="/logout"
           >退出登录</el-menu-item
         >
@@ -49,21 +49,21 @@
 </template>
 
 <script setup lang="ts">
-import { useViewportStore } from '@/stores/viewport.ts'
-import { useCheckStore } from '@/stores/user.ts'
+import { useUserStore } from '@/stores/user.ts'
 
-const props = defineProps({
-  key: {
+defineProps({
+  menuKey: {
     type: String,
     default: '',
   },
 })
-const emit = defineEmits(['update:key'])
+const emit = defineEmits(['update:menuKey'])
 
-const handleSelect = (key: string, keyPath: string[]) => {
-  emit('update:key', key)
+const userStore = useUserStore()
+
+const handleSelect = (key: string) => {
+  emit('update:menuKey', key)
 }
-const checkStore = useCheckStore()
 </script>
 
 <style scoped>
