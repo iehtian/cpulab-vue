@@ -1,5 +1,6 @@
 import psycopg2
 
+from database.reagent_usage import create_reagent_usage
 from database.reagents import create_reagent
 from database.reservation import create_booking_index, create_date_plan_index
 from database.space import create_space
@@ -17,6 +18,7 @@ def initialize_database():
         create_space()
         create_zone()
         create_reagent()
+        create_reagent_usage()
         return True
     except psycopg2.Error as e:
         logger.error(f"数据库初始化失败: {e}")

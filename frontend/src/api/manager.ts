@@ -40,6 +40,7 @@ interface Reagent {
   capacity: number | null
   bottle_count: number | null
   specification: string | null
+  open_date: string | null
   expiry_date: string | null
 }
 
@@ -71,6 +72,14 @@ async function getReagentsByZone(zoneId: number): Promise<Reagent[]> {
   return data.reagents || []
 }
 
+async function deleteReagentById(id: number): Promise<void> {
+  await service.delete(`/api/reagent/delete/${id}`)
+}
+
+async function openReagentById(id: number, open_date: string): Promise<void> {
+  await service.post(`/api/reagent/open`, { id, open_date })
+}
+
 export {
   getAllSpaces,
   addSpace,
@@ -79,5 +88,7 @@ export {
   getZonesBySpace,
   upsertReagent,
   getReagentsByZone,
+  deleteReagentById,
+  openReagentById,
 }
 export type { Zone, Reagent }

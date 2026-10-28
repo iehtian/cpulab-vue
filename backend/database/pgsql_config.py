@@ -16,6 +16,8 @@ PLANS_TABLE = "date_plans"
 SPACE_TABLE = "spaces"
 ZONE_TABLE = "zones"
 REAGENT_TABLE = "reagents"
+REAGENT_CATEGORY_TABLE = "reagent_categories"
+REAGENT_USAGE_TABLE = "reagent_usage"
 
 
 def get_db_connection():

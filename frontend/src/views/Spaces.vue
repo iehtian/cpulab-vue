@@ -8,6 +8,7 @@
       v-model:zoneid="selectedZoneId"
       :zones="zones"
     />
+    <Reagment :reagents="reagents" />
   </div>
   <van-submit-bar
     style="bottom: 50px"
@@ -95,12 +96,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import Reagment from '@/components/Reagment.vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
 const id = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
 import { getZonesBySpace, upsertReagent, getReagentsByZone } from '@/api/manager.ts'
-import type { Zone } from '@/api/manager.ts'
+import type { Zone, Reagent } from '@/api/manager.ts'
 const zones = ref<Zone[]>([])
 const searchKeyword = ref('')
 const showBottom = ref(false)
@@ -109,18 +111,19 @@ const selectedZoneId = ref<number>(0)
 const reagentName = ref('')
 const casNumber = ref('')
 const specification = ref('')
-// 类别选择：category 存实际值（默认 '1' 普通试剂），categoryText 是显示文字
-const category = ref('1')
+// 类别选择：category 存实际值（默认 1 普通试剂），categoryText 是显示文字
+// 与后端一致使用数字类型
+const category = ref(1)
 const categoryText = ref('普通试剂')
 const showCategoryPicker = ref(false)
 const categoryColumns = [
-  { text: '普通试剂', value: '1' },
-  { text: '危化品', value: '2' },
-  { text: '生物试剂', value: '3' },
-  { text: '色谱级试剂', value: '4' },
+  { text: '普通试剂', value: 1 },
+  { text: '危化品', value: 2 },
+  { text: '生物试剂', value: 3 },
+  { text: '色谱级试剂', value: 4 },
 ]
 const onCategoryConfirm = ({ selectedOptions }: any) => {
-  category.value = selectedOptions[0].value as string
+  category.value = selectedOptions[0].value as number
   categoryText.value = selectedOptions[0].text as string
   showCategoryPicker.value = false
 }
@@ -160,12 +163,20 @@ const onAddReagent = () => {
   reagentName.value = ''
   casNumber.value = ''
   specification.value = ''
-  category.value = '1'
+  category.value = 1
   categoryText.value = '普通试剂'
   expiryDate.value = []
   expiryDateText.value = ''
   showBottom.value = false
 }
+
+const reagents = ref<Reagent[]>([])
+watch(selectedZoneId, (newId) => {
+  getReagentsByZone(newId).then((res) => {
+    console.log('获取试剂数据:', res)
+    reagents.value = res
+  })
+})
 onMounted(() => {
   getZonesBySpace(id).then((res) => {
     console.log('获取分区数据:', res)

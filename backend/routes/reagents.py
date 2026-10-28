@@ -26,13 +26,13 @@ def upsert_reagent_api():
 
         db_api.upsert_reagent(
             zone_id,
-            name,
-            category,
-            CAS_number,
-            capacity,
-            bottle_count,
-            specification,
-            expiry_date,
+            name=name,
+            CAS_number=CAS_number,
+            category=category,
+            capacity=capacity,
+            bottle_count=bottle_count,
+            specification=specification,
+            expiry_date=expiry_date,
         )
         logger.info(
             "试剂信息已添加/更新| 区域ID: {}, 名称: {}, 类别: {}, 容量: {}, 瓶数: {}, 规格: {}, 有效期: {}".format(
@@ -43,6 +43,34 @@ def upsert_reagent_api():
                 bottle_count,
                 specification,
                 expiry_date,
+            )
+        )
+        return jsonify({"message": "Reagent information added/updated successfully"})
+
+    except Exception as e:  # noqa: BLE001
+        logger.exception("试剂信息添加/更新时发生异常: {}", e)
+        return fail("Internal server error", 500)
+
+
+@bp.route("/reagent/open", methods=["POST"])
+def open_reagent_api():
+    """开瓶贴标"""
+    try:
+        data = request.get_json()
+        Reagent_id = data.get("id")
+        open_date = data.get("open_date")
+
+        if not Reagent_id or not open_date:
+            return fail("Reagent ID and open date are required")
+
+        db_api.update_open_date(
+            Reagent_id,
+            open_date,
+        )
+        logger.info(
+            "试剂信息已添加/更新| 试剂ID: {}, 开封日期: {}".format(
+                Reagent_id,
+                open_date,
             )
         )
         return jsonify({"message": "Reagent information added/updated successfully"})
