@@ -126,15 +126,19 @@ def get_reagent_usage(reagent_id):
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
-            SELECT user_id, usage_time, remaining_after
-            FROM {REAGENT_USAGE_TABLE}
-            WHERE reagent_id = %s
-            ORDER BY usage_time DESC
+            SELECT COUNT(*) OVER () AS length,
+                   u.user_name,
+                   r.remaining_after
+            FROM {REAGENT_USAGE_TABLE} r
+            LEFT JOIN {USER_TABLE} u ON u.id = r.user_id
+            WHERE r.reagent_id = %s
+            ORDER BY r.usage_time DESC
+            LIMIT 1
             """),
             (reagent_id,),
         )
-        records = cur.fetchall()
-        lenth = len(records)
-        last_record = records[0] if lenth > 0 else None
-        remainder = last_record[2] if last_record else None
-    return {"length": lenth, "last_record": last_record, "remainder": remainder}
+        record = cur.fetchone()
+
+    if record is None:
+        return {"length": 0, "username": None, "remainder": None}
+    return {"length": record[0], "username": record[1], "remainder": record[2]}

@@ -88,7 +88,7 @@ import { ref } from 'vue'
 import { openReagentById, deleteReagentById } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
 import DeleteDialog from '@/components/DeleteDialog.vue'
-import { addReagentUsage } from '@/api/reagentusage'
+import { addReagentUsage, getReagentUsage } from '@/api/reagentusage'
 import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
 defineProps<{ reagents: Reagent[] }>()
@@ -103,6 +103,9 @@ const currentReagent = ref<Reagent>(null as unknown as Reagent) // 初始化为 
 
 function showDetail(reagent: Reagent) {
   currentReagent.value = reagent
+  getReagentUsage(reagent.id).then((usage) => {
+    console.log('试剂使用记录:', usage)
+  })
   showDetailPopup.value = true
 }
 
