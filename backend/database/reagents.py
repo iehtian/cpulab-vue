@@ -31,7 +31,6 @@ def create_reagent():
             )
             """
         )
-        conn.commit()
     logger.info(f"Table '{REAGENT_TABLE}' ensured.")
 
 
@@ -79,8 +78,6 @@ def upsert_reagent(
             [zone_id] + values,
         )
 
-        conn.commit()
-
 
 def update_open_date(reagent_id, open_date):
     """更新试剂的开瓶贴标日期"""
@@ -93,8 +90,6 @@ def update_open_date(reagent_id, open_date):
             """,
             (open_date, reagent_id),
         )
-        conn.commit()
-
 
 def get_reagents_by_zone(zone_id):
     """根据区域 ID 获取试剂信息"""
@@ -136,4 +131,3 @@ def delete_reagent_by_id(reagent_id):
             """,
             (reagent_id,),
         )
-        conn.commit()

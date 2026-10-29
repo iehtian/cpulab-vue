@@ -23,7 +23,6 @@ def create_zone():
             """
         )
         cur.execute(f"COMMENT ON COLUMN {ZONE_TABLE}.sort_order  IS '区域内排序序号'")
-        conn.commit()
     logger.info(f"Table '{ZONE_TABLE}' ensured.")
 
 
@@ -47,8 +46,6 @@ def add_zone(parent_id, space_id, name):
             """,
             (parent_id, space_id, name, sort_order),
         )
-        conn.commit()
-
 
 def get_child_zones(parent_id):
     """递归获取子区域"""

@@ -6,7 +6,7 @@ Database operations package.
 """
 
 from .pgsql_client import initialize_database
-from .pgsql_config import get_connection, get_db_connection
+from .pgsql_config import get_connection
 from .reagent_usage import add_reagent_usage, get_reagent_usage
 from .reagents import (
     delete_reagent_by_id,
@@ -43,7 +43,6 @@ __all__ = [
     "get_all_dateinfo_by_date",
     "get_connection",
     "get_dateinfo",
-    "get_db_connection",
     "initialize_database",
     "search_booking_by_date",
     "search_booking_by_user_and_date",

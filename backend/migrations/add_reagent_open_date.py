@@ -18,7 +18,6 @@ def migrate():
             DROP COLUMN IF EXISTS manufacturer
             """
         )
-        conn.commit()
     logger.info(f"Column 'open_date' ensured, 'manufacturer' dropped on table '{REAGENT_TABLE}'.")
 
 

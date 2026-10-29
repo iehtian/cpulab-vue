@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg
 
 from database.reagent_usage import create_reagent_usage
 from database.reagents import create_reagent
@@ -20,6 +20,6 @@ def initialize_database():
         create_reagent()
         create_reagent_usage()
         return True
-    except psycopg2.Error as e:
+    except psycopg.Error as e:
         logger.error(f"数据库初始化失败: {e}")
         return False

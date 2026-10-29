@@ -39,7 +39,6 @@ def create_booking_index():
         cur.execute(
             f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_instrument_date ON {BOOKING_TABLE}(instrument_id, booking_date)"
         )
-        conn.commit()
     logger.info(f"Table '{BOOKING_TABLE}' ensured.")
 
 
@@ -72,8 +71,6 @@ def upsert_booking(user_name, instrument_id, date, time_slot_id):
         # 插入预约
         cur.execute(insert_sql, (user_id, instrument_id, date, time_slot_id))
         booking_id = cur.fetchone()[0]
-        conn.commit()
-
     logger.info(
         f"Created booking id={booking_id} -> "
         f"{{'user_name': {user_name}, 'user_id': {user_id}, "
@@ -166,7 +163,6 @@ def delete_booking_by_id(booking_id):
     sql = f"DELETE FROM {BOOKING_TABLE} WHERE id = %s"
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(sql, (booking_id,))
-        conn.commit()
     logger.info(f"Deleted booking id={booking_id}")
 
 
@@ -175,7 +171,6 @@ def delete_bookings_by_dates(instrument_id, date_list):
     sql = f"DELETE FROM {BOOKING_TABLE} WHERE instrument_id = %s AND booking_date = ANY(%s)"
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(sql, (instrument_id, date_list))
-        conn.commit()
     logger.info(
         f"Deleted bookings for instrument_id={instrument_id} on dates={date_list}"
     )
@@ -196,8 +191,6 @@ def delete_bookings_by_slots(instrument_id, date, slots):
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(sql, (instrument_id, date, slots))
         deleted = cur.rowcount
-        conn.commit()
-
     logger.info(
         f"Deleted {deleted} bookings for instrument_id={instrument_id} on date={date} slots={slots}"
     )
@@ -231,7 +224,6 @@ def create_date_plan_index():
         cur.execute(
             f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{PLANS_TABLE}_user_date ON {PLANS_TABLE}(user_id, date)"
         )
-        conn.commit()
     logger.info(f"Table '{PLANS_TABLE}' ensured.")
 
 
@@ -335,8 +327,6 @@ def upsert_plan_field(user_name: str, date: str, field: str, value) -> None:
         else:
             cur.execute(insert_sql, (user_id, date, value))
 
-        conn.commit()
-
     logger.info(
         "每日计划更新成功 | user_name=%s, date=%s, field=%s", user_name, date, field
     )
@@ -350,5 +340,4 @@ def delete_user_data(user_name: str) -> None:
     """
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(sql, (user_name,))
-        conn.commit()
     logger.info("user_name={} 的每日计划数据已删除", user_name)

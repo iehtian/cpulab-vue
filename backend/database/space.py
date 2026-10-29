@@ -26,7 +26,6 @@ def create_space():
             )
             """
         )
-        conn.commit()
     logger.info(f"Table '{SPACE_TABLE}' ensured.")
 
 
@@ -41,8 +40,6 @@ def add_space(name):
             """,
             (name,),
         )
-        conn.commit()
-
 
 def delete_space_by_id(space_id):
     """根据空间 ID 删除空间信息"""
@@ -53,8 +50,6 @@ def delete_space_by_id(space_id):
             """,
             (space_id,),
         )
-        conn.commit()
-
 
 def get_all_spaces():
     """获取所有空间信息"""
