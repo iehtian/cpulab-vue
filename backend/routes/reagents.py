@@ -59,6 +59,7 @@ def open_reagent_api():
         data = request.get_json()
         Reagent_id = data.get("id")
         open_date = data.get("open_date")
+        user_id = data.get("user_id")  # 默认用户ID为1，如果未提供
 
         if not Reagent_id or not open_date:
             return fail("Reagent ID and open date are required")
@@ -72,6 +73,10 @@ def open_reagent_api():
                 Reagent_id,
                 open_date,
             )
+        )
+        db_api.open_reagent(
+            Reagent_id,
+            user_id,
         )
         return jsonify({"message": "Reagent information added/updated successfully"})
 

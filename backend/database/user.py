@@ -1,5 +1,6 @@
 from database.pgsql_config import (
     USER_TABLE,
+    dynamic_sql,
     get_connection,
 )
 from log_config import logger
@@ -18,7 +19,7 @@ def create_user_index():
         # 创建用户表，使用 SERIAL 作为主键
         # fmt: off
         cur.execute(
-            rf"""
+            dynamic_sql(rf"""
             CREATE TABLE IF NOT EXISTS {USER_TABLE} (
                 id SERIAL PRIMARY KEY,
                 password TEXT NOT NULL,
@@ -28,13 +29,15 @@ def create_user_index():
                 phone TEXT CHECK (phone ~* '^1[3-9]\d{{9}}$'),
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours')
             )
-            """
+            """)
         )
         # fmt: on
 
         # 为常用查询字段创建索引
         cur.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{USER_TABLE}_user_name ON {USER_TABLE}(user_name)"
+            dynamic_sql(
+                f"CREATE INDEX IF NOT EXISTS idx_{USER_TABLE}_user_name ON {USER_TABLE}(user_name)"
+            )
         )
     logger.info(f"Table '{USER_TABLE}' ensured.")
 
@@ -81,7 +84,7 @@ def upsert_user(user_name, password=None, color=None, email=None, phone=None):
     """
 
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, tuple(insert_values))
+        cur.execute(dynamic_sql(sql), tuple(insert_values))
         user_id = cur.fetchone()[0]
 
     logger.info(f"Upserted user '{user_name}' (id={user_id})")
@@ -109,7 +112,7 @@ def search_user_by_name(user_name):
             WHERE user_name = %s
         """
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (user_name,))
+        cur.execute(dynamic_sql(sql), (user_name,))
         row = cur.fetchone()
         logger.debug(
             f"search_user_by_name('{user_name}') returned {'1 row' if row else '0 rows'}"

@@ -2,6 +2,7 @@ from database.pgsql_config import (
     BOOKING_TABLE,
     PLANS_TABLE,
     USER_TABLE,
+    dynamic_sql,
     get_connection,
 )
 from log_config import logger
@@ -12,7 +13,7 @@ def create_booking_index():
     with get_connection() as conn, conn.cursor() as cur:
         # 创建预约表
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             CREATE TABLE IF NOT EXISTS {BOOKING_TABLE} (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -27,17 +28,23 @@ def create_booking_index():
                 CONSTRAINT unique_time_slot
                     UNIQUE (instrument_id, booking_date, time_slot_id)
             )
-            """
+            """)
         )
         # 创建索引优化查询
         cur.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_user_id ON {BOOKING_TABLE}(user_id)"
+            dynamic_sql(
+                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_user_id ON {BOOKING_TABLE}(user_id)"
+            )
         )
         cur.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_date ON {BOOKING_TABLE}(booking_date)"
+            dynamic_sql(
+                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_date ON {BOOKING_TABLE}(booking_date)"
+            )
         )
         cur.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_instrument_date ON {BOOKING_TABLE}(instrument_id, booking_date)"
+            dynamic_sql(
+                f"CREATE INDEX IF NOT EXISTS idx_{BOOKING_TABLE}_instrument_date ON {BOOKING_TABLE}(instrument_id, booking_date)"
+            )
         )
     logger.info(f"Table '{BOOKING_TABLE}' ensured.")
 
@@ -60,7 +67,7 @@ def upsert_booking(user_name, instrument_id, date, time_slot_id):
     )
     with get_connection() as conn, conn.cursor() as cur:
         # 获取 user_id
-        cur.execute(get_user_sql, (user_name,))
+        cur.execute(dynamic_sql(get_user_sql), (user_name,))
         result = cur.fetchone()
 
         if result is None:
@@ -69,7 +76,7 @@ def upsert_booking(user_name, instrument_id, date, time_slot_id):
         user_id = result[0]
 
         # 插入预约
-        cur.execute(insert_sql, (user_id, instrument_id, date, time_slot_id))
+        cur.execute(dynamic_sql(insert_sql), (user_id, instrument_id, date, time_slot_id))
         booking_id = cur.fetchone()[0]
     logger.info(
         f"Created booking id={booking_id} -> "
@@ -109,7 +116,7 @@ def search_booking_by_date(instrument_id, date):
     """
     with get_connection() as conn, conn.cursor() as cur:
         logger.info(f"Executing SQL: {sql} with params: {(instrument_id, date)}")
-        cur.execute(sql, (instrument_id, date))
+        cur.execute(dynamic_sql(sql), (instrument_id, date))
         rows = cur.fetchall()
 
     # 包含用户信息的结果
@@ -132,7 +139,7 @@ def search_booking_by_user_and_date(user_id, date):
         ORDER BY b.time_slot_id
     """
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (user_id, date))
+        cur.execute(dynamic_sql(sql), (user_id, date))
         rows = cur.fetchall()
         logger.info(f"Found bookings for user_id={user_id}, date={date}: {rows}")
     return [_row_to_booking(row) for row in rows]
@@ -149,7 +156,7 @@ def search_booking_users_by_range(instrument_id, start_date, end_date):
         ORDER BY u.user_name
     """
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (instrument_id, start_date, end_date))
+        cur.execute(dynamic_sql(sql), (instrument_id, start_date, end_date))
         rows = cur.fetchall()
 
     logger.info(
@@ -162,7 +169,7 @@ def delete_booking_by_id(booking_id):
     """删除预约"""
     sql = f"DELETE FROM {BOOKING_TABLE} WHERE id = %s"
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (booking_id,))
+        cur.execute(dynamic_sql(sql), (booking_id,))
     logger.info(f"Deleted booking id={booking_id}")
 
 
@@ -170,7 +177,7 @@ def delete_bookings_by_dates(instrument_id, date_list):
     """删除某仪器在指定日期列表的所有预约"""
     sql = f"DELETE FROM {BOOKING_TABLE} WHERE instrument_id = %s AND booking_date = ANY(%s)"
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (instrument_id, date_list))
+        cur.execute(dynamic_sql(sql), (instrument_id, date_list))
     logger.info(
         f"Deleted bookings for instrument_id={instrument_id} on dates={date_list}"
     )
@@ -189,7 +196,7 @@ def delete_bookings_by_slots(instrument_id, date, slots):
     """
 
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (instrument_id, date, slots))
+        cur.execute(dynamic_sql(sql), (instrument_id, date, slots))
         deleted = cur.rowcount
     logger.info(
         f"Deleted {deleted} bookings for instrument_id={instrument_id} on date={date} slots={slots}"
@@ -202,7 +209,7 @@ def create_date_plan_index():
     """创建每日计划表与索引"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             CREATE TABLE IF NOT EXISTS {PLANS_TABLE} (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -217,12 +224,14 @@ def create_date_plan_index():
                     REFERENCES {USER_TABLE}(id)
                     ON DELETE CASCADE
             )
-            """
+            """)
         )
 
         # 优化按用户+日期查询，并保证同一用户同一天只有一条记录
         cur.execute(
-            f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{PLANS_TABLE}_user_date ON {PLANS_TABLE}(user_id, date)"
+            dynamic_sql(
+                f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{PLANS_TABLE}_user_date ON {PLANS_TABLE}(user_id, date)"
+            )
         )
     logger.info(f"Table '{PLANS_TABLE}' ensured.")
 
@@ -236,7 +245,7 @@ def get_dateinfo(user_name: str, date: str) -> list[tuple]:
         WHERE u.user_name = %s AND dp.date = %s
     """
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (user_name, date))
+        cur.execute(dynamic_sql(sql), (user_name, date))
         results = cur.fetchall()
 
     logger.debug(
@@ -257,7 +266,7 @@ def get_all_dateinfo_by_date(date: str, skip_names=None) -> list[dict]:
     """
 
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (date,))
+        cur.execute(dynamic_sql(sql), (date,))
         rows = cur.fetchall()
 
     skip_set = set(skip_names or [])
@@ -313,19 +322,19 @@ def upsert_plan_field(user_name: str, date: str, field: str, value) -> None:
     """
 
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(get_user_sql, (user_name,))
+        cur.execute(dynamic_sql(get_user_sql), (user_name,))
         row = cur.fetchone()
         if row is None:
             raise ValueError(f"用户 '{user_name}' 不存在")
         user_id = row[0]
 
-        cur.execute(check_sql, (user_name, date))
+        cur.execute(dynamic_sql(check_sql), (user_name, date))
         existing = cur.fetchone()
 
         if existing:
-            cur.execute(update_sql, (value, existing[0]))
+            cur.execute(dynamic_sql(update_sql), (value, existing[0]))
         else:
-            cur.execute(insert_sql, (user_id, date, value))
+            cur.execute(dynamic_sql(insert_sql), (user_id, date, value))
 
     logger.info(
         "每日计划更新成功 | user_name=%s, date=%s, field=%s", user_name, date, field
@@ -339,5 +348,5 @@ def delete_user_data(user_name: str) -> None:
         WHERE user_id = (SELECT id FROM {USER_TABLE} WHERE user_name = %s)
     """
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(sql, (user_name,))
+        cur.execute(dynamic_sql(sql), (user_name,))
     logger.info("user_name={} 的每日计划数据已删除", user_name)

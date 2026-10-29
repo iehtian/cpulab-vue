@@ -124,7 +124,10 @@ const handleDelete = async (id: number) => {
 
 const handleOpen = async () => {
   try {
-    await openReagentById(currentReagent.value?.id || -1, new Date().toISOString())
+    if (!currentReagent.value?.id || userStore.userId === null) {
+      return
+    }
+    await openReagentById(currentReagent.value.id, new Date().toISOString(), userStore.userId)
     emit('updateReagents') // 通知父组件更新试剂列表
     showDetailPopup.value = false
   } catch (error) {
@@ -144,12 +147,6 @@ const confirmDelete = async () => {
 const handleReagentUsed = async (amount?: number) => {
   try {
     if (!currentReagent.value?.id || userStore.userId === null) {
-      console.error(
-        'currentReagent.value?.id',
-        currentReagent.value?.id,
-        'userStore.userId',
-        userStore.userId,
-      )
       return
     }
     await addReagentUsage(currentReagent.value.id, userStore.userId, amount) // 假设 userId 为 1

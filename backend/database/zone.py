@@ -1,6 +1,7 @@
 from database.pgsql_config import (
     SPACE_TABLE,
     ZONE_TABLE,
+    dynamic_sql,
     get_connection,
 )
 from log_config import logger
@@ -9,7 +10,7 @@ from log_config import logger
 def create_zone():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             CREATE TABLE IF NOT EXISTS {ZONE_TABLE} (
                 id SERIAL PRIMARY KEY,
                 parent_id INTEGER REFERENCES {ZONE_TABLE}(id) ON DELETE CASCADE,
@@ -20,9 +21,11 @@ def create_zone():
                 UNIQUE NULLS NOT DISTINCT (parent_id, space_id, name)
 
             )
-            """
+            """)
         )
-        cur.execute(f"COMMENT ON COLUMN {ZONE_TABLE}.sort_order  IS '区域内排序序号'")
+        cur.execute(
+            dynamic_sql(f"COMMENT ON COLUMN {ZONE_TABLE}.sort_order  IS '区域内排序序号'")
+        )
     logger.info(f"Table '{ZONE_TABLE}' ensured.")
 
 
@@ -31,19 +34,19 @@ def add_zone(parent_id, space_id, name):
 
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             SELECT sort_order  FROM {ZONE_TABLE} WHERE parent_id IS NOT DISTINCT FROM %s AND space_id = %s
-            """,
+            """),
             (parent_id, space_id),
         )
         existing_sort_order = cur.fetchall()
         sort_order = len(existing_sort_order) + 1 if existing_sort_order else 1
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             INSERT INTO {ZONE_TABLE} (parent_id, space_id, name, sort_order)
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (parent_id, space_id, name) DO NOTHING
-            """,
+            """),
             (parent_id, space_id, name, sort_order),
         )
 
@@ -51,12 +54,12 @@ def get_child_zones(parent_id):
     """递归获取子区域"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             SELECT id, parent_id, space_id, name, sort_order
             FROM {ZONE_TABLE}
             WHERE parent_id = %s
             ORDER BY sort_order
-            """,
+            """),
             (parent_id,),
         )
         rows = cur.fetchall()
@@ -78,12 +81,12 @@ def get_zones_by_space(space_id):
     """获取指定空间下的所有区域信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             SELECT id, parent_id, space_id, name, sort_order
             FROM {ZONE_TABLE}
             WHERE space_id = %s AND parent_id IS NULL
             ORDER BY sort_order
-            """,
+            """),
             (space_id,),
         )
         # 先拿到所有的顶级区域，然后再递归获取子区域

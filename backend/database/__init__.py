@@ -7,7 +7,11 @@ Database operations package.
 
 from .pgsql_client import initialize_database
 from .pgsql_config import get_connection
-from .reagent_usage import add_reagent_usage, get_reagent_usage
+from .reagent_usage import (
+    add_reagent_usage,
+    get_reagent_usage,
+    open_reagent,
+)
 from .reagents import (
     delete_reagent_by_id,
     get_reagents_by_zone,
@@ -56,6 +60,7 @@ __all__ = [
     "add_space",
     "delete_space_by_id",
     "get_all_spaces",
+    "open_reagent",
     "upsert_reagent",
     "get_reagents_by_zone",
     "add_reagent_usage",

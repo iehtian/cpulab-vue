@@ -46,6 +46,6 @@ export async function deleteReagentById(id: number): Promise<void> {
   await service.delete(`/api/reagent/delete/${id}`)
 }
 
-export async function openReagentById(id: number, openDate: string): Promise<void> {
-  await service.post('/api/reagent/open', { id, open_date: openDate })
+export async function openReagentById(id: number, openDate: string,userId: number): Promise<void> {
+  await service.post('/api/reagent/open', { id, open_date: openDate, user_id: userId })
 }

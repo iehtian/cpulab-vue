@@ -1,5 +1,6 @@
 from database.pgsql_config import (
     SPACE_TABLE,
+    dynamic_sql,
     get_connection,
 )
 from log_config import logger
@@ -18,13 +19,13 @@ def _row_to_dict(row):
 def create_space():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             CREATE TABLE IF NOT EXISTS {SPACE_TABLE} (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours')
             )
-            """
+            """)
         )
     logger.info(f"Table '{SPACE_TABLE}' ensured.")
 
@@ -33,11 +34,11 @@ def add_space(name):
     """插入或更新空间信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             INSERT INTO {SPACE_TABLE} (name)
             VALUES (%s)
             ON CONFLICT (name) DO NOTHING
-            """,
+            """),
             (name,),
         )
 
@@ -45,9 +46,9 @@ def delete_space_by_id(space_id):
     """根据空间 ID 删除空间信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             DELETE FROM {SPACE_TABLE} WHERE id = %s
-            """,
+            """),
             (space_id,),
         )
 
@@ -55,9 +56,9 @@ def get_all_spaces():
     """获取所有空间信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            f"""
+            dynamic_sql(f"""
             SELECT id, name FROM {SPACE_TABLE} ORDER BY created_at ASC
-            """
+            """)
         )
         spaces = cur.fetchall()
         results = []
