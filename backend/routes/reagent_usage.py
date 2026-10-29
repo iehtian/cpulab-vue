@@ -14,14 +14,14 @@ def add_reagent_usage_api():
         data = request.get_json()
         reagent_id = data.get("reagent_id")
         user_id = data.get("user_id")
-        usage_time = data.get("usage_time")  # 可选参数，默认为当前时间
+        amount = data.get("amount")
 
         if not reagent_id or not user_id:
             return fail("Reagent ID and User ID are required")
 
-        db_api.add_reagent_usage(reagent_id, user_id, usage_time)
+        db_api.add_reagent_usage(reagent_id, user_id, event_type=1, amount=amount)
         logger.info(
-            f"Reagent usage record added for reagent_id={reagent_id}, user_id={user_id}, usage_time={usage_time}."
+            f"Reagent usage record added for reagent_id={reagent_id}, user_id={user_id}, amount={amount}."
         )
         return jsonify({"message": "Reagent usage record added successfully"})
 
@@ -30,6 +30,7 @@ def add_reagent_usage_api():
         return fail("Internal server error", 500)
 
 
+@bp.route("/reagent/usage/<int:reagent_id>", methods=["GET"])
 def get_reagent_usage_api(reagent_id):
     """获取指定试剂的使用记录"""
     try:

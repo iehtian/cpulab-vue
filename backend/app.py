@@ -6,7 +6,17 @@ from flask_jwt_extended import JWTManager
 
 from config import Config
 from log_config import logger
-from routes import auth, bookings, daily_plan, dygx, misc, reagents, spaces, zones
+from routes import (
+    auth,
+    bookings,
+    daily_plan,
+    dygx,
+    misc,
+    reagent_usage,
+    reagents,
+    spaces,
+    zones,
+)
 
 CORS_ORIGINS = [
     "http://localhost:5501",
@@ -17,7 +27,16 @@ CORS_ORIGINS = [
 ]
 
 # 以 /api 为前缀注册的业务蓝图
-API_BLUEPRINTS = (auth, bookings, daily_plan, dygx, spaces, zones, reagents)
+API_BLUEPRINTS = (
+    auth,
+    bookings,
+    daily_plan,
+    dygx,
+    spaces,
+    zones,
+    reagents,
+    reagent_usage,
+)
 
 
 def create_app():

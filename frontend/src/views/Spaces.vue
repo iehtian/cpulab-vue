@@ -164,6 +164,8 @@ const onAddReagent = async () => {
     bottleCount: null,
     specification: specification.value,
     expiryDate: expiryDateText.value || null,
+  }).then(() => {
+    fetchReagents()
   })
   // 提交后清空表单
   reagentName.value = ''

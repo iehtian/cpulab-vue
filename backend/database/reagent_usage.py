@@ -15,6 +15,8 @@ def create_reagent_usage():
                 id SERIAL PRIMARY KEY,
                 reagent_id INTEGER REFERENCES {REAGENT_TABLE}(id) ON DELETE CASCADE,
                 user_id INTEGER REFERENCES {USER_TABLE}(id) ON DELETE SET NULL,
+                event_type SMALLINT NOT NULL, -- 1=取用, 2=修改总量
+                amount NUMERIC, -- 取用量或修改总量
                 usage_time TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
                 UNIQUE (reagent_id, user_id, usage_time)
             )
@@ -24,20 +26,21 @@ def create_reagent_usage():
     logger.info(f"Table '{REAGENT_USAGE_TABLE}' ensured.")
 
 
-def add_reagent_usage(reagent_id, user_id, usage_date=None):
+def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
     """插入试剂使用记录"""
 
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             f"""
-            INSERT INTO {REAGENT_USAGE_TABLE} (reagent_id, user_id, usage_time)
-            VALUES (%s, %s, %s)
+            INSERT INTO {REAGENT_USAGE_TABLE} (reagent_id, user_id, event_type, amount)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (reagent_id, user_id, usage_time) DO NOTHING
             """,
             (
                 reagent_id,
                 user_id,
-                usage_date,
+                event_type,
+                amount,
             ),
         )
         conn.commit()

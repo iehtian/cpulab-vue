@@ -48,6 +48,12 @@
     </div>
     <div class="action-buttons">
       <van-button
+        type="primary"
+        @click="handleReagentUsed()"
+        v-if="currentReagent?.category === 2"
+        >取用</van-button
+      >
+      <van-button
         type="danger"
         @click="showDetailPopup = false"
         >标记需要补货</van-button
@@ -82,7 +88,9 @@ import { ref } from 'vue'
 import { openReagentById, deleteReagentById } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
 import DeleteDialog from '@/components/DeleteDialog.vue'
-
+import { addReagentUsage } from '@/api/reagentusage'
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore()
 defineProps<{ reagents: Reagent[] }>()
 
 const emit = defineEmits<{
@@ -91,7 +99,7 @@ const emit = defineEmits<{
 
 const showDetailPopup = ref(false)
 const showDeleteDialog = ref(false)
-const currentReagent = ref<Reagent | null>(null)
+const currentReagent = ref<Reagent>(null as unknown as Reagent) // 初始化为 null，但类型为 Reagent
 
 function showDetail(reagent: Reagent) {
   currentReagent.value = reagent
@@ -130,6 +138,25 @@ const confirmDelete = async () => {
     emit('updateReagents') // 通知父组件更新试剂列表
     showDeleteDialog.value = false
     showDetailPopup.value = false // 关闭详情弹层
+  }
+}
+
+const handleReagentUsed = async (amount?: number) => {
+  try {
+    if (!currentReagent.value?.id || userStore.userId === null) {
+      console.error(
+        'currentReagent.value?.id',
+        currentReagent.value?.id,
+        'userStore.userId',
+        userStore.userId,
+      )
+      return
+    }
+    await addReagentUsage(currentReagent.value.id, userStore.userId, amount) // 假设 userId 为 1
+    emit('updateReagents') // 通知父组件更新试剂列表
+    showDetailPopup.value = false
+  } catch (error) {
+    console.error('记录试剂使用失败:', error)
   }
 }
 </script>
