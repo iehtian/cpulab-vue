@@ -17,17 +17,19 @@ def add_reagent_usage_api():
         amount = data.get("amount")
 
         if not reagent_id or not user_id:
-            return fail("Reagent ID and User ID are required")
+            return fail("缺少试剂或用户信息，请刷新后重试")
 
         db_api.add_reagent_usage(reagent_id, user_id, event_type=1, amount=amount)
         logger.info(
             f"Reagent usage record added for reagent_id={reagent_id}, user_id={user_id}, amount={amount}."
         )
-        return jsonify({"message": "Reagent usage record added successfully"})
-
+        return jsonify({"message": "使用记录已添加"})
+    except ValueError as e:
+        logger.warning(f"添加试剂使用记录失败: {e}")
+        return fail(str(e), 400)
     except Exception as e:  # noqa: BLE001
         logger.exception(f"Error adding reagent usage record: {e}")
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/reagent/usage/<int:reagent_id>", methods=["GET"])
@@ -40,4 +42,4 @@ def get_reagent_usage_api(reagent_id):
         logger.exception(
             f"Error retrieving reagent usage records for reagent_id={reagent_id}: {e}"
         )
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)

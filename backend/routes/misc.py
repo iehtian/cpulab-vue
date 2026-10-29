@@ -27,5 +27,5 @@ def serve_changelog_md():
     changelog_path = BASE_DIR / "changelog.md"
     if not changelog_path.exists():
         logger.warning("changelog.md 文件不存在: {}", changelog_path)
-        return fail("changelog.md not found", 404)
+        return fail("更新日志文件不存在", 404)
     return send_from_directory(changelog_path.parent, changelog_path.name)

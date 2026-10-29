@@ -45,7 +45,7 @@ def open_reagent(reagent_id, user_id):
         )
         result = cur.fetchone()
         if result is None:
-            raise ValueError(f"Reagent with id {reagent_id} does not exist.")
+            raise ValueError("该试剂不存在或已被删除")
         capacity = None
         if result[1] is not None and result[2] is not None:
             capacity = result[1] * result[2]
@@ -72,7 +72,7 @@ def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
             (reagent_id,),
         )
         if cur.fetchone() is None:
-            raise ValueError(f"Reagent with id {reagent_id} does not exist.")
+            raise ValueError("该试剂不存在或已被删除")
 
         cur.execute(
             dynamic_sql(f"""
@@ -81,7 +81,7 @@ def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
             (reagent_id,),
         )
         if cur.fetchone() is None:
-            raise ValueError(f"Reagent with id {reagent_id} has not been opened yet")
+            raise ValueError("该试剂尚未开封，无法记录使用")
 
         cur.execute(
             dynamic_sql(f"""

@@ -22,7 +22,7 @@ def update_daily_plan():
             logger.warning(
                 "更新每日计划失败 - 缺少字段: user_name=%s, date=%s", user_name, date
             )
-            return fail("Missing required fields: user_name, date")
+            return fail("缺少用户或日期信息，请刷新后重试")
 
         field_key_map = {"plan": "plan", "status": "status", "remark": "remark"}
 
@@ -35,7 +35,7 @@ def update_daily_plan():
 
         if not updated:
             logger.warning("用户 [{}] 更新每日计划失败 - 无有效字段", user_name)
-            return fail("No updatable fields provided")
+            return fail("没有需要更新的内容")
 
         logger.info(
             "用户 [%s] 更新每日计划 | 日期: %s | 更新字段: %s",
@@ -47,7 +47,7 @@ def update_daily_plan():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("更新每日计划时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/daily_plan/all", methods=["GET"])
@@ -56,7 +56,7 @@ def get_all_daily_plans():
     try:
         date = request.args.get("date")
         if not date:
-            return fail("Date parameter is required")
+            return fail("请指定日期")
 
         res = db_api.get_all_dateinfo_by_date(date, SKIP_NAMES)
 
@@ -65,4 +65,4 @@ def get_all_daily_plans():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("获取所有用户每日计划时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)

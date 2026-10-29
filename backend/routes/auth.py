@@ -26,7 +26,7 @@ def get_register_info():
     """用户注册"""
     data = request.get_json()
     if not data:
-        return fail("No registration data provided")
+        return fail("未收到注册信息，请重新提交")
 
     user_name = data.get("user_name")
     password = data.get("password")
@@ -40,11 +40,11 @@ def get_register_info():
             password,
             email,
         )
-        return fail("Missing required fields: user_name, password, email, phone")
+        return fail("请填写完整：姓名、密码、邮箱、手机号")
 
     if db_api.search_user_by_name(user_name):
         logger.warning("注册失败 - 用户名 [{}] 已存在", user_name)
-        return fail("User name already exists")
+        return fail("该姓名已被注册，请更换")
 
     user_color = random_color()
     hashed_password = hash_password(password)
@@ -71,7 +71,10 @@ def check_auth():
         user = db_api.search_user_by_name(current_user_name)
         if not user:
             logger.warning("认证检查失败 - 用户 [{}] 不存在", current_user_name)
-            return jsonify({"logged_in": False, "message": "User not found"}), 401
+            return (
+                jsonify({"logged_in": False, "message": "用户不存在，请重新登录"}),
+                401,
+            )
 
         logger.debug("用户 [{}] 认证检查通过", current_user_name)
         return jsonify(
@@ -80,7 +83,7 @@ def check_auth():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("认证检查时发生异常: {}", e)
-        return jsonify({"logged_in": False, "message": "Invalid token"}), 401
+        return jsonify({"logged_in": False, "message": "登录状态无效，请重新登录"}), 401
 
 
 @bp.route("/login", methods=["POST"])
@@ -133,7 +136,7 @@ def refresh():
         user = db_api.search_user_by_name(current_user_name)
         if not user:
             logger.warning("Token 刷新失败 - 用户 [{}] 不存在", current_user_name)
-            return jsonify({"message": "User not found"}), 401
+            return jsonify({"message": "用户不存在，请重新登录"}), 401
 
         new_token = create_access_token(
             identity=current_user_name,
@@ -144,7 +147,7 @@ def refresh():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("刷新 Token 时发生异常: {}", e)
-        return fail("Token refresh failed", 500)
+        return fail("登录状态刷新失败，请重新登录", 500)
 
 
 @bp.route("/update_profile", methods=["POST"])
@@ -158,7 +161,7 @@ def update_profile():
         user = db_api.search_user_by_name(current_user_name)
         if not user:
             logger.warning("更新信息失败 - 用户 [{}] 不存在", current_user_name)
-            return fail("User not found", 404)
+            return fail("用户不存在", 404)
 
         new_password = data.get("new_password")
         new_email = data.get("new_email")
@@ -166,13 +169,13 @@ def update_profile():
         verification_code = data.get("verify_code")
 
         if not verification_code:
-            return fail("Verification code is required")
+            return fail("请输入验证码")
         if not verify_code.verify_reset_code(current_user_name, verification_code):
             logger.warning(
                 "更新信息失败 - 用户 [%s] 提供的验证码无效或已过期",
                 current_user_name,
             )
-            return fail("Invalid or expired reset code")
+            return fail("验证码错误或已过期，请重新获取")
 
         hashed_password = (
             hash_password(new_password) if new_password else user.get("password")
@@ -199,11 +202,11 @@ def update_profile():
             current_user_name,
             updated_fields,
         )
-        return jsonify({"message": "Profile updated successfully"})
+        return jsonify({"message": "资料更新成功"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("更新个人信息时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/send_reset_code", methods=["POST"])
@@ -215,18 +218,18 @@ def send_reset_code():
         method = data.get("method", "sms")
 
         if not user_name:
-            return fail("User name is required")
+            return fail("请输入姓名")
 
         user = db_api.search_user_by_name(user_name)
         if not user:
             logger.warning("发送验证码失败 - 用户 [{}] 不存在", user_name)
-            return fail("User not found", 404)
+            return fail("该用户不存在", 404)
 
         if method == "phone":
             phone = user.get("phone")
             if not phone:
                 logger.warning("发送验证码失败 - 用户 [{}] 未绑定手机号", user_name)
-                return fail("User has no phone number on record")
+                return fail("该用户未绑定手机号")
             verify_code.send_reset(user_name=user_name, phone=phone)
             logger.info("向用户 [{}] 手机发送重置验证码成功", user_name)
 
@@ -234,16 +237,16 @@ def send_reset_code():
             email = user.get("email")
             if not email:
                 logger.warning("发送验证码失败 - 用户 [{}] 未绑定邮箱", user_name)
-                return fail("User has no email on record")
+                return fail("该用户未绑定邮箱")
             verify_code.send_reset(user_name=user_name, email=email)
             logger.info("向用户 [{}] 邮箱发送重置验证码成功", user_name)
 
         else:
             logger.warning("发送验证码失败 - 不支持的方式: {}", method)
-            return fail("Unsupported method")
+            return fail("不支持的找回方式，请选择手机或邮箱")
 
-        return jsonify({"message": "Reset code sent"})
+        return jsonify({"message": "验证码已发送，请注意查收"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("发送重置验证码时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)

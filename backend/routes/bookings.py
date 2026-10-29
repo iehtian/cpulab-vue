@@ -31,7 +31,7 @@ def save_info():
                 date,
                 slots_ids,
             )
-            return fail("Missing required fields: date, slots, user_name")
+            return fail("请选择日期和时段后再提交")
 
         if not isinstance(slots_ids, list) or len(slots_ids) == 0:
             logger.warning(
@@ -39,7 +39,7 @@ def save_info():
                 current_user_name,
                 slots_ids,
             )
-            return fail("slots_ids must be a non-empty array")
+            return fail("请至少选择一个时段")
 
         logger.info(
             "用户 [%s] 请求预约 | 仪器: %s | 日期: %s | 时间段: %s",
@@ -61,7 +61,7 @@ def save_info():
                         date,
                         slot,
                     )
-                    return fail(f"Time slot {slot} is already booked", 409)
+                    return fail(f"时段 {slot} 已被预约，请选择其他时段", 409)
 
         successful_slots = []
         for slot in slots_ids:
@@ -78,17 +78,14 @@ def save_info():
         )
         return jsonify(
             {
-                "message": (
-                    f"Successfully booked {len(successful_slots)} "
-                    f"time slots for {current_user_name} on {date}"
-                ),
+                "message": f"已成功预约 {date} 的 {len(successful_slots)} 个时段",
                 "booked_slots": successful_slots,
             }
         )
 
     except Exception as e:  # noqa: BLE001
         logger.exception("保存预约时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/cancel_booking", methods=["POST"])
@@ -110,13 +107,13 @@ def cancel_booking():
                 date,
                 slots,
             )
-            return fail("Missing required fields: date, slots")
+            return fail("请选择日期和时段")
 
         if not isinstance(slots, list) or len(slots) == 0:
             logger.warning(
                 "用户 [%s] 取消预约失败 - slots 格式错误: %s", current_user_name, slots
             )
-            return fail("slots must be a non-empty array")
+            return fail("请至少选择一个时段")
 
         logger.info(
             "用户 [%s] 请求取消预约 | 仪器: %s | 日期: %s | 时间段: %s",
@@ -133,7 +130,7 @@ def cancel_booking():
                 current_user_name,
                 date,
             )
-            return fail("No bookings found for the specified date", 404)
+            return fail("该日期没有任何预约记录", 404)
 
         booked_slot_ids = [slot["time_slot_id"] for slot in search_by_date_result]
         for slot in slots:
@@ -144,7 +141,7 @@ def cancel_booking():
                     slot,
                     date,
                 )
-                return fail(f"Time slot {slot} is not booked", 404)
+                return fail(f"时段 {slot} 当前没有预约，无需取消", 404)
 
         deleted_count = db_api.delete_bookings_by_slots(instrument, date, slots)
 
@@ -158,17 +155,14 @@ def cancel_booking():
         )
         return jsonify(
             {
-                "message": (
-                    f"Successfully cancelled {deleted_count} "
-                    f"time slots on {date}"
-                ),
+                "message": f"已取消 {date} 的 {deleted_count} 个预约时段",
                 "cancelled_slots": list(slots),
             }
         )
 
     except Exception as e:  # noqa: BLE001
         logger.exception("取消预约时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/bookings", methods=["GET"])
@@ -179,7 +173,7 @@ def get_bookings():
 
     if not date:
         logger.warning("获取预约信息失败 - 未提供 date 参数")
-        return fail("Date parameter is required")
+        return fail("请指定日期")
 
     logger.debug("查询预约信息 | 仪器: {} | 日期: {}", instrument, date)
 
@@ -213,13 +207,13 @@ def get_user_bookings():
         instrument = request.args.get("instrument")
 
         if not date or not instrument:
-            return fail("Date and instrument parameters are required")
+            return fail("请指定日期和设备")
 
         current_user_name = get_jwt_identity()
         user = db_api.search_user_by_name(current_user_name)
         if not user:
             logger.warning("查询个人预约失败 - 用户 [{}] 不存在", current_user_name)
-            return fail("User not found", 404)
+            return fail("用户不存在", 404)
 
         user_bookings = db_api.search_booking_by_user_and_date(user["id"], date)
         times = [slot["time_slot_id"] for slot in user_bookings]
@@ -235,7 +229,7 @@ def get_user_bookings():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("获取用户预约信息时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/bookings/users", methods=["GET"])
@@ -248,22 +242,22 @@ def get_booking_users_by_range():
 
     if not start or not end:
         logger.warning("查询预约用户失败 - 缺少参数: start=%s, end=%s", start, end)
-        return fail("start and end parameters are required")
+        return fail("请指定开始和结束日期")
 
     try:
         start_date = datetime.strptime(start, "%Y-%m-%d").date()
         end_date = datetime.strptime(end, "%Y-%m-%d").date()
     except ValueError:
         logger.warning("查询预约用户失败 - 日期格式错误: start=%s, end=%s", start, end)
-        return fail("Invalid date format, expected YYYY-MM-DD")
+        return fail("日期格式不正确，应为 YYYY-MM-DD（如 2026-10-29）")
 
     if start_date > end_date:
         logger.warning("查询预约用户失败 - start > end: %s > %s", start, end)
-        return fail("start must not be later than end")
+        return fail("开始日期不能晚于结束日期")
 
     if (end_date - start_date).days > 366:
         logger.warning("查询预约用户失败 - 跨度超限: %s ~ %s", start, end)
-        return fail("Date range exceeds 366 days")
+        return fail("查询范围不能超过一年")
 
     try:
         users = db_api.search_booking_users_by_range(instrument, start, end)
@@ -277,4 +271,4 @@ def get_booking_users_by_range():
         return jsonify({"users": users})
     except Exception as e:  # noqa: BLE001
         logger.error("查询预约用户时发生异常: %s", e, exc_info=True)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)

@@ -17,15 +17,15 @@ def add_space_api():
         name = data.get("name")
 
         if not name:
-            return fail("Space name is required")
+            return fail("请填写空间名称")
 
         db_api.add_space(name)
         logger.info("空间信息已添加| 名称: {}", name)
-        return jsonify({"message": "Space information added successfully"})
+        return jsonify({"message": "空间添加成功"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息添加/更新时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/space/delete/<int:space_id>", methods=["DELETE"])
@@ -34,11 +34,11 @@ def delete_space_api(space_id):
     try:
         db_api.delete_space_by_id(space_id)
         logger.info("空间信息已删除 | ID: {}", space_id)
-        return jsonify({"message": "Space information deleted successfully"})
+        return jsonify({"message": "空间已删除"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息删除时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/space/all", methods=["GET"])
@@ -51,4 +51,4 @@ def get_all_spaces_api():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("查询所有空间信息时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)

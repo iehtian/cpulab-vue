@@ -22,18 +22,18 @@ def dygx_fetch_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return fail("storage_state is required")
+            return fail("登录状态缺失，请重新登录")
 
         date = data.get("date")
         result, error = dygx_fetch_with_state(storage_state, date)
         if error == "expired":
-            return fail("expired", 401)
+            return fail("登录已过期，请重新登录", 401)
         if error:
             return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX fetch 时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/dygx_book", methods=["POST"])
@@ -43,13 +43,13 @@ def dygx_book_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return fail("storage_state is required")
+            return fail("登录状态缺失，请重新登录")
 
         date = data.get("date")
         start_row = data.get("start_row")
         half_hours = data.get("half_hours")
         if date is None or start_row is None or half_hours is None:
-            return fail("date, start_row, half_hours are required")
+            return fail("缺少预约参数，请重新选择时段")
 
         result, error = dygx_book(
             storage_state,
@@ -65,7 +65,7 @@ def dygx_book_api():
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX book 时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/dygx_modify", methods=["POST"])
@@ -75,7 +75,7 @@ def dygx_modify_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return fail("storage_state is required")
+            return fail("登录状态缺失，请重新登录")
 
         date = data.get("date")
         start_row = data.get("start_row")
@@ -83,10 +83,7 @@ def dygx_modify_api():
         new_start_row = data.get("new_start_row")
         new_half_hours = data.get("new_half_hours")
         if None in (date, start_row, half_hours, new_start_row, new_half_hours):
-            return fail(
-                "date, start_row, half_hours, "
-                "new_start_row, new_half_hours are required"
-            )
+            return fail("缺少预约参数，请重新选择时段")
 
         result, error = dygx_modify(
             storage_state,
@@ -97,13 +94,13 @@ def dygx_modify_api():
             int(new_half_hours),
         )
         if error == "expired":
-            return fail("expired", 401)
+            return fail("登录已过期，请重新登录", 401)
         if error:
             return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX modify 时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/dygx_delete", methods=["POST"])
@@ -113,25 +110,25 @@ def dygx_delete_api():
         data = request.get_json()
         storage_state = data.get("storage_state")
         if not storage_state:
-            return fail("storage_state is required")
+            return fail("登录状态缺失，请重新登录")
 
         date = data.get("date")
         start_row = data.get("start_row")
         half_hours = data.get("half_hours")
         if date is None or start_row is None or half_hours is None:
-            return fail("date, start_row, half_hours are required")
+            return fail("缺少预约参数，请重新选择时段")
 
         result, error = dygx_delete(
             storage_state, date, int(start_row), int(half_hours)
         )
         if error == "expired":
-            return fail("expired", 401)
+            return fail("登录已过期，请重新登录", 401)
         if error:
             return fail(error)
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX delete 时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/dygx_run/login", methods=["POST"])
@@ -142,7 +139,7 @@ def dygx_run_login_api():
         username = data.get("username")
         password = data.get("password")
         if not username or not password:
-            return fail("Username and password are required")
+            return fail("请输入账号和密码")
 
         response = dygx_run_with_login(username, password)
         if not response.ok:
@@ -150,4 +147,4 @@ def dygx_run_login_api():
         return jsonify(response.storage_state), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX run (login) 时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)

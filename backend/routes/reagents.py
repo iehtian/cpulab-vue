@@ -22,7 +22,7 @@ def upsert_reagent_api():
         expiry_date = data.get("expiry_date")
 
         if not zone_id or not name or not category:
-            return fail("Zone ID, reagent name, CAS number, and category are required")
+            return fail("请填写完整：所在区域、试剂名称、类别")
 
         db_api.upsert_reagent(
             zone_id,
@@ -45,11 +45,11 @@ def upsert_reagent_api():
                 expiry_date,
             )
         )
-        return jsonify({"message": "Reagent information added/updated successfully"})
+        return jsonify({"message": "试剂信息已保存"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("试剂信息添加/更新时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/reagent/open", methods=["POST"])
@@ -62,7 +62,7 @@ def open_reagent_api():
         user_id = data.get("user_id")  # 默认用户ID为1，如果未提供
 
         if not Reagent_id or not open_date:
-            return fail("Reagent ID and open date are required")
+            return fail("请填写开封日期")
 
         db_api.update_open_date(
             Reagent_id,
@@ -78,11 +78,11 @@ def open_reagent_api():
             Reagent_id,
             user_id,
         )
-        return jsonify({"message": "Reagent information added/updated successfully"})
+        return jsonify({"message": "试剂信息已保存"})
 
     except Exception as e:  # noqa: BLE001
         logger.exception("试剂信息添加/更新时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/reagent/all/<int:zone_id>", methods=["GET"])
@@ -93,7 +93,7 @@ def get_reagents_by_zone_api(zone_id):
         return jsonify({"reagents": reagent_info})
     except Exception as e:  # noqa: BLE001
         logger.exception("获取试剂信息时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
 
 
 @bp.route("/reagent/delete/<int:reagent_id>", methods=["DELETE"])
@@ -102,7 +102,7 @@ def delete_reagent_by_id_api(reagent_id):
     try:
         db_api.delete_reagent_by_id(reagent_id)
         logger.info("试剂信息已删除| 试剂ID: {}".format(reagent_id))
-        return jsonify({"message": "Reagent information deleted successfully"})
+        return jsonify({"message": "试剂已删除"})
     except Exception as e:  # noqa: BLE001
         logger.exception("删除试剂信息时发生异常: {}", e)
-        return fail("Internal server error", 500)
+        return fail("操作失败，请稍后重试", 500)
