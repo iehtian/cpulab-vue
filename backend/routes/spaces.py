@@ -25,7 +25,7 @@ def add_space_api():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息添加/更新时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("保存空间信息失败", 500)
 
 
 @bp.route("/space/delete/<int:space_id>", methods=["DELETE"])
@@ -38,7 +38,7 @@ def delete_space_api(space_id):
 
     except Exception as e:  # noqa: BLE001
         logger.exception("空间信息删除时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("删除空间失败", 500)
 
 
 @bp.route("/space/all", methods=["GET"])
@@ -51,4 +51,4 @@ def get_all_spaces_api():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("查询所有空间信息时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("获取空间列表失败", 500)

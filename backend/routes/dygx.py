@@ -33,7 +33,7 @@ def dygx_fetch_api():
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX fetch 时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("获取 LIMS 预约信息失败", 500)
 
 
 @bp.route("/dygx_book", methods=["POST"])
@@ -65,7 +65,7 @@ def dygx_book_api():
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX book 时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("提交 LIMS 预约失败", 500)
 
 
 @bp.route("/dygx_modify", methods=["POST"])
@@ -100,7 +100,7 @@ def dygx_modify_api():
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX modify 时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("修改 LIMS 预约失败", 500)
 
 
 @bp.route("/dygx_delete", methods=["POST"])
@@ -128,7 +128,7 @@ def dygx_delete_api():
         return jsonify(result), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX delete 时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("删除 LIMS 预约失败", 500)
 
 
 @bp.route("/dygx_run/login", methods=["POST"])
@@ -147,4 +147,4 @@ def dygx_run_login_api():
         return jsonify(response.storage_state), 200
     except Exception as e:  # noqa: BLE001
         logger.exception("DYGX run (login) 时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("登录失败", 500)

@@ -85,7 +85,7 @@ def save_info():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("保存预约时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("保存预约失败", 500)
 
 
 @bp.route("/cancel_booking", methods=["POST"])
@@ -162,7 +162,7 @@ def cancel_booking():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("取消预约时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("取消预约失败", 500)
 
 
 @bp.route("/bookings", methods=["GET"])
@@ -229,7 +229,7 @@ def get_user_bookings():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("获取用户预约信息时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("获取个人预约信息失败", 500)
 
 
 @bp.route("/bookings/users", methods=["GET"])
@@ -271,4 +271,4 @@ def get_booking_users_by_range():
         return jsonify({"users": users})
     except Exception as e:  # noqa: BLE001
         logger.error("查询预约用户时发生异常: %s", e, exc_info=True)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("查询预约用户失败", 500)

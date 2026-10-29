@@ -49,7 +49,7 @@ def upsert_reagent_api():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("试剂信息添加/更新时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("保存试剂信息失败", 500)
 
 
 @bp.route("/reagent/open", methods=["POST"])
@@ -82,7 +82,7 @@ def open_reagent_api():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("试剂信息添加/更新时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("开瓶贴标失败", 500)
 
 
 @bp.route("/reagent/all/<int:zone_id>", methods=["GET"])
@@ -93,7 +93,7 @@ def get_reagents_by_zone_api(zone_id):
         return jsonify({"reagents": reagent_info})
     except Exception as e:  # noqa: BLE001
         logger.exception("获取试剂信息时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("获取试剂信息失败", 500)
 
 
 @bp.route("/reagent/delete/<int:reagent_id>", methods=["DELETE"])
@@ -105,4 +105,4 @@ def delete_reagent_by_id_api(reagent_id):
         return jsonify({"message": "试剂已删除"})
     except Exception as e:  # noqa: BLE001
         logger.exception("删除试剂信息时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("删除试剂失败", 500)

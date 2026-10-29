@@ -25,7 +25,7 @@ def add_zone_api():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("区域信息添加/更新时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("保存区域信息失败", 500)
 
 
 @bp.route("/zone/all/<int:space_id>", methods=["GET"])
@@ -36,4 +36,4 @@ def get_zone_api(space_id):
         return jsonify({"zones": zone_info})
     except Exception as e:  # noqa: BLE001
         logger.exception("获取区域信息时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("获取区域信息失败", 500)

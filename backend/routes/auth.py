@@ -206,7 +206,7 @@ def update_profile():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("更新个人信息时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("更新个人信息失败", 500)
 
 
 @bp.route("/send_reset_code", methods=["POST"])
@@ -249,4 +249,4 @@ def send_reset_code():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("发送重置验证码时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("验证码发送失败", 500)

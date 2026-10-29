@@ -47,7 +47,7 @@ def update_daily_plan():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("更新每日计划时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("更新每日计划失败", 500)
 
 
 @bp.route("/daily_plan/all", methods=["GET"])
@@ -65,4 +65,4 @@ def get_all_daily_plans():
 
     except Exception as e:  # noqa: BLE001
         logger.exception("获取所有用户每日计划时发生异常: {}", e)
-        return fail("操作失败，请稍后重试", 500)
+        return fail("获取每日计划失败", 500)
