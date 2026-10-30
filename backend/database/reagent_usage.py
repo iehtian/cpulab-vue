@@ -26,7 +26,7 @@ def create_reagent_usage():
         )
         cur.execute(
             dynamic_sql(f"""
-            CREATE UNIQUE INDEX idx_usage_open_once
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_usage_open_once
             ON {REAGENT_USAGE_TABLE} (reagent_id)
             WHERE event_type = 2
             """)

@@ -26,6 +26,7 @@ def create_reagent():
                 bottle_count INTEGER CHECK (bottle_count > 0),
                 -- 规格, 所有类别均可填, 可为空
                 specification TEXT,
+                need2restock BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
                 UNIQUE (zone_id, name),
                 -- 容量和瓶数仅允许出现在色谱级试剂上
@@ -50,6 +51,7 @@ def upsert_reagent(
     specification=_unset,
     expiry_date=_unset,
     open_date=_unset,
+    need2restock=_unset,
 ):
     """插入或更新试剂信息"""
     if zone_id is None:
@@ -63,6 +65,7 @@ def upsert_reagent(
         "specification": specification,
         "expiry_date": expiry_date,
         "open_date": open_date,
+        "need2restock": need2restock,
     }
     update_fields = {k: v for k, v in candidate_fields.items() if v is not _unset}
     if not update_fields:
@@ -96,13 +99,27 @@ def update_open_date(reagent_id, open_date):
         )
 
 
+def update_need2restock(reagent_id, need2restock):
+    """更新试剂的补货状态"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            UPDATE {REAGENT_TABLE}
+            SET need2restock = %s
+            WHERE id = %s
+            """),
+            (need2restock, reagent_id),
+        )
+    logger.info(f"Reagent need2restock updated for reagent_id={reagent_id}.")
+
+
 def get_reagents_by_zone(zone_id):
     """根据区域 ID 获取试剂信息"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
             SELECT id, zone_id, name, CAS_number, category, capacity, bottle_count,
-                   specification, open_date, expiry_date
+                   specification, open_date, expiry_date, need2restock
             FROM {REAGENT_TABLE}
             WHERE zone_id = %s
             """),
@@ -112,15 +129,16 @@ def get_reagents_by_zone(zone_id):
         reagents = [
             {
                 "id": row[0],
-                "zone_id": row[1],
+                "zoneId": row[1],
                 "name": row[2],
-                "CAS_number": row[3],
+                "casNumber": row[3],
                 "category": row[4],
                 "capacity": float(row[5]) if row[5] is not None else None,
-                "bottle_count": row[6],
+                "bottleCount": row[6],
                 "specification": row[7],
-                "open_date": row[8].isoformat() if row[8] is not None else None,
-                "expiry_date": row[9].isoformat() if row[9] is not None else None,
+                "openDate": row[8].isoformat() if row[8] is not None else None,
+                "expiryDate": row[9].isoformat() if row[9] is not None else None,
+                "need2restock": row[10],
             }
             for row in rows
         ]

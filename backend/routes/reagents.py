@@ -106,3 +106,28 @@ def delete_reagent_by_id_api(reagent_id):
     except Exception as e:  # noqa: BLE001
         logger.exception("删除试剂信息时发生异常: {}", e)
         return fail("删除试剂失败", 500)
+
+
+@bp.route("/reagent/mark_need2restock", methods=["POST"])
+def mark_reagent_need2restock_api():
+    """标记试剂需要补货"""
+    try:
+        data = request.get_json()
+        reagent_id = data.get("id")
+        need2restock = data.get("need2restock")
+
+        if reagent_id is None or need2restock is None:
+            return fail("请提供试剂ID和补货状态")
+
+        db_api.update_need2restock(reagent_id, need2restock)
+        logger.info(
+            "试剂补货状态已更新| 试剂ID: {}, 需要补货: {}".format(
+                reagent_id,
+                need2restock,
+            )
+        )
+        return jsonify({"message": "试剂补货状态已更新"})
+
+    except Exception as e:  # noqa: BLE001
+        logger.exception("更新试剂补货状态时发生异常: {}", e)
+        return fail("更新试剂补货状态失败", 500)

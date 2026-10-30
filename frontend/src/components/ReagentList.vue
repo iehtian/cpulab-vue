@@ -14,9 +14,9 @@
         >
           {{ reagent.name }}
           <span
-            v-if="reagent.bottle_count != null"
+            v-if="reagent.bottleCount != null"
             class="count"
-            >×{{ reagent.bottle_count }}</span
+            >×{{ reagent.bottleCount }}</span
           >
         </van-tag>
         <van-empty
@@ -39,12 +39,13 @@
       v-if="currentReagent"
     >
       <h3>{{ currentReagent.name }}</h3>
-      <p>CAS 号：{{ currentReagent.CAS_number || '-' }}</p>
+      <p>CAS 号：{{ currentReagent.casNumber || '-' }}</p>
       <p>规格：{{ currentReagent.specification || '-' }}</p>
       <p>容量：{{ currentReagent.capacity ?? '-' }}</p>
-      <p>瓶数：{{ currentReagent.bottle_count ?? '-' }}</p>
-      <p>开瓶日期：{{ currentReagent.open_date || '-' }}</p>
-      <p>有效期：{{ currentReagent.expiry_date || '-' }}</p>
+      <p>瓶数：{{ currentReagent.bottleCount ?? '-' }}</p>
+      <p>需要补货：{{ currentReagent.need2restock ?? '-' }}</p>
+      <p>开瓶日期：{{ currentReagent.openDate || '-' }}</p>
+      <p>有效期：{{ currentReagent.expiryDate || '-' }}</p>
     </div>
     <div class="action-buttons">
       <van-button
@@ -55,13 +56,14 @@
       >
       <van-button
         type="danger"
-        @click="showDetailPopup = false"
-        >标记需要补货</van-button
-      >
+        @click="handleneed2restock(currentReagent.id)"
+        ><p v-if="currentReagent?.need2restock === false">标记需要补货</p>
+        <p v-else>完成补货</p>
+      </van-button>
       <van-button
         plain
         type="primary"
-        :disabled="!!currentReagent?.open_date"
+        :disabled="!!currentReagent?.openDate"
         @click="handleOpen()"
         >开瓶贴标</van-button
       >
@@ -85,7 +87,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { openReagentById, deleteReagentById } from '@/api/reagent'
+import { openReagentById, deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
 import DeleteDialog from '@/components/DeleteDialog.vue'
 import { addReagentUsage, getReagentUsage } from '@/api/reagentusage'
@@ -111,8 +113,8 @@ function showDetail(reagent: Reagent) {
 
 // 按有效期/数量给胶囊着色：临近过期 → warning，数量为 0 → default
 function tagType(reagent: Reagent): 'primary' | 'warning' | 'default' {
-  if (reagent.bottle_count === 0) return 'default'
-  if (reagent.expiry_date && new Date(reagent.expiry_date).getTime() - Date.now() < 30 * 86400_000)
+  if (reagent.bottleCount === 0) return 'default'
+  if (reagent.expiryDate && new Date(reagent.expiryDate).getTime() - Date.now() < 30 * 86400_000)
     return 'warning'
   return 'primary'
 }
@@ -122,6 +124,15 @@ const handleDelete = async (id: number) => {
     await deleteReagentById(id)
   } catch (error) {
     console.error('删除试剂失败:', error)
+  }
+}
+
+const handleneed2restock = async (id: number) => {
+  try {
+    await markReagentNeed2Restock(id, !currentReagent.value.need2restock)
+    emit('updateReagents') // 通知父组件更新试剂列表
+  } catch (error) {
+    console.error('标记需要补货失败:', error)
   }
 }
 

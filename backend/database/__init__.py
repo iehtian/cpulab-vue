@@ -15,6 +15,7 @@ from .reagent_usage import (
 from .reagents import (
     delete_reagent_by_id,
     get_reagents_by_zone,
+    update_need2restock,
     update_open_date,
     upsert_reagent,
 )
@@ -67,4 +68,5 @@ __all__ = [
     "get_reagent_usage",
     "update_open_date",
     "delete_reagent_by_id",
+    "update_need2restock",
 ]
