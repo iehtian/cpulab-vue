@@ -4,19 +4,22 @@ export interface Reagent {
   id: number
   zoneId: number
   name: string
-  casNumber: string | null
+  casNumber: string
   category: number
   capacity: number | null
   bottleCount: number | null
-  specification: string | null
+  specification: string
   openDate: string | null
-  expiryDate: string | null
+  expiryDate: string
   need2restock: boolean | null
   usageLength: number | null
   lastUserName: string | null
   lastRemainder: number | null
 }
-export type ReagentPayload = Omit<Reagent, 'id' | 'openDate' | 'need2restock'>
+export type ReagentPayload = Omit<
+  Reagent,
+  'id' | 'openDate' | 'need2restock' | 'usageLength' | 'lastUserName' | 'lastRemainder'
+>
 
 export async function getReagentsByZone(zoneId: number): Promise<Reagent[]> {
   const response = await service.get(`/api/reagent/all/${zoneId}`)

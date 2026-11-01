@@ -11,6 +11,7 @@
     <ReagentList
       :reagents="reagents"
       @update-reagents="fetchReagents"
+      @edit-reagent="onReagentEdit"
     />
   </div>
   <van-submit-bar
@@ -26,70 +27,81 @@
   >
     <div class="container">
       <h3>入库新物品</h3>
-      <p>这里是入库新物品的内容，可以根据需要进行操作。</p>
-      <!-- 可以使用 CellGroup 作为容器 -->
-      <van-cell-group inset>
-        <van-field
-          v-model="reagentName"
-          label="试剂名称"
-          placeholder="请输入试剂名称"
-          required
-        />
-        <van-field
-          v-model="casNumber"
-          label="CAS号"
-          placeholder="请输入CAS号"
-        />
-        <van-field
-          v-model="categoryText"
-          is-link
-          readonly
-          label="类别"
-          placeholder="请选择类别"
-          @click="showCategoryPicker = true"
-        />
-        <van-field
-          v-model="specification"
-          label="规格/包装"
-          placeholder="请输入规格/包装"
-        />
-        <van-field
-          v-if="category === 4"
-          v-model="capacity"
-          label="单瓶容量"
-          placeholder="请输入容量"
-          required
-          type="digit"
-        />
-        <van-field
-          v-if="category === 4"
-          v-model="bottleCount"
-          label="瓶数"
-          placeholder="请输入瓶数"
-          type="digit"
-          required
-          :error-message="errors.bottleCount"
-        />
-        <van-field
-          v-model="expiryDateText"
-          is-link
-          readonly
-          label="有效期至"
-          placeholder="请选择有效期"
-          @click="showDatePicker = true"
-        />
-      </van-cell-group>
+      <van-form
+        ref="formRef"
+        @submit="onSubmit"
+        @failed="onFailed"
+      >
+        <van-cell-group inset>
+          <van-field
+            v-model="form.name"
+            name="name"
+            label="试剂名称"
+            placeholder="请输入试剂名称"
+            required
+            :rules="[{ required: true, message: '请输入试剂名称' }]"
+          />
+          <van-field
+            v-model="form.casNumber"
+            name="casNumber"
+            label="CAS号"
+            placeholder="请输入CAS号"
+          />
+          <van-field
+            v-model="categoryText"
+            is-link
+            readonly
+            label="类别"
+            placeholder="请选择类别"
+            @click="showCategoryPicker = true"
+          />
+          <van-field
+            v-model="form.specification"
+            name="specification"
+            label="规格/包装"
+            placeholder="请输入规格/包装"
+          />
+          <van-field
+            v-if="form.category === 4"
+            v-model="form.capacity"
+            name="capacity"
+            label="单瓶容量"
+            placeholder="请输入容量"
+            required
+            type="digit"
+            :rules="[{ validator: validatePositive, message: '容量必须大于0' }]"
+          />
+          <van-field
+            v-if="form.category === 4"
+            v-model="form.bottleCount"
+            name="bottleCount"
+            label="瓶数"
+            placeholder="请输入瓶数"
+            required
+            type="digit"
+            :rules="[{ validator: validatePositive, message: '瓶数必须大于0' }]"
+          />
+          <van-field
+            v-model="expiryDateText"
+            is-link
+            readonly
+            label="有效期至"
+            placeholder="请选择有效期"
+            @click="showDatePicker = true"
+          />
+        </van-cell-group>
 
-      <van-button
-        type="primary"
-        @click="onAddReagent"
-        >提交</van-button
-      >
-      <van-button
-        type="primary"
-        @click="showBottom = false"
-        >关闭</van-button
-      >
+        <van-button
+          type="primary"
+          native-type="submit"
+          >提交</van-button
+        >
+        <van-button
+          type="primary"
+          @click="showBottom = false"
+          >关闭</van-button
+        >
+      </van-form>
     </div>
   </van-popup>
   <van-popup
@@ -119,13 +131,14 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, reactive } from 'vue'
 import { useRoute } from 'vue-router'
+import { showToast } from 'vant'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
 import ReagentList from '@/components/ReagentList.vue'
 import { categoryColumns } from '@/constants/reagent'
 import { getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
-import type { Reagent } from '@/api/reagent'
+import type { Reagent, ReagentPayload } from '@/api/reagent'
 
 const spaceId = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
 
@@ -135,28 +148,27 @@ const selectedZoneId = ref<number>(0)
 const searchKeyword = ref('')
 const showBottom = ref(false)
 
-// 入库表单字段
-const reagentName = ref('')
-const casNumber = ref('')
-const specification = ref('')
-const capacity = ref('')
-const bottleCount = ref('')
-// 类别选择：category 存实际值（默认 1 普通试剂），categoryText 是显示文字
-// 与后端一致使用数字类型
-const category = ref(1)
+const initialForm = () => ({
+  name: '',
+  casNumber: '',
+  category: 1,
+  specification: '',
+  capacity: '',
+  bottleCount: '',
+})
+const form = reactive(initialForm())
 const categoryText = ref('普通试剂')
-const showCategoryPicker = ref(false)
-
-// 有效期：expiryDate 是 van-date-picker 的 v-model（[年, 月, 日] 字符串数组）
-// expiryDateText 是显示文字，提交时可直接用 'YYYY-MM-DD' 格式
 const expiryDate = ref<string[]>([])
 const expiryDateText = ref('')
+
+const showCategoryPicker = ref(false)
 const showDatePicker = ref(false)
+
 // 不允许选今天之前的日期
 const minDate = new Date()
 
 const onCategoryConfirm = ({ selectedOptions }: any) => {
-  category.value = selectedOptions[0].value as number
+  form.category = selectedOptions[0].value as number
   categoryText.value = selectedOptions[0].text as string
   showCategoryPicker.value = false
 }
@@ -170,50 +182,47 @@ const fetchReagents = async () => {
   reagents.value = await getReagentsByZone(selectedZoneId.value)
 }
 
-const errors = reactive({ capacity: '', bottleCount: '' })
-const onAddReagent = async () => {
-  const capacityValue = capacity.value === '' ? null : Number(capacity.value)
-  const bottleCountValue =
-    bottleCount.value === '' ? null : Number(bottleCount.value)
+// 容量/瓶数：必填且大于 0
+const validatePositive = (val: string) => val !== '' && Number(val) > 0
 
-  if (
-    category.value === 4 &&
-    (capacityValue === null ||
-      capacityValue <= 0 ||
-      bottleCountValue === null ||
-      bottleCountValue <= 0)
-  ) {
-    errors.capacity =
-      capacityValue === null || capacityValue <= 0 ? '容量必须大于0' : ''
-    errors.bottleCount =
-      bottleCountValue === null || bottleCountValue <= 0
-        ? '瓶数必须大于0'
-        : ''
-    return
-  }
-  await upsertReagent({
+// 校验全部通过后触发，values 是 van-form 按各 field 的 name 聚合出的对象
+const onSubmit = async (values: Record<string, string>) => {
+  // 项目开了 noUncheckedIndexedAccess，索引取值带 undefined，这里解构给默认值
+  const { name = '', casNumber = '', specification = '', capacity = '', bottleCount = '' } = values
+  const payload: ReagentPayload = {
     zoneId: selectedZoneId.value,
-    name: reagentName.value,
-    casNumber: casNumber.value,
-    category: category.value,
-    capacity: capacityValue,
-    bottleCount: bottleCountValue,
-    specification: specification.value,
-    expiryDate: expiryDateText.value || null,
-  }).then(() => {
-    fetchReagents()
-  })
-  // 提交后清空表单
-  reagentName.value = ''
-  casNumber.value = ''
-  specification.value = ''
-  capacity.value = ''
-  bottleCount.value = ''
-  category.value = 1
+    name,
+    casNumber,
+    category: form.category,
+    capacity: capacity ? Number(capacity) : null,
+    bottleCount: bottleCount ? Number(bottleCount) : null,
+    specification: specification,
+    expiryDate: expiryDateText.value,
+  }
+  await upsertReagent(payload)
+  fetchReagents()
+  // 提交后重置表单
+  Object.assign(form, initialForm())
   categoryText.value = '普通试剂'
   expiryDate.value = []
   expiryDateText.value = ''
   showBottom.value = false
+}
+
+const onFailed = (errorInfo: { errors: { message?: string }[] }) => {
+  showToast(errorInfo.errors[0]?.message ?? '请检查后填写')
+}
+
+const onReagentEdit = (reagent: Reagent) => {
+  console.log('onReagentUsed', reagent)
+  form.bottleCount = String(reagent.bottleCount)
+  form.capacity = String(reagent.capacity)
+  form.category = reagent.category
+  form.name = reagent.name
+  form.specification = reagent.specification
+  form.casNumber = reagent.casNumber
+  expiryDateText.value = reagent.expiryDate ?? ''
+  showBottom.value = true
 }
 
 watch(selectedZoneId, fetchReagents)

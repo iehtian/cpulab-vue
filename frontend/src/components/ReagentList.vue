@@ -78,7 +78,7 @@
       <van-button
         type="danger"
         v-if="!currentReagent?.openDate"
-        @click="showDetailPopup = false"
+        @click="handleEditReagent()"
         >编辑</van-button
       >
       <van-button
@@ -123,6 +123,7 @@ const props = defineProps<{ reagents: Reagent[] }>()
 
 const emit = defineEmits<{
   updateReagents: []
+  editReagent: [Reagent]
 }>()
 
 const showDetailPopup = ref(false)
@@ -228,6 +229,11 @@ const confirmUsage = async () => {
   } catch (error) {
     console.error('记录试剂使用失败:', error)
   }
+}
+
+const handleEditReagent = () => {
+  emit('editReagent', currentReagent.value!)
+  showDetailPopup.value = false
 }
 </script>
 
