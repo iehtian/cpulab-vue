@@ -31,8 +31,9 @@
       <van-cell-group inset>
         <van-field
           v-model="reagentName"
-          label="试剂名称 *"
+          label="试剂名称"
           placeholder="请输入试剂名称"
+          required
         />
         <van-field
           v-model="casNumber"
@@ -51,6 +52,23 @@
           v-model="specification"
           label="规格/包装"
           placeholder="请输入规格/包装"
+        />
+        <van-field
+          v-if="category === 4"
+          v-model="capacity"
+          label="单瓶容量"
+          placeholder="请输入容量"
+          required
+          type="digit"
+        />
+        <van-field
+          v-if="category === 4"
+          v-model="bottleCount"
+          label="瓶数"
+          placeholder="请输入瓶数"
+          type="digit"
+          required
+          :error-message="errors.bottleCount"
         />
         <van-field
           v-model="expiryDateText"
@@ -99,10 +117,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
 import ReagentList from '@/components/ReagentList.vue'
+import { categoryColumns } from '@/constants/reagent'
 import { getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
@@ -120,17 +139,14 @@ const showBottom = ref(false)
 const reagentName = ref('')
 const casNumber = ref('')
 const specification = ref('')
+const capacity = ref('')
+const bottleCount = ref('')
 // 类别选择：category 存实际值（默认 1 普通试剂），categoryText 是显示文字
 // 与后端一致使用数字类型
 const category = ref(1)
 const categoryText = ref('普通试剂')
 const showCategoryPicker = ref(false)
-const categoryColumns = [
-  { text: '普通试剂', value: 1 },
-  { text: '危化品', value: 2 },
-  { text: '生物试剂', value: 3 },
-  { text: '色谱级试剂', value: 4 },
-]
+
 // 有效期：expiryDate 是 van-date-picker 的 v-model（[年, 月, 日] 字符串数组）
 // expiryDateText 是显示文字，提交时可直接用 'YYYY-MM-DD' 格式
 const expiryDate = ref<string[]>([])
@@ -154,14 +170,34 @@ const fetchReagents = async () => {
   reagents.value = await getReagentsByZone(selectedZoneId.value)
 }
 
+const errors = reactive({ capacity: '', bottleCount: '' })
 const onAddReagent = async () => {
+  const capacityValue = capacity.value === '' ? null : Number(capacity.value)
+  const bottleCountValue =
+    bottleCount.value === '' ? null : Number(bottleCount.value)
+
+  if (
+    category.value === 4 &&
+    (capacityValue === null ||
+      capacityValue <= 0 ||
+      bottleCountValue === null ||
+      bottleCountValue <= 0)
+  ) {
+    errors.capacity =
+      capacityValue === null || capacityValue <= 0 ? '容量必须大于0' : ''
+    errors.bottleCount =
+      bottleCountValue === null || bottleCountValue <= 0
+        ? '瓶数必须大于0'
+        : ''
+    return
+  }
   await upsertReagent({
     zoneId: selectedZoneId.value,
     name: reagentName.value,
     casNumber: casNumber.value,
     category: category.value,
-    capacity: null,
-    bottleCount: null,
+    capacity: capacityValue,
+    bottleCount: bottleCountValue,
     specification: specification.value,
     expiryDate: expiryDateText.value || null,
   }).then(() => {
@@ -171,6 +207,8 @@ const onAddReagent = async () => {
   reagentName.value = ''
   casNumber.value = ''
   specification.value = ''
+  capacity.value = ''
+  bottleCount.value = ''
   category.value = 1
   categoryText.value = '普通试剂'
   expiryDate.value = []

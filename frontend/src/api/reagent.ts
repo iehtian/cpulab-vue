@@ -13,13 +13,14 @@ export interface Reagent {
   expiryDate: string | null
   need2restock: boolean | null
 }
+export type ReagentPayload = Omit<Reagent, 'id' | 'openDate' | 'need2restock'>
 
 export async function getReagentsByZone(zoneId: number): Promise<Reagent[]> {
   const response = await service.get(`/api/reagent/all/${zoneId}`)
   return response.data.reagents || []
 }
 
-export async function upsertReagent(payload: Reagent): Promise<void> {
+export async function upsertReagent(payload: ReagentPayload): Promise<void> {
   await service.post('/api/reagent/upsert', {
     zone_id: payload.zoneId,
     name: payload.name,

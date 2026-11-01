@@ -52,11 +52,11 @@ def open_reagent(reagent_id, user_id):
 
         cur.execute(
             dynamic_sql(f"""
-            INSERT INTO {REAGENT_USAGE_TABLE} (reagent_id, user_id, event_type, amount)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO {REAGENT_USAGE_TABLE} (reagent_id, user_id, event_type, amount, remaining_after)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (reagent_id) WHERE event_type = 2 DO NOTHING
             """),
-            (reagent_id, user_id, 2, capacity),
+            (reagent_id, user_id, 2, 0, capacity),
         )
     logger.info(f"Reagent opened for reagent_id={reagent_id}, user_id={user_id}.")
 
