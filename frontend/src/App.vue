@@ -1,5 +1,5 @@
 <template>
-  <el-container
+  <!-- <el-container
     direction="vertical"
     v-if="!isMobile"
   >
@@ -19,7 +19,7 @@
     </el-container>
     <RegisterDialog v-model:visible="showRegisterDialog" />
     <LoginDialog v-model:visible="showLoginDialog" />
-  </el-container>
+  </el-container> -->
 
   <van-nav-bar
     title="标题"
