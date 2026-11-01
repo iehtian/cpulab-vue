@@ -1,5 +1,7 @@
 from database.pgsql_config import (
     REAGENT_TABLE,
+    REAGENT_USAGE_TABLE,
+    USER_TABLE,
     ZONE_TABLE,
     dynamic_sql,
     get_connection,
@@ -118,10 +120,21 @@ def get_reagents_by_zone(zone_id):
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
-            SELECT id, zone_id, name, CAS_number, category, capacity, bottle_count,
-                   specification, open_date, expiry_date, need2restock
-            FROM {REAGENT_TABLE}
-            WHERE zone_id = %s
+            SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
+                r.bottle_count, r.specification, r.open_date, r.expiry_date, r.need2restock,
+                u.length, u.user_name, u.remaining_after    -- ← 别忘了把子查询结果选出来
+            FROM {REAGENT_TABLE} AS r
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) OVER () AS length,
+                    u.user_name,
+                    ru.remaining_after
+                FROM {REAGENT_USAGE_TABLE} ru
+                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
+                WHERE ru.reagent_id = r.id
+                ORDER BY ru.usage_time DESC
+                LIMIT 1
+            ) AS u ON TRUE
+            WHERE r.zone_id = %s
             """),
             (zone_id,),
         )
@@ -139,6 +152,9 @@ def get_reagents_by_zone(zone_id):
                 "openDate": row[8].isoformat() if row[8] is not None else None,
                 "expiryDate": row[9].isoformat() if row[9] is not None else None,
                 "need2restock": row[10],
+                "usageLength": row[11],
+                "lastUserName": row[12],
+                "lastRemainder": row[13],
             }
             for row in rows
         ]

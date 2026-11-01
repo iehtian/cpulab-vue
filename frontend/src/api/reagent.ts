@@ -12,6 +12,9 @@ export interface Reagent {
   openDate: string | null
   expiryDate: string | null
   need2restock: boolean | null
+  usageLength: number | null
+  lastUserName: string | null
+  lastRemainder: number | null
 }
 export type ReagentPayload = Omit<Reagent, 'id' | 'openDate' | 'need2restock'>
 

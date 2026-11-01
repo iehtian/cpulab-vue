@@ -1,18 +1,30 @@
 <template>
   <van-row>
     <van-col
-      span="8"
+      span="12"
       v-for="reagent in reagents"
       :key="reagent.id"
     >
       <div class="reagent-container">
         <van-tag
           size="large"
+          plain
           :type="tagType(reagent)"
           class="reagent-tag"
           @click="showDetail(reagent)"
         >
           {{ reagent.name }}
+          <div v-if="reagent.category === 1">常规试剂</div>
+          <div v-else-if="reagent.category === 2 || reagent.category == 3">
+            {{ reagent.usageLength ?? 0 }} 次，最近
+            {{ reagent.lastUserName ?? '-' }}
+          </div>
+          <div v-else>
+            <div v-if="reagent.openDate">
+              剩余{{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
+            </div>
+            <div v-else>尚未开瓶</div>
+          </div>
         </van-tag>
         <van-empty
           v-if="reagents.length === 0"
@@ -36,10 +48,6 @@
       <h3>{{ currentReagent.name }}</h3>
       <p><span class="label">CAS 号：</span>{{ currentReagent.casNumber || '-' }}</p>
       <p><span class="label">规格：</span>{{ currentReagent.specification || '-' }}</p>
-      <p>
-        <span class="label">使用情况：</span>被取用 {{ currentReagentUsage.length }} 次，最近
-        {{ currentReagentUsage.username }}
-      </p>
       <p><span class="label">容量：</span>{{ currentReagent.capacity ?? '-' }}</p>
       <p><span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}</p>
       <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>
@@ -51,6 +59,7 @@
         type="primary"
         @click="handleReagentUsed()"
         v-if="currentReagent?.category !== 1"
+        :disabled="!currentReagent?.openDate"
         >取用</van-button
       >
       <van-button
@@ -118,23 +127,14 @@ const emit = defineEmits<{
 
 const showDetailPopup = ref(false)
 const showDeleteDialog = ref(false)
-
-interface ReagentUsage {
-  length: number
-  remainder: number
-  username: string
-}
 const currentReagentId = ref<number | null>(null)
 
 const currentReagent = computed(
   () => props.reagents.find((r) => r.id === currentReagentId.value) ?? null,
 )
-const currentReagentUsage = ref<ReagentUsage>({ length: 0, remainder: 0, username: '-' }) // 当前试剂的使用记录
+
 function showDetail(reagent: Reagent) {
   currentReagentId.value = reagent.id
-  getReagentUsage(reagent.id).then((usage) => {
-    currentReagentUsage.value = usage.usage_records
-  })
   showDetailPopup.value = true
 }
 
@@ -265,6 +265,9 @@ const confirmUsage = async () => {
   width: 100%; /* 充满父容器（.reagent-container / van-col） */
   justify-content: center; /* 文字在 tag 内居中 */
   box-sizing: border-box; /* 让内边距算在 100% 宽度内，避免溢出 */
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 16px;
 }
 .action-buttons {
   display: flex;
