@@ -77,6 +77,7 @@
       >
       <van-button
         type="danger"
+        v-if="!currentReagent?.openDate"
         @click="showDetailPopup = false"
         >编辑</van-button
       >
@@ -115,9 +116,8 @@ import { ref, computed } from 'vue'
 import { openReagentById, deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
 import DeleteDialog from '@/components/DeleteDialog.vue'
-import { addReagentUsage, getReagentUsage } from '@/api/reagentusage'
+import { addReagentUsage } from '@/api/reagentusage'
 import { useUserStore } from '@/stores/user'
-import { showDialog } from 'vant'
 const userStore = useUserStore()
 const props = defineProps<{ reagents: Reagent[] }>()
 

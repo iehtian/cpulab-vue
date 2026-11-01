@@ -7,8 +7,4 @@ async function addReagentUsage(reagentId: number, userId: number, amount?: numbe
   })
 }
 
-async function getReagentUsage(reagentId: number): Promise<any> {
-  const response = await service.get(`/api/reagent/usage/${reagentId}`)
-  return response.data
-}
-export { addReagentUsage, getReagentUsage }
+export { addReagentUsage }

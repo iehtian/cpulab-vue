@@ -30,16 +30,3 @@ def add_reagent_usage_api():
     except Exception as e:  # noqa: BLE001
         logger.exception(f"Error adding reagent usage record: {e}")
         return fail("添加使用记录失败", 500)
-
-
-@bp.route("/reagent/usage/<int:reagent_id>", methods=["GET"])
-def get_reagent_usage_api(reagent_id):
-    """获取指定试剂的使用记录"""
-    try:
-        records = db_api.get_reagent_usage(reagent_id)
-        return jsonify({"usage_records": records})
-    except Exception as e:  # noqa: BLE001
-        logger.exception(
-            f"Error retrieving reagent usage records for reagent_id={reagent_id}: {e}"
-        )
-        return fail("获取使用记录失败", 500)
