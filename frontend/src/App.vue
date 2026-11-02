@@ -37,15 +37,15 @@
     >
     <van-tabbar-item
       replace
-      to="/user"
-      icon="search"
-      >标签</van-tabbar-item
+      to="/manager"
+      icon="cluster-o"
+      >试剂</van-tabbar-item
     >
     <van-tabbar-item
       replace
-      to="/manager"
-      icon="search"
-      >标签</van-tabbar-item
+      to="/user"
+      icon="user-o"
+      >用户</van-tabbar-item
     >
   </van-tabbar>
 </template>
