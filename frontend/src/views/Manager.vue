@@ -3,7 +3,14 @@
     <div class="container space">
       <van-cell-group>
         <van-cell title="空间管理">
-          <template #value> <div @click="onAddSpace">添加空间</div> </template>
+          <template #value>
+            <div
+              class="add-space"
+              @click="onAddSpace"
+            >
+              添加空间
+            </div>
+          </template>
         </van-cell>
         <van-cell
           v-for="space in spaces"
@@ -220,5 +227,9 @@ onMounted(fetchSpaces)
   font-size: 18px;
   color: #969799;
   padding: 4px;
+}
+.add-space {
+  color: #1989fa;
+  cursor: pointer;
 }
 </style>
