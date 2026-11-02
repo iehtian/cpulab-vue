@@ -62,7 +62,7 @@
       <van-button
         plain
         type="primary"
-        @click="onAddZone"
+        @click="onAddZone(null)"
         >添加分区</van-button
       >
       <van-button
