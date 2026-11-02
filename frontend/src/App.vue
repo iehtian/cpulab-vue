@@ -22,9 +22,9 @@
   </el-container> -->
 
   <van-nav-bar
-    title="CPU 实验室管理平台"
-    left-text="返回"
-    left-arrow
+    :title="pageTitle"
+    :left-text="isTabPage ? '' : '返回'"
+    :left-arrow="!isTabPage"
     @click-left="onClickLeft"
   />
   <router-view />
@@ -51,8 +51,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterView } from 'vue-router'
+import { useRoute } from 'vue-router'
 import router from './router/index.ts'
 import AppHeader from '@/components/AppHeader.vue'
 import RegisterDialog from '@/components/RegisterDialog.vue'
@@ -62,7 +63,12 @@ import { useUserStore } from '@/stores/user.ts'
 
 const viewportStore = useViewportStore()
 const userStore = useUserStore()
+const route = useRoute()
 const isMobile = viewportStore.isMobile
+const pageTitle = computed(() => {
+  return typeof route.meta.title === 'string' ? route.meta.title : 'CPU 实验室管理平台'
+})
+const isTabPage = computed(() => route.meta.isTabPage === true)
 
 const showRegisterDialog = ref(false)
 const showLoginDialog = ref(false)

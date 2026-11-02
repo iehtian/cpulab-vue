@@ -7,21 +7,36 @@ const router = createRouter({
       path: '/cell-room',
       name: 'CellRoom',
       component: () => import('../views/CellRoom.vue'),
+      meta: {
+        title: '标签',
+        isTabPage: true,
+      },
     },
     {
       path: '/user',
       name: 'User',
       component: () => import('../views/MobileUser.vue'),
+      meta: {
+        title: '我的',
+        isTabPage: true,
+      },
     },
     {
       path: '/manager',
       name: 'Manager',
       component: () => import('../views/Manager.vue'),
+      meta: {
+        title: '试剂',
+        isTabPage: true,
+      },
     },
     {
       path: '/spaces/:id',
       name: 'Spaces',
       component: () => import('../views/Spaces.vue'),
+      meta: {
+        title: '空间详情',
+      },
     },
   ],
 })
