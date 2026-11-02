@@ -22,7 +22,7 @@
   </el-container> -->
 
   <van-nav-bar
-    title="标题"
+    title="CPU 实验室管理平台"
     left-text="返回"
     left-arrow
     @click-left="onClickLeft"
