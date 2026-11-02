@@ -1,7 +1,5 @@
 <template>
   <div class="user-page">
-    <van-nav-bar title="我的" />
-
     <!-- 已登录 -->
     <template v-if="userStore.loggedIn">
       <van-cell-group
@@ -125,11 +123,6 @@ async function onSubmit() {
   background: #f7f8fa;
 }
 
-.form-card {
-  margin-top: 24px;
-  padding-top: 16px;
-}
-
 .btn-zone {
   margin: 24px 16px 0;
 }
@@ -139,9 +132,5 @@ async function onSubmit() {
   text-align: center;
   color: #1989fa;
   font-size: 14px;
-}
-
-.user-card {
-  margin-top: 16px;
 }
 </style>
