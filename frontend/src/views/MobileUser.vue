@@ -4,18 +4,32 @@
 
     <!-- 已登录 -->
     <template v-if="userStore.loggedIn">
-      <van-cell-group inset class="user-card">
-        <van-cell title="用户名" :value="displayName" />
+      <van-cell-group
+        inset
+        class="user-card"
+      >
+        <van-cell
+          title="用户名"
+          :value="displayName"
+        />
       </van-cell-group>
       <div class="btn-zone">
-        <van-button round block type="danger" @click="userStore.logout()">
+        <van-button
+          round
+          block
+          type="danger"
+          @click="userStore.logout()"
+        >
           退出登录
         </van-button>
       </div>
     </template>
 
     <!-- 未登录：单表单，登录/注册模式切换 -->
-    <div v-else class="form-card">
+    <div
+      v-else
+      class="form-card"
+    >
       <van-form @submit="onSubmit">
         <van-cell-group inset>
           <van-field
@@ -46,10 +60,18 @@
           />
         </van-cell-group>
         <div class="btn-zone">
-          <van-button round block type="primary" native-type="submit">
+          <van-button
+            round
+            block
+            type="primary"
+            native-type="submit"
+          >
             {{ isRegister ? '注册并登录' : '登录' }}
           </van-button>
-          <div class="switch-link" @click="toggleMode">
+          <div
+            class="switch-link"
+            @click="toggleMode"
+          >
             {{ isRegister ? '已有账号？返回登录' : '没有账号？立即注册' }}
           </div>
         </div>
@@ -73,8 +95,8 @@ const email = ref('')
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const displayName = computed(() => {
-  const info = userStore.userInfo as { user_name?: string } | null
-  return info?.user_name ?? '已登录用户'
+  const info = userStore.userName
+  return info || '未知用户'
 })
 
 function toggleMode() {
