@@ -3,12 +3,8 @@ import sys
 
 from loguru import logger
 
-LOG_DIR = "/var/log/order"
-
-# 先移除默认的 stderr handler，避免重复输出
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
 logger.remove()
-
-# 控制台（始终启用）
 logger.add(sys.stderr, level="DEBUG")
 
 # 文件写入
