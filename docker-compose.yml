@@ -9,9 +9,7 @@ services:
     ports:
       - '5435:5432'
     volumes:
-      - cpulab-db-data:/var/lib/postgresql
-      - ./wal_archive:/var/lib/postgresql/wal_archive   # 新增：WAL 归档目录
-      - ./backups:/var/lib/postgresql/backups           # 新增：base backup 目录
+      - cpulab-db-data:/var/lib/postgresql         # 新增：base backup 目录
     command: >
       postgres
       -c wal_level=logical

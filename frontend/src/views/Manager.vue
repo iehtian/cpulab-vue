@@ -1,13 +1,5 @@
 <template>
   <div>
-    <div class="container nav_buttons">
-      <van-button
-        plain
-        square
-        v-for="id in 8"
-        >朴素按钮</van-button
-      >
-    </div>
     <div class="container space">
       <van-cell-group>
         <van-cell title="空间管理">

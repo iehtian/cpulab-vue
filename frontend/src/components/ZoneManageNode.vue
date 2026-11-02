@@ -20,15 +20,15 @@
         :depth="depth + 1"
         @add="onAdd"
       />
+      <van-button
+        plain
+        type="primary"
+        @click="onAdd(area.id)"
+        size="small"
+      >
+        添加分区
+      </van-button>
     </div>
-    <van-button
-      plain
-      type="primary"
-      @click="onAdd(area.id)"
-      v-if="depth < 1"
-    >
-      添加分区
-    </van-button>
   </div>
 </template>
 
