@@ -8,13 +8,15 @@
       <ZoneDisplayNode
         v-if="zone.children?.length"
         :zones="zone.children"
-        @update:zone-id="(id) => emit('update:zoneId', id)"
+        :depth="depth + 1"
+        :path="path.slice(1)"
+        @selected="(e) => emit('selected', e)"
       />
     </van-tab>
   </van-tabs>
 </template>
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { computed } from 'vue'
 import type { Zone } from '@/api/zone'
 
 defineOptions({
@@ -22,18 +24,16 @@ defineOptions({
 })
 const props = defineProps<{
   zones: Zone[]
+  depth: number
+  path: number[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:zoneId', id: number): void
+  selected: [payload: { depth: number; index: number }]
 }>()
 
-const active = ref(0)
-watchEffect(() => {
-  // 自动追踪读取到的所有响应式依赖：active 和 props.zones
-  const zone = props.zones[active.value]
-  if (zone && !zone.children?.length) {
-    emit('update:zoneId', zone.id)
-  }
+const active = computed({
+  get: () => props.path[0] ?? 0,
+  set: (v) => emit('selected', { depth: props.depth, index: v }),
 })
 </script>

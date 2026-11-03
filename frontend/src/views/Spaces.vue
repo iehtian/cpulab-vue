@@ -5,8 +5,10 @@
       placeholder="请输入搜索关键词"
     />
     <ZoneDisplayNode
-      v-model:zone-id="selectedZoneId"
       :zones="zones"
+      :depth="0"
+      :path="activePath"
+      @selected="selectedDisplay"
     />
     <ReagentList
       :reagents="reagents"
@@ -129,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, reactive } from 'vue'
+import { ref, onMounted, watch, reactive, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
@@ -147,7 +149,7 @@ const reagents = ref<Reagent[]>([])
 const selectedZoneId = ref<number>(0)
 const searchKeyword = ref('')
 const showBottom = ref(false)
-
+const activePath = ref<number[]>([])
 const initialForm = () => ({
   name: '',
   casNumber: '',
@@ -225,9 +227,31 @@ const onReagentEdit = (reagent: Reagent) => {
   showBottom.value = true
 }
 
+const activePathLength = computed(() => activePath.value.length)
+
+function tt(zones: Zone[], path: number[], depth: number) {
+  if (zones.length === 0) return
+  if (depth >= activePathLength.value) {
+    path.push(0)
+  }
+  const index = path.at(depth) ?? 0
+  const zone = zones.at(index)
+  if (!zone) return
+  selectedZoneId.value = zone.id
+  if (zone && zone.children?.length) {
+    tt(zone.children, path, depth + 1)
+  }
+}
+
 watch(selectedZoneId, fetchReagents)
+const selectedDisplay = ({ depth, index }: { depth: number; index: number }) => {
+  activePath.value = activePath.value.slice(0, depth)
+  activePath.value[depth] = index
+  tt(zones.value, activePath.value, 0)
+}
 
 onMounted(async () => {
   zones.value = await getZonesBySpace(spaceId)
+  tt(zones.value, activePath.value, 0)
 })
 </script>
