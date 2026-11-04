@@ -10,6 +10,11 @@
           title="用户名"
           :value="displayName"
         />
+        <van-cell
+          title="我要反馈"
+          is-link
+          @click="goFeedback"
+        />
       </van-cell-group>
       <div class="btn-zone">
         <van-button
@@ -99,6 +104,10 @@ const displayName = computed(() => {
 
 function toggleMode() {
   isRegister.value = !isRegister.value
+}
+
+const goFeedback = () => {
+  window.location.href = 'https://fider.cpulab.cn/'
 }
 
 async function onSubmit() {
