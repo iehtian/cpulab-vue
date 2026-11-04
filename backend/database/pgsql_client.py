@@ -1,5 +1,6 @@
 import psycopg
 
+from database.oauth import create_oauth_client_table
 from database.reagent_usage import create_reagent_usage
 from database.reagents import create_reagent
 from database.reservation import create_booking_index, create_date_plan_index
@@ -19,6 +20,7 @@ def initialize_database():
         create_zone()
         create_reagent()
         create_reagent_usage()
+        create_oauth_client_table()
         return True
     except psycopg.Error as e:
         logger.error(f"数据库初始化失败: {e}")

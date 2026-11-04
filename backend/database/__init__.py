@@ -5,6 +5,7 @@ Database operations package.
 
 """
 
+from .oauth import create_client, create_oauth_client_table, get_client
 from .pgsql_client import initialize_database
 from .pgsql_config import get_connection
 from .reagent_usage import (
@@ -69,4 +70,7 @@ __all__ = [
     "update_open_date",
     "delete_reagent_by_id",
     "update_need2restock",
+    "create_client",
+    "create_oauth_client_table",
+    "get_client",
 ]

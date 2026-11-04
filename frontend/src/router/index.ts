@@ -38,6 +38,14 @@ const router = createRouter({
         title: '空间详情',
       },
     },
+    {
+      path: '/oauth/authorize',
+      name: 'OAuthAuthorize',
+      component: () => import('../views/OAuthAuthorize.vue'),
+      meta: {
+        title: '授权确认',
+      },
+    },
   ],
 })
 

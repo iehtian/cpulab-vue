@@ -23,6 +23,9 @@ REAGENT_CATEGORY_TABLE = "reagent_categories"
 REAGENT_USAGE_TABLE = "reagent_usage"
 
 
+OAUTH_CLIENT_TABLE = "oauth_clients"
+
+
 @contextmanager
 def get_connection() -> Iterator[psycopg.Connection]:
     """事务作用域连接：正常退出自动提交，异常自动回滚，结束自动关闭。"""
