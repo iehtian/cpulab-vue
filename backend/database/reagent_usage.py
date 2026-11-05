@@ -141,4 +141,5 @@ def get_reagent_usage(reagent_id):
 
     if record is None:
         return {"length": 0, "username": None, "remainder": None}
-    return {"length": record[0], "username": record[1], "remainder": record[2]}
+    #  开瓶贴标不应算作一次使用
+    return {"length": record[0] - 1, "username": record[1], "remainder": record[2]}
