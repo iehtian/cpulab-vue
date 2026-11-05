@@ -39,6 +39,14 @@ const router = createRouter({
       },
     },
     {
+      path: '/restock',
+      name: 'Restock',
+      component: () => import('../views/ReagentRestock.vue'),
+      meta: {
+        title: '补货',
+      },
+    },
+    {
       path: '/oauth/authorize',
       name: 'OAuthAuthorize',
       component: () => import('../views/OAuthAuthorize.vue'),

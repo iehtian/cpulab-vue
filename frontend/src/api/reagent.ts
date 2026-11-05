@@ -48,3 +48,8 @@ export async function openReagentById(id: number, openDate: string, userId: numb
 export async function markReagentNeed2Restock(id: number, need2restock: boolean): Promise<void> {
   await service.post('/api/reagent/mark_need2restock', { id, need2restock })
 }
+
+export async function getNeed2RestockReagents(): Promise<Reagent[]> {
+  const response = await service.get('/api/reagent/get_need2restock_reagents')
+  return response.data.reagents || []
+}

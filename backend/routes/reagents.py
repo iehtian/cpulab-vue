@@ -128,3 +128,13 @@ def mark_reagent_need2restock_api():
     except Exception as e:  # noqa: BLE001
         logger.exception("更新试剂补货状态时发生异常: {}", e)
         return fail("更新试剂补货状态失败", 500)
+
+@bp.route("/reagent/get_need2restock_reagents", methods=["GET"])
+def get_need2restock_reagents_api():
+    """获取所有需要补货的试剂"""
+    try:
+        reagents = db_api.get_need2restock_reagents()
+        return jsonify({"reagents": reagents})
+    except Exception as e:  # noqa: BLE001
+        logger.exception("获取需要补货的试剂信息时发生异常: {}", e)
+        return fail("获取需要补货的试剂信息失败", 500)

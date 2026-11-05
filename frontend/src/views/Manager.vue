@@ -1,5 +1,22 @@
 <template>
   <div>
+    <van-grid
+      column-num="2"
+      clickable
+    >
+      <van-grid-item text="试剂">
+        <template #icon> <FlaskConical /> </template>
+      </van-grid-item>
+
+      <van-grid-item
+        text="需补货"
+        :badge="need2RestockReagentsLength"
+        to="/restock"
+      >
+        <template #icon> <PackagePlus /> </template>
+      </van-grid-item>
+    </van-grid>
+
     <div class="container space">
       <van-cell-group>
         <van-cell title="空间管理">
@@ -86,6 +103,8 @@ import { getAllSpaces, addSpace, deleteSpaceById } from '@/api/space'
 import type { Space } from '@/api/space'
 import { addZone, getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
+import { FlaskConical, PackagePlus } from '@lucide/vue'
+import { getNeed2RestockReagents } from '@/api/reagent'
 
 interface DialogOptions {
   title: string
@@ -196,7 +215,26 @@ const confirmDelete = async () => {
   }
 }
 
-onMounted(fetchSpaces)
+import type { Reagent } from '@/api/reagent'
+import { computed } from 'vue'
+const need2RestockReagents = ref<Reagent[]>([])
+
+const need2RestockReagentsLength = computed(() => need2RestockReagents.value.length)
+
+const fetchNeed2RestockReagents = async () => {
+  try {
+    const reagents = await getNeed2RestockReagents()
+    need2RestockReagents.value = reagents
+    console.log('需要补货的试剂:', reagents)
+  } catch (err) {
+    console.error('获取需要补货的试剂失败:', err)
+  }
+}
+
+onMounted(() => {
+  fetchSpaces()
+  fetchNeed2RestockReagents()
+})
 </script>
 
 <style scoped>

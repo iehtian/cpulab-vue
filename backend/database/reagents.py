@@ -167,3 +167,34 @@ def delete_reagent_by_id(reagent_id):
             """),
             (reagent_id,),
         )
+
+
+def get_need2restock_reagents():
+    """获取所有需要补货的试剂信息"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            SELECT id, zone_id, name, CAS_number, category, capacity,
+                bottle_count, specification, open_date, need2restock
+            FROM {REAGENT_TABLE}
+            WHERE need2restock = TRUE
+            ORDER BY id
+            """)
+        )
+        rows = cur.fetchall()
+        reagents = [
+            {
+                "id": row[0],
+                "zoneId": row[1],
+                "name": row[2],
+                "casNumber": row[3],
+                "category": row[4],
+                "capacity": float(row[5]) if row[5] is not None else None,
+                "bottleCount": row[6],
+                "specification": row[7],
+                "openDate": row[8].isoformat() if row[8] is not None else None,
+                "need2restock": row[9],
+            }
+            for row in rows
+        ]
+        return reagents
