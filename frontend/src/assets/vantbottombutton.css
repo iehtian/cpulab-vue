@@ -1,0 +1,6 @@
+.action-buttons {
+  display: flex;
+  gap: 8px; /* 按钮之间的间隔 */
+  padding: 0 16px 16px; 
+  flex-wrap: wrap; /* 屏幕窄时自动换行 */
+}

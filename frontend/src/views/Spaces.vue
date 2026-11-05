@@ -28,7 +28,6 @@
     position="bottom"
   >
     <div class="container">
-      <h3>入库新物品</h3>
       <van-form
         ref="formRef"
         @submit="onSubmit"
@@ -84,17 +83,18 @@
             :rules="[{ validator: validatePositive, message: '瓶数必须大于0' }]"
           />
         </van-cell-group>
-
-        <van-button
-          type="primary"
-          native-type="submit"
-          >提交</van-button
-        >
-        <van-button
-          type="primary"
-          @click="showBottom = false"
-          >关闭</van-button
-        >
+        <div class="action-buttons">
+          <van-button
+            type="primary"
+            native-type="submit"
+            >提交</van-button
+          >
+          <van-button
+            type="primary"
+            @click="showBottom = false"
+            >关闭</van-button
+          >
+        </div>
       </van-form>
     </div>
   </van-popup>

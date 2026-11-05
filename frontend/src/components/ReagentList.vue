@@ -240,7 +240,10 @@ const handleEditReagent = () => {
   margin-left: 2px;
 }
 .detail {
-  padding: 24px;
+  padding-left: 24px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-right: 12px;
 }
 .detail h3 {
   margin-top: 0;
@@ -266,12 +269,7 @@ const handleEditReagent = () => {
   align-items: flex-start;
   font-size: 16px;
 }
-.action-buttons {
-  display: flex;
-  gap: 8px; /* 按钮之间的间隔 */
-  padding: 0 24px 24px; /* 与上面 .detail 的内边距对齐 */
-  flex-wrap: wrap; /* 屏幕窄时自动换行 */
-}
+
 /* 让 badge 的包装层撑满 van-col，恢复原来块级布局 :deep(.van-badge__wrapper) {
   display: block;
   width: 95%;
