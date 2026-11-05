@@ -129,6 +129,7 @@ def mark_reagent_need2restock_api():
         logger.exception("更新试剂补货状态时发生异常: {}", e)
         return fail("更新试剂补货状态失败", 500)
 
+
 @bp.route("/reagent/get_need2restock_reagents", methods=["GET"])
 def get_need2restock_reagents_api():
     """获取所有需要补货的试剂"""
@@ -138,3 +139,14 @@ def get_need2restock_reagents_api():
     except Exception as e:  # noqa: BLE001
         logger.exception("获取需要补货的试剂信息时发生异常: {}", e)
         return fail("获取需要补货的试剂信息失败", 500)
+
+
+@bp.route("/reagent/get_common_used_reagents/<int:user_id>", methods=["GET"])
+def get_used_times_by_user_id_api(user_id):
+    """获取用户使用次数"""
+    try:
+        used_times = db_api.get_common_used_reagents_by_user_id(user_id)
+        return jsonify({"reagents": used_times})
+    except Exception as e:  # noqa: BLE001
+        logger.exception("获取用户使用次数时发生异常: {}", e)
+        return fail("获取用户使用次数失败", 500)

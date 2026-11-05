@@ -198,3 +198,36 @@ def get_need2restock_reagents():
             for row in rows
         ]
         return reagents
+
+
+def get_common_used_reagents_by_user_id(user_id):
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+                    SELECT r.*,
+                        COUNT(*) AS times
+                    FROM reagent_usage AS u
+                    JOIN reagents AS r ON r."id" = u.reagent_id
+                    WHERE u.user_id = %s
+                    GROUP BY r."id"
+                    ORDER BY times DESC;
+            """,
+            (user_id,),
+        )
+        rows = cur.fetchall()
+        reagents = [
+            {
+                "id": row[0],
+                "zoneId": row[1],
+                "name": row[2],
+                "casNumber": row[3],
+                "category": row[4],
+                "capacity": float(row[5]) if row[5] is not None else None,
+                "bottleCount": row[6],
+                "specification": row[7],
+                "openDate": row[8].isoformat() if row[8] is not None else None,
+                "need2restock": row[9],
+            }
+            for row in rows
+        ]
+        return reagents

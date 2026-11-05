@@ -19,6 +19,9 @@ export type ReagentPayload = Omit<
   Reagent,
   'id' | 'openDate' | 'need2restock' | 'usageLength' | 'lastUserName' | 'lastRemainder'
 >
+export type ReagentTimes = Reagent & {
+  times: number
+}
 
 export async function getReagentsByZone(zoneId: number): Promise<Reagent[]> {
   const response = await service.get(`/api/reagent/all/${zoneId}`)
@@ -51,5 +54,10 @@ export async function markReagentNeed2Restock(id: number, need2restock: boolean)
 
 export async function getNeed2RestockReagents(): Promise<Reagent[]> {
   const response = await service.get('/api/reagent/get_need2restock_reagents')
+  return response.data.reagents || []
+}
+
+export async function getCommonUsedReagents(userId: number): Promise<ReagentTimes[]> {
+  const response = await service.get(`/api/reagent/get_common_used_reagents/${userId}`)
   return response.data.reagents || []
 }

@@ -56,6 +56,14 @@ const router = createRouter({
       },
     },
     {
+      path: '/common-used',
+      name: 'CommonUsed',
+      component: () => import('../views/CommonUsedReagents.vue'),
+      meta: {
+        title: '常用试剂',
+      },
+    },
+    {
       path: '/oauth/authorize',
       name: 'OAuthAuthorize',
       component: () => import('../views/OAuthAuthorize.vue'),

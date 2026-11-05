@@ -4,7 +4,10 @@
       column-num="2"
       clickable
     >
-      <van-grid-item text="试剂">
+      <van-grid-item
+        text="常用试剂"
+        to="/common-used"
+      >
         <template #icon> <FlaskConical /> </template>
       </van-grid-item>
 
