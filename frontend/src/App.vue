@@ -31,9 +31,15 @@
   <van-tabbar route>
     <van-tabbar-item
       replace
-      to="/cell-room"
+      to="/home"
       icon="home-o"
-      >标签</van-tabbar-item
+      >首页</van-tabbar-item
+    >
+    <van-tabbar-item
+      replace
+      to="/cell-room"
+      icon="calendar-o"
+      >预约</van-tabbar-item
     >
     <van-tabbar-item
       replace

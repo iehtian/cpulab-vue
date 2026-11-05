@@ -4,6 +4,15 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/',
+      name: 'Home',
+      component: () => import('../views/HomePage.vue'),
+      meta: {
+        title: '首页',
+        isTabPage: true,
+      },
+    },
+    {
       path: '/cell-room',
       name: 'CellRoom',
       component: () => import('../views/CellRoom.vue'),
