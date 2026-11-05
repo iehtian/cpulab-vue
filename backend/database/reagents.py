@@ -18,7 +18,6 @@ def create_reagent():
                 zone_id INTEGER REFERENCES {ZONE_TABLE}(id) ON DELETE CASCADE,
                 name TEXT NOT NULL,
                 CAS_number TEXT,
-                expiry_date DATE,
                 -- 开瓶贴标日期
                 open_date DATE,
                 -- 试剂类别: 1=普通试剂, 2=危化品, 3=生物试剂, 4=色谱级试剂
@@ -51,7 +50,6 @@ def upsert_reagent(
     capacity=_unset,
     bottle_count=_unset,
     specification=_unset,
-    expiry_date=_unset,
     open_date=_unset,
     need2restock=_unset,
 ):
@@ -65,7 +63,6 @@ def upsert_reagent(
         "capacity": capacity,
         "bottle_count": bottle_count,
         "specification": specification,
-        "expiry_date": expiry_date,
         "open_date": open_date,
         "need2restock": need2restock,
     }
@@ -121,7 +118,7 @@ def get_reagents_by_zone(zone_id):
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification, r.open_date, r.expiry_date, r.need2restock,
+                r.bottle_count, r.specification, r.open_date, r.need2restock,
                 u.length, u.user_name, u.remaining_after    -- ← 别忘了把子查询结果选出来
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
@@ -150,11 +147,10 @@ def get_reagents_by_zone(zone_id):
                 "bottleCount": row[6],
                 "specification": row[7],
                 "openDate": row[8].isoformat() if row[8] is not None else None,
-                "expiryDate": row[9].isoformat() if row[9] is not None else None,
-                "need2restock": row[10],
-                "usageLength": row[11],
-                "lastUserName": row[12],
-                "lastRemainder": row[13],
+                "need2restock": row[9],
+                "usageLength": row[10],
+                "lastUserName": row[11],
+                "lastRemainder": row[12],
             }
             for row in rows
         ]

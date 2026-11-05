@@ -19,7 +19,6 @@ def upsert_reagent_api():
         capacity = data.get("capacity")
         bottle_count = data.get("bottle_count")
         specification = data.get("specification")
-        expiry_date = data.get("expiry_date")
 
         if not zone_id or not name or not category:
             return fail("请填写完整：所在区域、试剂名称、类别")
@@ -32,17 +31,15 @@ def upsert_reagent_api():
             capacity=capacity,
             bottle_count=bottle_count,
             specification=specification,
-            expiry_date=expiry_date,
         )
         logger.info(
-            "试剂信息已添加/更新| 区域ID: {}, 名称: {}, 类别: {}, 容量: {}, 瓶数: {}, 规格: {}, 有效期: {}".format(
+            "试剂信息已添加/更新| 区域ID: {}, 名称: {}, 类别: {}, 容量: {}, 瓶数: {}, 规格: {}".format(
                 zone_id,
                 name,
                 category,
                 capacity,
                 bottle_count,
                 specification,
-                expiry_date,
             )
         )
         return jsonify({"message": "试剂信息已保存"})

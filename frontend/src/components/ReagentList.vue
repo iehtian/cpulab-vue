@@ -9,7 +9,7 @@
         <van-tag
           size="large"
           plain
-          :type="tagType(reagent)"
+          type="primary"
           class="reagent-tag"
           @click="showDetail(reagent)"
         >
@@ -52,7 +52,6 @@
       <p><span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}</p>
       <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>
       <p><span class="label">开瓶日期：</span>{{ currentReagent.openDate || '-' }}</p>
-      <p><span class="label">有效期：</span>{{ currentReagent.expiryDate || '-' }}</p>
     </div>
     <div class="action-buttons">
       <van-button
@@ -137,14 +136,6 @@ const currentReagent = computed(
 function showDetail(reagent: Reagent) {
   currentReagentId.value = reagent.id
   showDetailPopup.value = true
-}
-
-// 按有效期/数量给胶囊着色：临近过期 → warning，数量为 0 → default
-function tagType(reagent: Reagent): 'primary' | 'warning' | 'default' {
-  if (reagent.bottleCount === 0) return 'default'
-  if (reagent.expiryDate && new Date(reagent.expiryDate).getTime() - Date.now() < 30 * 86400_000)
-    return 'warning'
-  return 'primary'
 }
 
 const handleDelete = async (id: number) => {

@@ -10,7 +10,6 @@ export interface Reagent {
   bottleCount: number | null
   specification: string
   openDate: string | null
-  expiryDate: string
   need2restock: boolean | null
   usageLength: number | null
   lastUserName: string | null
@@ -35,7 +34,6 @@ export async function upsertReagent(payload: ReagentPayload): Promise<void> {
     capacity: payload.capacity,
     bottle_count: payload.bottleCount,
     specification: payload.specification,
-    expiry_date: payload.expiryDate,
   })
 }
 

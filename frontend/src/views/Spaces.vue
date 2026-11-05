@@ -83,14 +83,6 @@
             type="digit"
             :rules="[{ validator: validatePositive, message: '瓶数必须大于0' }]"
           />
-          <van-field
-            v-model="expiryDateText"
-            is-link
-            readonly
-            label="有效期至"
-            placeholder="请选择有效期"
-            @click="showDatePicker = true"
-          />
         </van-cell-group>
 
         <van-button
@@ -114,18 +106,6 @@
       :columns="categoryColumns"
       @confirm="onCategoryConfirm"
       @cancel="showCategoryPicker = false"
-    />
-  </van-popup>
-  <van-popup
-    v-model:show="showDatePicker"
-    position="bottom"
-  >
-    <van-date-picker
-      v-model="expiryDate"
-      title="选择有效期"
-      :min-date="minDate"
-      @confirm="onDateConfirm"
-      @cancel="showDatePicker = false"
     />
   </van-popup>
 </template>
@@ -160,24 +140,12 @@ const initialForm = () => ({
 })
 const form = reactive(initialForm())
 const categoryText = ref('普通试剂')
-const expiryDate = ref<string[]>([])
-const expiryDateText = ref('')
-
 const showCategoryPicker = ref(false)
-const showDatePicker = ref(false)
-
-// 不允许选今天之前的日期
-const minDate = new Date()
 
 const onCategoryConfirm = ({ selectedOptions }: any) => {
   form.category = selectedOptions[0].value as number
   categoryText.value = selectedOptions[0].text as string
   showCategoryPicker.value = false
-}
-
-const onDateConfirm = () => {
-  expiryDateText.value = expiryDate.value.join('-')
-  showDatePicker.value = false
 }
 
 const fetchReagents = async () => {
@@ -199,15 +167,12 @@ const onSubmit = async (values: Record<string, string>) => {
     capacity: capacity ? Number(capacity) : null,
     bottleCount: bottleCount ? Number(bottleCount) : null,
     specification: specification,
-    expiryDate: expiryDateText.value,
   }
   await upsertReagent(payload)
   fetchReagents()
   // 提交后重置表单
   Object.assign(form, initialForm())
   categoryText.value = '普通试剂'
-  expiryDate.value = []
-  expiryDateText.value = ''
   showBottom.value = false
 }
 
@@ -223,7 +188,6 @@ const onReagentEdit = (reagent: Reagent) => {
   form.name = reagent.name
   form.specification = reagent.specification
   form.casNumber = reagent.casNumber
-  expiryDateText.value = reagent.expiryDate ?? ''
   showBottom.value = true
 }
 
