@@ -144,7 +144,7 @@
   </van-popup>
   <ReagentUsePopup
     v-model:show="showUsageDialog"
-    @confirm="onConfirmUseage"
+    @confirm="confirmUsage"
   />
   <DeleteDialog
     v-model:visible="showDeleteDialog"
@@ -196,7 +196,6 @@ const fetchReagents = async () => {
   reagents.value = await getReagentsByZone(selectedZoneId.value)
 }
 
-// 复用 composable 的详情弹窗/删除逻辑，删除后刷新当前列表
 const {
   showDetailPopup,
   currentReagentId,
@@ -213,20 +212,13 @@ const {
 const currentReagent = computed(
   () => reagents.value.find((r) => r.id === currentReagentId.value) ?? undefined,
 )
-// ReagentList 只发 id，这里查出完整 reagent 再交给 composable
+
 const openDetailById = (id: number) => {
   const reagent = reagents.value.find((r) => r.id === id)
   if (reagent) openDetail(reagent)
 }
 
-// 容量/瓶数：必填且大于 0
 const validatePositive = (val: string) => val !== '' && Number(val) > 0
-
-const onConfirmUseage = (usageInput: string) => {
-  if (currentReagent.value) {
-    confirmUsage(currentReagent.value, usageInput)
-  }
-}
 
 // 校验全部通过后触发，values 是 van-form 按各 field 的 name 聚合出的对象
 const onSubmit = async (values: Record<string, string>) => {

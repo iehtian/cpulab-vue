@@ -31,7 +31,6 @@
             <div class="tag-action">
               <slot
                 name="right-button"
-                :reagent="reagent"
               />
             </div>
           </div>
@@ -51,7 +50,6 @@ import type { Reagent } from '@/api/reagent'
 const props = defineProps<{ reagents: Reagent[] }>()
 
 const emit = defineEmits<{
-  updateReagents: []
   currentReagentId: [id: number]
 }>()
 </script>

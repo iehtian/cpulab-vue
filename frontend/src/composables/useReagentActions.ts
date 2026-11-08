@@ -49,10 +49,10 @@ export function useReagentActions(refresh: () => void) {
     showDetailPopup.value = false
   }
 
-  const confirmUsage = async (reagent: Reagent, usageInput: string) => {
+  const confirmUsage = async (usageInput: string) => {
     if (userStore.userId === null) return
     try {
-      await addReagentUsage(reagent.id, userStore.userId, Number(usageInput))
+      await addReagentUsage(currentReagentId.value, userStore.userId, Number(usageInput))
       refresh()
       showUsageDialog.value = false
       showDetailPopup.value = false
