@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 
 const service = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
-  timeout: 1000,
+  timeout: 5000,
 })
 
 // 常见 HTTP 状态码对应的错误提示
