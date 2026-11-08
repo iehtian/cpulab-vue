@@ -1,7 +1,7 @@
 <template>
   <!-- 详情弹层 -->
   <van-popup
-    v-model:show="showDetailPopup"
+    v-model:show="visible"
     round
     position="bottom"
   >
@@ -25,11 +25,12 @@
 
 <script setup lang="ts">
 import type { Reagent } from '@/api/reagent'
-const props = defineProps<{
+
+defineProps<{
   currentReagent?: Reagent
 }>()
 
-const showDetailPopup = defineModel<boolean>('show', { default: false })
+const visible = defineModel<boolean>('show', { default: false })
 </script>
 
 <style scoped>

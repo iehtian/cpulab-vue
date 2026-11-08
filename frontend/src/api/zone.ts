@@ -13,6 +13,10 @@ export async function getZonesBySpace(spaceId: number): Promise<Zone[]> {
   return response.data.zones || []
 }
 
-export async function addZone(parentId: number | null, spaceId: number, name: string): Promise<void> {
+export async function addZone(
+  parentId: number | null,
+  spaceId: number,
+  name: string,
+): Promise<void> {
   await service.post('/api/zone/add', { parent_id: parentId, space_id: spaceId, name })
 }

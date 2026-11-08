@@ -1,6 +1,6 @@
 <template>
   <van-dialog
-    v-model:show="showUsageDialog"
+    v-model:show="visible"
     title="提示"
     show-cancel-button
     confirm-button-text="确定"
@@ -16,12 +16,14 @@
     />
   </van-dialog>
 </template>
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-const emit = defineEmits<{ confirm: [vale: string] }>()
-const showUsageDialog = defineModel<boolean>('show', { required: true })
 
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const emit = defineEmits<{ confirm: [value: string] }>()
+const visible = defineModel<boolean>('show', { required: true })
 const usageInput = defineModel<string>('value', { default: '' })
+
 const handleConfirm = () => {
   emit('confirm', usageInput.value)
   usageInput.value = ''

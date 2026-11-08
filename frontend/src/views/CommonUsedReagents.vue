@@ -1,66 +1,42 @@
 <template>
-  <ReagentList
-    :reagents="commonUsedReagents"
-    @currentReagentId="openDetailById"
-  >
-    <template #right-button>
+  <ReagentList :reagents="commonUsedReagents">
+    <template #right-button="{ reagent }">
       <van-button
         type="primary"
-        @click="requestUse"
+        @click="requestUse(reagent)"
       >
         取用
       </van-button>
     </template>
   </ReagentList>
   <ReagentUsePopup
-    v-model:show="showUsageDialog"
+    v-model:show="showUsagePopup"
     @confirm="confirmUsage"
   />
 </template>
+
 <script setup lang="ts">
-import ReagentList from '@/components/ReagentList.vue'
 import { ref, onMounted } from 'vue'
+import ReagentList from '@/components/ReagentList.vue'
+import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
 import { getCommonUsedReagents } from '@/api/reagent'
-import type { Reagent } from '@/api/reagent'
+import type { ReagentTimes } from '@/api/reagent'
 import { useUserStore } from '@/stores/user'
 import { useReagentActions } from '@/composables/useReagentActions'
-import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
+
 const userStore = useUserStore()
-const commonUsedReagents = ref<Reagent[]>([])
+const commonUsedReagents = ref<ReagentTimes[]>([])
 
 const fetchCommonUsedReagents = async () => {
+  if (userStore.userId === null) return
   try {
-    if (userStore.userId === null) {
-      return
-    }
-    const reagents = await getCommonUsedReagents(userStore.userId)
-    commonUsedReagents.value = reagents
-    console.log('常用试剂:', reagents)
+    commonUsedReagents.value = await getCommonUsedReagents(userStore.userId)
   } catch (err) {
     console.error('获取常用试剂失败:', err)
   }
 }
 
-const {
-  showDetailPopup,
-  currentReagentId,
-  openDetail,
-  showUsageDialog,
-  confirmUsage,
-  requestUse,
-  requestDelete,
-  showDeleteDialog,
-  confirmDelete,
-  openReagent,
-  requestRestock,
-} = useReagentActions(fetchCommonUsedReagents)
+const { showUsagePopup, requestUse, confirmUsage } = useReagentActions(fetchCommonUsedReagents)
 
-const openDetailById = (id: number) => {
-  const reagent = commonUsedReagents.value.find((r) => r.id === id)
-  if (reagent) openDetail(reagent)
-}
-
-onMounted(() => {
-  fetchCommonUsedReagents()
-})
+onMounted(fetchCommonUsedReagents)
 </script>

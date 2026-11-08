@@ -8,7 +8,7 @@
     />
     <ReagentList
       :reagents="reagents"
-      @currentReagentId="openDetailById"
+      @select="openDetailById"
     />
     <ReagentDetailPopup
       v-model:show="showDetailPopup"
@@ -16,8 +16,8 @@
     >
       <template #action-buttons>
         <van-button
-          type="primary"
           v-if="currentReagent?.category !== 1"
+          type="primary"
           :disabled="!currentReagent?.openDate"
           @click="currentReagent && requestUse(currentReagent)"
         >
@@ -25,20 +25,20 @@
         </van-button>
         <van-button
           type="danger"
-          @click="currentReagent && requestRestock(!currentReagent?.need2restock)"
-          ><p v-if="currentReagent?.need2restock === false">需要补货</p>
-          <p v-else>完成补货</p>
+          @click="currentReagent && requestRestock(currentReagent.id, !currentReagent.need2restock)"
+        >
+          {{ currentReagent?.need2restock ? '完成补货' : '需要补货' }}
         </van-button>
         <van-button
+          v-if="!currentReagent?.openDate"
           plain
           type="primary"
-          v-if="!currentReagent?.openDate"
           @click="openReagent"
           >开瓶贴标</van-button
         >
         <van-button
-          type="danger"
           v-if="!currentReagent?.openDate"
+          type="danger"
           @click="onReagentEdit"
           >编辑</van-button
         >
@@ -55,10 +55,10 @@
     button-text="入库新物品"
     button-color="#1989fa"
     :loading="false"
-    @submit="showBottom = true"
+    @submit="showFormPopup = true"
   />
   <van-popup
-    v-model:show="showBottom"
+    v-model:show="showFormPopup"
     position="bottom"
   >
     <div class="container">
@@ -125,7 +125,7 @@
           >
           <van-button
             type="primary"
-            @click="showBottom = false"
+            @click="showFormPopup = false"
             >关闭</van-button
           >
         </div>
@@ -143,7 +143,7 @@
     />
   </van-popup>
   <ReagentUsePopup
-    v-model:show="showUsageDialog"
+    v-model:show="showUsagePopup"
     @confirm="confirmUsage"
   />
   <DeleteDialog
@@ -158,22 +158,24 @@ import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
 import ReagentList from '@/components/ReagentList.vue'
+import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
+import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
+import DeleteDialog from '@/components/DeleteDialog.vue'
 import { categoryColumns } from '@/constants/reagent'
 import { getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
 import type { Reagent, ReagentPayload } from '@/api/reagent'
-import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
 import { useReagentActions } from '@/composables/useReagentActions'
-import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
-import DeleteDialog from '@/components/DeleteDialog.vue'
+
 const spaceId = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
 
 const zones = ref<Zone[]>([])
 const reagents = ref<Reagent[]>([])
-const selectedZoneId = ref<number>(0)
-const showBottom = ref(false)
+const selectedZoneId = ref(0)
 const activePath = ref<number[]>([])
+
+const showFormPopup = ref(false)
 const initialForm = () => ({
   name: '',
   casNumber: '',
@@ -200,15 +202,16 @@ const {
   showDetailPopup,
   currentReagentId,
   openDetail,
-  showUsageDialog,
-  confirmUsage,
+  showUsagePopup,
   requestUse,
-  requestDelete,
+  confirmUsage,
   showDeleteDialog,
+  requestDelete,
   confirmDelete,
   openReagent,
   requestRestock,
 } = useReagentActions(fetchReagents)
+
 const currentReagent = computed(
   () => reagents.value.find((r) => r.id === currentReagentId.value) ?? undefined,
 )
@@ -229,16 +232,16 @@ const onSubmit = async (values: Record<string, string>) => {
     name,
     casNumber,
     category: form.category,
+    specification,
     capacity: capacity ? Number(capacity) : null,
     bottleCount: bottleCount ? Number(bottleCount) : null,
-    specification: specification,
   }
   await upsertReagent(payload)
-  fetchReagents()
+  await fetchReagents()
   // 提交后重置表单
   Object.assign(form, initialForm())
   categoryText.value = '普通试剂'
-  showBottom.value = false
+  showFormPopup.value = false
 }
 
 const onFailed = (errorInfo: { errors: { message?: string }[] }) => {
@@ -248,40 +251,37 @@ const onFailed = (errorInfo: { errors: { message?: string }[] }) => {
 const onReagentEdit = () => {
   const reagent = currentReagent.value
   if (!reagent) return
-  form.bottleCount = reagent.bottleCount != null ? String(reagent.bottleCount) : ''
-  form.capacity = reagent.capacity != null ? String(reagent.capacity) : ''
-  form.category = reagent.category
   form.name = reagent.name
-  form.specification = reagent.specification
   form.casNumber = reagent.casNumber
-  showBottom.value = true
+  form.category = reagent.category
+  form.specification = reagent.specification
+  form.capacity = reagent.capacity != null ? String(reagent.capacity) : ''
+  form.bottleCount = reagent.bottleCount != null ? String(reagent.bottleCount) : ''
+  showFormPopup.value = true
 }
 
-const activePathLength = computed(() => activePath.value.length)
-
-function tt(zones: Zone[], path: number[], depth: number) {
+// 沿 activePath 逐层下钻，把 selectedZoneId 定位到当前路径对应的 zone；路径不足的层默认选第一项
+const resolveSelectedZone = (zones: Zone[], path: number[], depth: number) => {
   if (zones.length === 0) return
-  if (depth >= activePathLength.value) {
-    path.push(0)
-  }
-  const index = path.at(depth) ?? 0
-  const zone = zones.at(index)
+  if (depth >= path.length) path.push(0)
+  const zone = zones.at(path.at(depth) ?? 0)
   if (!zone) return
   selectedZoneId.value = zone.id
-  if (zone && zone.children?.length) {
-    tt(zone.children, path, depth + 1)
+  if (zone.children?.length) {
+    resolveSelectedZone(zone.children, path, depth + 1)
   }
 }
 
 watch(selectedZoneId, fetchReagents)
+
 const selectedDisplay = ({ depth, index }: { depth: number; index: number }) => {
   activePath.value = activePath.value.slice(0, depth)
   activePath.value[depth] = index
-  tt(zones.value, activePath.value, 0)
+  resolveSelectedZone(zones.value, activePath.value, 0)
 }
 
 onMounted(async () => {
   zones.value = await getZonesBySpace(spaceId)
-  tt(zones.value, activePath.value, 0)
+  resolveSelectedZone(zones.value, activePath.value, 0)
 })
 </script>

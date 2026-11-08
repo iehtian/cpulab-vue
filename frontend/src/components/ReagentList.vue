@@ -1,9 +1,9 @@
 <template>
-  <van-row>
+  <van-row v-if="reagents.length > 0">
     <van-col
-      span="12"
       v-for="reagent in reagents"
       :key="reagent.id"
+      span="12"
     >
       <div class="reagent-container">
         <van-tag
@@ -11,13 +11,13 @@
           plain
           type="primary"
           class="reagent-tag"
-          @click="emit('currentReagentId', reagent.id)"
+          @click="emit('select', reagent.id)"
         >
           <div class="tag-row">
             <div class="tag-info">
               {{ reagent.name }}
               <div v-if="reagent.category === 1">常规试剂</div>
-              <div v-else-if="reagent.category === 2 || reagent.category == 3">
+              <div v-else-if="reagent.category === 2 || reagent.category === 3">
                 {{ reagent.usageLength ?? 0 }} 次，最近
                 {{ reagent.lastUserName ?? '-' }}
               </div>
@@ -31,26 +31,28 @@
             <div class="tag-action">
               <slot
                 name="right-button"
+                :reagent="reagent"
               />
             </div>
           </div>
         </van-tag>
-        <van-empty
-          v-if="reagents.length === 0"
-          description="暂无试剂"
-          image-size="60"
-        />
       </div>
     </van-col>
   </van-row>
+  <van-empty
+    v-else
+    description="暂无试剂"
+    image-size="60"
+  />
 </template>
 
 <script setup lang="ts">
 import type { Reagent } from '@/api/reagent'
-const props = defineProps<{ reagents: Reagent[] }>()
+
+defineProps<{ reagents: Reagent[] }>()
 
 const emit = defineEmits<{
-  currentReagentId: [id: number]
+  select: [id: number]
 }>()
 </script>
 
@@ -60,10 +62,6 @@ const emit = defineEmits<{
   flex-wrap: wrap;
   gap: 8px;
   padding: 4px;
-}
-.count {
-  opacity: 0.7;
-  margin-left: 2px;
 }
 .reagent-tag {
   cursor: pointer;
@@ -89,9 +87,4 @@ const emit = defineEmits<{
   flex-shrink: 0; /* 不被压缩 */
   margin-left: auto; /* 无论左侧内容多长，都推到最右 */
 }
-
-/* 让 badge 的包装层撑满 van-col，恢复原来块级布局 :deep(.van-badge__wrapper) {
-  display: block;
-  width: 95%;
-} */
 </style>
