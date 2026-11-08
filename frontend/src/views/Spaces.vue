@@ -1,9 +1,5 @@
 <template>
   <div>
-    <van-search
-      v-model="searchKeyword"
-      placeholder="请输入搜索关键词"
-    />
     <ZoneDisplayNode
       :zones="zones"
       :depth="0"
@@ -12,9 +8,47 @@
     />
     <ReagentList
       :reagents="reagents"
-      @update-reagents="fetchReagents"
-      @edit-reagent="onReagentEdit"
+      @currentReagentId="openDetailById"
     />
+    <ReagentDetailPopup
+      v-model:show="showDetailPopup"
+      :currentReagent="currentReagent"
+    >
+      <template #action-buttons>
+        <van-button
+          type="primary"
+          v-if="currentReagent?.category !== 1"
+          :disabled="!currentReagent?.openDate"
+          @click="currentReagent && requestUse(currentReagent)"
+        >
+          取用
+        </van-button>
+        <van-button
+          type="danger"
+          @click="currentReagent && requestRestock(!currentReagent?.need2restock)"
+          ><p v-if="currentReagent?.need2restock === false">需要补货</p>
+          <p v-else>完成补货</p>
+        </van-button>
+        <van-button
+          plain
+          type="primary"
+          v-if="!currentReagent?.openDate"
+          @click="openReagent"
+          >开瓶贴标</van-button
+        >
+        <van-button
+          type="danger"
+          v-if="!currentReagent?.openDate"
+          @click="onReagentEdit"
+          >编辑</van-button
+        >
+        <van-button
+          type="danger"
+          @click="requestDelete"
+          >删除</van-button
+        >
+      </template>
+    </ReagentDetailPopup>
   </div>
   <van-submit-bar
     style="bottom: 50px"
@@ -108,6 +142,14 @@
       @cancel="showCategoryPicker = false"
     />
   </van-popup>
+  <ReagentUsePopup
+    v-model:show="showUsageDialog"
+    @confirm="onConfirmUseage"
+  />
+  <DeleteDialog
+    v-model:visible="showDeleteDialog"
+    @confirm="confirmDelete"
+  />
 </template>
 
 <script setup lang="ts">
@@ -121,13 +163,15 @@ import { getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
 import type { Reagent, ReagentPayload } from '@/api/reagent'
-
+import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
+import { useReagentActions } from '@/composables/useReagentActions'
+import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
+import DeleteDialog from '@/components/DeleteDialog.vue'
 const spaceId = Number(useRoute().params.id as string) // params.id 是 string | string[] | undefined
 
 const zones = ref<Zone[]>([])
 const reagents = ref<Reagent[]>([])
 const selectedZoneId = ref<number>(0)
-const searchKeyword = ref('')
 const showBottom = ref(false)
 const activePath = ref<number[]>([])
 const initialForm = () => ({
@@ -152,8 +196,37 @@ const fetchReagents = async () => {
   reagents.value = await getReagentsByZone(selectedZoneId.value)
 }
 
+// 复用 composable 的详情弹窗/删除逻辑，删除后刷新当前列表
+const {
+  showDetailPopup,
+  currentReagentId,
+  openDetail,
+  showUsageDialog,
+  confirmUsage,
+  requestUse,
+  requestDelete,
+  showDeleteDialog,
+  confirmDelete,
+  openReagent,
+  requestRestock,
+} = useReagentActions(fetchReagents)
+const currentReagent = computed(
+  () => reagents.value.find((r) => r.id === currentReagentId.value) ?? undefined,
+)
+// ReagentList 只发 id，这里查出完整 reagent 再交给 composable
+const openDetailById = (id: number) => {
+  const reagent = reagents.value.find((r) => r.id === id)
+  if (reagent) openDetail(reagent)
+}
+
 // 容量/瓶数：必填且大于 0
 const validatePositive = (val: string) => val !== '' && Number(val) > 0
+
+const onConfirmUseage = (usageInput: string) => {
+  if (currentReagent.value) {
+    confirmUsage(currentReagent.value, usageInput)
+  }
+}
 
 // 校验全部通过后触发，values 是 van-form 按各 field 的 name 聚合出的对象
 const onSubmit = async (values: Record<string, string>) => {
@@ -180,10 +253,11 @@ const onFailed = (errorInfo: { errors: { message?: string }[] }) => {
   showToast(errorInfo.errors[0]?.message ?? '请检查后填写')
 }
 
-const onReagentEdit = (reagent: Reagent) => {
-  console.log('onReagentUsed', reagent)
-  form.bottleCount = String(reagent.bottleCount)
-  form.capacity = String(reagent.capacity)
+const onReagentEdit = () => {
+  const reagent = currentReagent.value
+  if (!reagent) return
+  form.bottleCount = reagent.bottleCount != null ? String(reagent.bottleCount) : ''
+  form.capacity = reagent.capacity != null ? String(reagent.capacity) : ''
   form.category = reagent.category
   form.name = reagent.name
   form.specification = reagent.specification

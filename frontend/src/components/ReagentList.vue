@@ -11,19 +11,29 @@
           plain
           type="primary"
           class="reagent-tag"
-          @click="showDetail(reagent)"
+          @click="emit('currentReagentId', reagent.id)"
         >
-          {{ reagent.name }}
-          <div v-if="reagent.category === 1">常规试剂</div>
-          <div v-else-if="reagent.category === 2 || reagent.category == 3">
-            {{ reagent.usageLength ?? 0 }} 次，最近
-            {{ reagent.lastUserName ?? '-' }}
-          </div>
-          <div v-else>
-            <div v-if="reagent.openDate">
-              剩余{{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
+          <div class="tag-row">
+            <div class="tag-info">
+              {{ reagent.name }}
+              <div v-if="reagent.category === 1">常规试剂</div>
+              <div v-else-if="reagent.category === 2 || reagent.category == 3">
+                {{ reagent.usageLength ?? 0 }} 次，最近
+                {{ reagent.lastUserName ?? '-' }}
+              </div>
+              <div v-else>
+                <div v-if="reagent.openDate">
+                  剩余{{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
+                </div>
+                <div v-else>尚未开瓶</div>
+              </div>
             </div>
-            <div v-else>尚未开瓶</div>
+            <div class="tag-action">
+              <slot
+                name="right-button"
+                :reagent="reagent"
+              />
+            </div>
           </div>
         </van-tag>
         <van-empty
@@ -34,198 +44,16 @@
       </div>
     </van-col>
   </van-row>
-
-  <!-- 详情弹层 -->
-  <van-popup
-    v-model:show="showDetailPopup"
-    round
-    position="bottom"
-  >
-    <div
-      class="detail"
-      v-if="currentReagent"
-    >
-      <h3>{{ currentReagent.name }}</h3>
-      <p><span class="label">CAS 号：</span>{{ currentReagent.casNumber || '-' }}</p>
-      <p><span class="label">规格：</span>{{ currentReagent.specification || '-' }}</p>
-      <p><span class="label">容量：</span>{{ currentReagent.capacity ?? '-' }}</p>
-      <p><span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}</p>
-      <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>
-      <p><span class="label">开瓶日期：</span>{{ currentReagent.openDate || '-' }}</p>
-    </div>
-    <div class="action-buttons">
-      <van-button
-        type="primary"
-        @click="handleReagentUsed()"
-        v-if="currentReagent?.category !== 1"
-        :disabled="!currentReagent?.openDate"
-        >取用</van-button
-      >
-      <van-button
-        type="danger"
-        @click="handleneed2restock()"
-        ><p v-if="currentReagent?.need2restock === false">标记需要补货</p>
-        <p v-else>完成补货</p>
-      </van-button>
-      <van-button
-        plain
-        type="primary"
-        :disabled="!!currentReagent?.openDate"
-        @click="handleOpen()"
-        >开瓶贴标</van-button
-      >
-      <van-button
-        type="danger"
-        v-if="!currentReagent?.openDate"
-        @click="handleEditReagent()"
-        >编辑</van-button
-      >
-      <van-button
-        type="danger"
-        @click="showDeleteDialog = true"
-        >删除</van-button
-      >
-    </div>
-  </van-popup>
-  <van-dialog
-    v-model:show="showUsageDialog"
-    title="提示"
-    show-cancel-button
-    confirm-button-text="确定"
-    :confirm-button-disabled="!isUsageValid"
-    @confirm="confirmUsage"
-  >
-    <van-field
-      v-model="usageInput"
-      type="digit"
-      label="记录用量"
-      placeholder="请输入用量（ml）"
-      :formatter="onlyNumber"
-    />
-  </van-dialog>
-
-  <DeleteDialog
-    v-model:visible="showDeleteDialog"
-    @confirm="confirmDelete"
-  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { openReagentById, deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
-import DeleteDialog from '@/components/DeleteDialog.vue'
-import { addReagentUsage } from '@/api/reagentusage'
-import { useUserStore } from '@/stores/user'
-const userStore = useUserStore()
 const props = defineProps<{ reagents: Reagent[] }>()
 
 const emit = defineEmits<{
   updateReagents: []
-  editReagent: [Reagent]
+  currentReagentId: [id: number]
 }>()
-
-const showDetailPopup = ref(false)
-const showDeleteDialog = ref(false)
-const currentReagentId = ref<number | null>(null)
-
-const currentReagent = computed(
-  () => props.reagents.find((r) => r.id === currentReagentId.value) ?? null,
-)
-
-function showDetail(reagent: Reagent) {
-  currentReagentId.value = reagent.id
-  showDetailPopup.value = true
-}
-
-const handleDelete = async (id: number) => {
-  try {
-    await deleteReagentById(id)
-  } catch (error) {
-    console.error('删除试剂失败:', error)
-  }
-}
-
-const handleneed2restock = async () => {
-  try {
-    if (!currentReagentId?.value || !currentReagent.value?.need2restock) {
-      return
-    }
-
-    await markReagentNeed2Restock(currentReagentId.value, !currentReagent.value.need2restock)
-    emit('updateReagents') // 通知父组件更新试剂列表
-  } catch (error) {
-    console.error('标记需要补货失败:', error)
-  }
-}
-
-const handleOpen = async () => {
-  try {
-    if (!currentReagent.value?.id || userStore.userId === null) {
-      return
-    }
-    await openReagentById(currentReagent.value.id, new Date().toISOString(), userStore.userId)
-    emit('updateReagents') // 通知父组件更新试剂列表
-    showDetailPopup.value = false
-  } catch (error) {
-    console.error('开瓶失败:', error)
-  }
-}
-
-const confirmDelete = async () => {
-  if (currentReagent.value) {
-    await handleDelete(currentReagent.value.id)
-    emit('updateReagents') // 通知父组件更新试剂列表
-    showDeleteDialog.value = false
-    showDetailPopup.value = false // 关闭详情弹层
-  }
-}
-
-const showUsageDialog = ref(false)
-const usageInput = ref('')
-
-// 输入合法才允许点确认
-const isUsageValid = computed(() => {
-  const n = Number(usageInput.value)
-  return usageInput.value !== '' && Number.isFinite(n) && n > 0
-})
-
-// 限制只能输入数字（整数）
-const onlyNumber = (value: string) => value.replace(/[^\d]/g, '')
-
-const handleReagentUsed = async () => {
-  if (!currentReagent.value?.id || userStore.userId === null) return
-  const reagent = currentReagent.value
-  if (reagent.category === 2 || reagent.category === 3) {
-    try {
-      await addReagentUsage(reagent.id, userStore.userId, 0)
-      emit('updateReagents')
-      showDetailPopup.value = false
-    } catch (error) {
-      console.error('记录试剂使用失败:', error)
-    }
-  } else {
-    usageInput.value = '' // 每次打开重置输入
-    showUsageDialog.value = true
-  }
-  showDetailPopup.value = false
-}
-
-const confirmUsage = async () => {
-  if (!currentReagent.value || userStore.userId === null || !isUsageValid.value) return
-  try {
-    await addReagentUsage(currentReagent.value.id, userStore.userId, Number(usageInput.value))
-    emit('updateReagents')
-    showDetailPopup.value = false
-  } catch (error) {
-    console.error('记录试剂使用失败:', error)
-  }
-}
-
-const handleEditReagent = () => {
-  emit('editReagent', currentReagent.value!)
-  showDetailPopup.value = false
-}
 </script>
 
 <style scoped>
@@ -239,23 +67,6 @@ const handleEditReagent = () => {
   opacity: 0.7;
   margin-left: 2px;
 }
-.detail {
-  padding-left: 24px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  padding-right: 12px;
-}
-.detail h3 {
-  margin-top: 0;
-}
-.detail p {
-  display: flex;
-  margin: 8px 0;
-  color: #666;
-}
-.detail .label {
-  flex: 0 0 5em; /* 不伸不缩，所有标签固定占 5em，值的起点对齐 */
-}
 .reagent-tag {
   cursor: pointer;
   /* 放大字号和内边距，tag 的高度 = 行高 + 上下内边距 */
@@ -268,6 +79,17 @@ const handleEditReagent = () => {
   flex-direction: column;
   align-items: flex-start;
   font-size: 16px;
+}
+.tag-row {
+  display: flex;
+  align-items: center; /* 按钮垂直居中 */
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+.tag-action {
+  flex-shrink: 0; /* 不被压缩 */
+  margin-left: auto; /* 无论左侧内容多长，都推到最右 */
 }
 
 /* 让 badge 的包装层撑满 van-col，恢复原来块级布局 :deep(.van-badge__wrapper) {
