@@ -9,7 +9,7 @@ from log_config import logger
 
 
 # -------- 预约相关 --------
-def create_booking_index():
+def create_booking_table():
     with get_connection() as conn, conn.cursor() as cur:
         # 创建预约表
         cur.execute(
@@ -49,7 +49,7 @@ def create_booking_index():
     logger.info(f"Table '{BOOKING_TABLE}' ensured.")
 
 
-def upsert_booking(user_name, instrument_id, date, time_slot_id):
+def upsert_booking(user_name, instrument_id, booking_date, time_slot_id):
     """插入预约，通过 user_name 获取 user_id"""
     # 先根据 user_name 查询 user_id
     get_user_sql = f"SELECT id FROM {USER_TABLE} WHERE user_name = %s"
@@ -63,7 +63,7 @@ def upsert_booking(user_name, instrument_id, date, time_slot_id):
     logger.info(
         f"Creating booking -> "
         f"{{'user_name': {user_name}, 'instrument_id': {instrument_id}, "
-        f"'date': {date}, 'time_slot_id': {time_slot_id}}}"
+        f"'date': {booking_date}, 'time_slot_id': {time_slot_id}}}"
     )
     with get_connection() as conn, conn.cursor() as cur:
         # 获取 user_id
@@ -76,12 +76,14 @@ def upsert_booking(user_name, instrument_id, date, time_slot_id):
         user_id = result[0]
 
         # 插入预约
-        cur.execute(dynamic_sql(insert_sql), (user_id, instrument_id, date, time_slot_id))
+        cur.execute(
+            dynamic_sql(insert_sql), (user_id, instrument_id, booking_date, time_slot_id)
+        )
         booking_id = cur.fetchone()[0]
     logger.info(
         f"Created booking id={booking_id} -> "
         f"{{'user_name': {user_name}, 'user_id': {user_id}, "
-        f"'instrument_id': {instrument_id}, 'date': {date}, "
+        f"'instrument_id': {instrument_id}, 'date': {booking_date}, "
         f"'time_slot_id': {time_slot_id}}}"
     )
     return booking_id
@@ -103,7 +105,7 @@ def _row_to_booking(row):
     }
 
 
-def search_booking_by_date(instrument_id, date):
+def get_bookings_by_date(instrument_id, booking_date):
     """查询某仪器某日期的所有预约（关联用户信息）"""
     sql = f"""
         SELECT b.id, b.user_id, b.instrument_id, b.booking_date, 
@@ -115,23 +117,23 @@ def search_booking_by_date(instrument_id, date):
         ORDER BY b.time_slot_id
     """
     with get_connection() as conn, conn.cursor() as cur:
-        logger.info(f"Executing SQL: {sql} with params: {(instrument_id, date)}")
-        cur.execute(dynamic_sql(sql), (instrument_id, date))
+        logger.info(f"Executing SQL: {sql} with params: {(instrument_id, booking_date)}")
+        cur.execute(dynamic_sql(sql), (instrument_id, booking_date))
         rows = cur.fetchall()
 
     # 包含用户信息的结果
     results = []
     for row in rows:
-        booking = _row_to_booking(row[:6])  # 前7个字段包含 user_name
+        booking = _row_to_booking(row[:6])  # 前 6 个字段（含 user_name）
         booking["color"] = row[6]  # 添加颜色信息
         results.append(booking)
     return results
 
 
-def search_booking_by_user_and_date(user_id, date):
+def get_bookings_by_user_and_date(user_id, booking_date):
     """查询某人某日期的所有预约"""
     sql = f"""
-        SELECT b.id, b.user_id, b.instrument_id, b.booking_date, 
+        SELECT b.id, b.user_id, b.instrument_id, b.booking_date,
                b.time_slot_id, u.user_name
         FROM {BOOKING_TABLE} b
         JOIN {USER_TABLE} u ON b.user_id = u.id
@@ -139,13 +141,13 @@ def search_booking_by_user_and_date(user_id, date):
         ORDER BY b.time_slot_id
     """
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute(dynamic_sql(sql), (user_id, date))
+        cur.execute(dynamic_sql(sql), (user_id, booking_date))
         rows = cur.fetchall()
-        logger.info(f"Found bookings for user_id={user_id}, date={date}: {rows}")
+        logger.info(f"Found bookings for user_id={user_id}, date={booking_date}: {rows}")
     return [_row_to_booking(row) for row in rows]
 
 
-def search_booking_users_by_range(instrument_id, start_date, end_date):
+def get_booking_users_by_range(instrument_id, start_date, end_date):
     """查询某仪器在 [start_date, end_date]（含端点）内预约过的去重用户名与颜色，按用户名排序。"""
     sql = f"""
         SELECT DISTINCT u.user_name, u.color
@@ -205,7 +207,7 @@ def delete_bookings_by_slots(instrument_id, date, slots):
 
 
 # -------- 每日计划相关 --------
-def create_date_plan_index():
+def create_daily_plan_table():
     """创建每日计划表与索引"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
@@ -236,7 +238,7 @@ def create_date_plan_index():
     logger.info(f"Table '{PLANS_TABLE}' ensured.")
 
 
-def get_dateinfo(user_name: str, date: str) -> list[tuple]:
+def get_daily_plan(user_name: str, date: str) -> list[tuple]:
     """根据 user_name 和 date 查询 plan / status / remark"""
     sql = f"""
         SELECT dp.plan, dp.status, dp.remark
@@ -254,7 +256,7 @@ def get_dateinfo(user_name: str, date: str) -> list[tuple]:
     return results
 
 
-def get_all_dateinfo_by_date(date: str, skip_names=None) -> list[dict]:
+def get_daily_plans_by_date(date: str, skip_names=None) -> list[dict]:
     """按日期查询所有用户每日计划，返回结构与接口层一致。"""
     sql = f"""
         SELECT u.user_name, dp.plan, dp.status, dp.remark
@@ -341,7 +343,7 @@ def upsert_plan_field(user_name: str, date: str, field: str, value) -> None:
     )
 
 
-def delete_user_data(user_name: str) -> None:
+def delete_user_daily_plans(user_name: str) -> None:
     """删除某用户的全部 date_plans 记录"""
     sql = f"""
         DELETE FROM {PLANS_TABLE}

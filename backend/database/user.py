@@ -7,14 +7,14 @@ from log_config import logger
 
 
 # -------- 用户相关 --------
-def user_index_exists(index_name=USER_TABLE):
+def user_table_exists(table_name=USER_TABLE):
     with get_connection() as conn, conn.cursor() as cur:
-        cur.execute("SELECT to_regclass(%s)", (f"public.{index_name}",))
+        cur.execute("SELECT to_regclass(%s)", (f"public.{table_name}",))
         exists = cur.fetchone()[0] is not None
     return exists
 
 
-def create_user_index():
+def create_user_table():
     with get_connection() as conn, conn.cursor() as cur:
         # 创建用户表，使用 SERIAL 作为主键
         # fmt: off

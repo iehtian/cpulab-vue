@@ -71,15 +71,20 @@ def escape_redis_search_value(value):
     return "".join(out)
 
 
-def upsert_user(user_id, ID, password, user_name, color):
+def upsert_user(user_id, id_number, password, user_name, color):
     key = f"user:{user_id}"
-    data = {"ID": ID, "password": password, "user_name": user_name, "color": color}
+    data = {
+        "ID": id_number,
+        "password": password,
+        "user_name": user_name,
+        "color": color,
+    }
     r.execute_command("JSON.SET", key, "$", json.dumps(data))
     print(f"Upserted {key}: {data}")
 
 
-def search_user_by_ID(ID):
-    escaped_id = escape_redis_search_value(ID)
+def search_user_by_id(id_number):
+    escaped_id = escape_redis_search_value(id_number)
     query = f"@ID:{{{escaped_id}}}"
     return search_user(query)
 
@@ -226,5 +231,5 @@ if __name__ == "__main__":
     print(f"{data}")
     for key, user in data:
         print(
-            f"user {user['real_name']} password {user['password']} color {user['color']}"
+            f"user {user['user_name']} password {user['password']} color {user['color']}"
         )

@@ -24,14 +24,12 @@ def update_daily_plan():
             )
             return fail("缺少用户或日期信息，请刷新后重试")
 
-        field_key_map = {"plan": "plan", "status": "status", "remark": "remark"}
-
         updated = []
-        for payload_key, db_field in field_key_map.items():
-            value = data.get(payload_key)
+        for field in ("plan", "status", "remark"):
+            value = data.get(field)
             if value is not None and value != "":
-                db_api.upsert_plan_field(user_name, date, db_field, value)
-                updated.append(db_field)
+                db_api.upsert_plan_field(user_name, date, field, value)
+                updated.append(field)
 
         if not updated:
             logger.warning("用户 [{}] 更新每日计划失败 - 无有效字段", user_name)
@@ -58,7 +56,7 @@ def get_all_daily_plans():
         if not date:
             return fail("请指定日期")
 
-        res = db_api.get_all_dateinfo_by_date(date, SKIP_NAMES)
+        res = db_api.get_daily_plans_by_date(date, SKIP_NAMES)
 
         logger.debug("查询所有用户每日计划 | 日期: {} | 共 {} 条", date, len(res))
         return jsonify({"data": res})

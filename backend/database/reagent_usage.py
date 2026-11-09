@@ -7,8 +7,12 @@ from database.pgsql_config import (
 )
 from log_config import logger
 
+# 使用记录的事件类型
+EVENT_USE = 1  # 取用
+EVENT_OPEN = 2  # 开瓶贴标设置总量
 
-def create_reagent_usage():
+
+def create_reagent_usage_table():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
@@ -16,7 +20,7 @@ def create_reagent_usage():
                 id SERIAL PRIMARY KEY,
                 reagent_id INTEGER REFERENCES {REAGENT_TABLE}(id) ON DELETE CASCADE,
                 user_id INTEGER REFERENCES {USER_TABLE}(id) ON DELETE SET NULL,
-                event_type SMALLINT NOT NULL, -- 1=取用, 2=开屏贴标设置总量
+                event_type SMALLINT NOT NULL, -- 1=取用, 2=开瓶贴标设置总量
                 amount NUMERIC, -- 取用量或修改总量
                 remaining_after NUMERIC, -- 余量
                 usage_time TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
@@ -56,7 +60,7 @@ def open_reagent(reagent_id, user_id):
             VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (reagent_id) WHERE event_type = 2 DO NOTHING
             """),
-            (reagent_id, user_id, 2, 0, capacity),
+            (reagent_id, user_id, EVENT_OPEN, 0, capacity),
         )
     logger.info(f"Reagent opened for reagent_id={reagent_id}, user_id={user_id}.")
 
@@ -95,7 +99,7 @@ def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
         last_record = cur.fetchone()
         last_remainder = last_record[0] if last_record else None
 
-        if event_type == 1:
+        if event_type == EVENT_USE:
             new_remainder = (
                 last_remainder - amount if last_remainder is not None else None
             )
@@ -126,7 +130,7 @@ def get_reagent_usage(reagent_id):
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
-            SELECT COUNT(*) OVER () AS length,
+            SELECT COUNT(*) OVER () AS usage_count,
                    u.user_name,
                    r.remaining_after
             FROM {REAGENT_USAGE_TABLE} r
@@ -140,6 +144,10 @@ def get_reagent_usage(reagent_id):
         record = cur.fetchone()
 
     if record is None:
-        return {"length": 0, "username": None, "remainder": None}
+        return {"usage_count": 0, "user_name": None, "remaining": None}
     #  开瓶贴标不应算作一次使用
-    return {"length": record[0] - 1, "username": record[1], "remainder": record[2]}
+    return {
+        "usage_count": record[0] - 1,
+        "user_name": record[1],
+        "remaining": record[2],
+    }

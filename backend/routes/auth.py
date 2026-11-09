@@ -22,7 +22,7 @@ bp = Blueprint("auth", __name__)
 
 
 @bp.route("/register", methods=["POST"])
-def get_register_info():
+def register():
     """用户注册"""
     data = request.get_json()
     if not data:

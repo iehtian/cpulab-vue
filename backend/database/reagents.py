@@ -9,7 +9,7 @@ from database.pgsql_config import (
 from log_config import logger
 
 
-def create_reagent():
+def create_reagent_table():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
@@ -46,12 +46,12 @@ def upsert_reagent(
     *,
     name=_unset,
     category=_unset,
-    CAS_number=_unset,
+    cas_number=_unset,
     capacity=_unset,
     bottle_count=_unset,
     specification=_unset,
     open_date=_unset,
-    need2restock=_unset,
+    needs_restock=_unset,
 ):
     """插入或更新试剂信息"""
     if zone_id is None:
@@ -59,12 +59,12 @@ def upsert_reagent(
     candidate_fields = {
         "name": name,
         "category": category,
-        "CAS_number": CAS_number,
+        "CAS_number": cas_number,
         "capacity": capacity,
         "bottle_count": bottle_count,
         "specification": specification,
         "open_date": open_date,
-        "need2restock": need2restock,
+        "need2restock": needs_restock,
     }
     update_fields = {k: v for k, v in candidate_fields.items() if v is not _unset}
     if not update_fields:
@@ -98,7 +98,7 @@ def update_open_date(reagent_id, open_date):
         )
 
 
-def update_need2restock(reagent_id, need2restock):
+def set_needs_restock(reagent_id, needs_restock):
     """更新试剂的补货状态"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
@@ -107,7 +107,7 @@ def update_need2restock(reagent_id, need2restock):
             SET need2restock = %s
             WHERE id = %s
             """),
-            (need2restock, reagent_id),
+            (needs_restock, reagent_id),
         )
     logger.info(f"Reagent need2restock updated for reagent_id={reagent_id}.")
 
@@ -119,10 +119,10 @@ def get_reagents_by_zone(zone_id):
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count, r.specification, r.open_date, r.need2restock,
-                u.length, u.user_name, u.remaining_after    -- ← 别忘了把子查询结果选出来
+                u.usage_count, u.user_name, u.remaining_after  -- 子查询结果列
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS length,
+                SELECT COUNT(*) OVER () AS usage_count,
                     u.user_name,
                     ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
@@ -176,10 +176,10 @@ def get_need2restock_reagents():
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count, r.specification, r.open_date, r.need2restock,
-                u.length, u.user_name, u.remaining_after
+                u.usage_count, u.user_name, u.remaining_after
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS length,
+                SELECT COUNT(*) OVER () AS usage_count,
                     u.user_name,
                     ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
@@ -214,24 +214,24 @@ def get_need2restock_reagents():
         return reagents
 
 
-def get_common_used_reagents_by_user_id(user_id):
+def get_frequently_used_reagents(user_id):
     """获取指定用户常用的试剂信息（按该用户使用次数降序）"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count, r.specification, r.open_date, r.need2restock,
-                t.times,
-                u.length, u.user_name, u.remaining_after
+                t.use_count,
+                u.usage_count, u.user_name, u.remaining_after
             FROM (
-                SELECT reagent_id, COUNT(*) AS times
+                SELECT reagent_id, COUNT(*) AS use_count
                 FROM {REAGENT_USAGE_TABLE}
                 WHERE user_id = %s
                 GROUP BY reagent_id
             ) AS t
             JOIN {REAGENT_TABLE} AS r ON r.id = t.reagent_id
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS length,
+                SELECT COUNT(*) OVER () AS usage_count,
                     u.user_name,
                     ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
@@ -240,7 +240,7 @@ def get_common_used_reagents_by_user_id(user_id):
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
             ) AS u ON TRUE
-            ORDER BY t.times DESC
+            ORDER BY t.use_count DESC
             """),
             (user_id,),
         )

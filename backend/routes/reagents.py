@@ -14,7 +14,7 @@ def upsert_reagent_api():
         data = request.get_json()
         zone_id = data.get("zone_id")
         name = data.get("name")
-        CAS_number = data.get("CAS_number")
+        cas_number = data.get("CAS_number")
         category = data.get("category")
         capacity = data.get("capacity")
         bottle_count = data.get("bottle_count")
@@ -26,7 +26,7 @@ def upsert_reagent_api():
         db_api.upsert_reagent(
             zone_id,
             name=name,
-            CAS_number=CAS_number,
+            cas_number=cas_number,
             category=category,
             capacity=capacity,
             bottle_count=bottle_count,
@@ -54,25 +54,25 @@ def open_reagent_api():
     """开瓶贴标"""
     try:
         data = request.get_json()
-        Reagent_id = data.get("id")
+        reagent_id = data.get("id")
         open_date = data.get("open_date")
         user_id = data.get("user_id")  # 默认用户ID为1，如果未提供
 
-        if not Reagent_id or not open_date:
+        if not reagent_id or not open_date:
             return fail("请填写开封日期")
 
         db_api.update_open_date(
-            Reagent_id,
+            reagent_id,
             open_date,
         )
         logger.info(
             "试剂信息已添加/更新| 试剂ID: {}, 开封日期: {}".format(
-                Reagent_id,
+                reagent_id,
                 open_date,
             )
         )
         db_api.open_reagent(
-            Reagent_id,
+            reagent_id,
             user_id,
         )
         return jsonify({"message": "试剂信息已保存"})
@@ -106,21 +106,21 @@ def delete_reagent_by_id_api(reagent_id):
 
 
 @bp.route("/reagent/mark_need2restock", methods=["POST"])
-def mark_reagent_need2restock_api():
+def mark_reagent_needs_restock_api():
     """标记试剂需要补货"""
     try:
         data = request.get_json()
         reagent_id = data.get("id")
-        need2restock = data.get("need2restock")
+        needs_restock = data.get("need2restock")
 
-        if reagent_id is None or need2restock is None:
+        if reagent_id is None or needs_restock is None:
             return fail("请提供试剂ID和补货状态")
 
-        db_api.update_need2restock(reagent_id, need2restock)
+        db_api.set_needs_restock(reagent_id, needs_restock)
         logger.info(
             "试剂补货状态已更新| 试剂ID: {}, 需要补货: {}".format(
                 reagent_id,
-                need2restock,
+                needs_restock,
             )
         )
         return jsonify({"message": "试剂补货状态已更新"})
@@ -142,11 +142,11 @@ def get_need2restock_reagents_api():
 
 
 @bp.route("/reagent/get_common_used_reagents/<int:user_id>", methods=["GET"])
-def get_used_times_by_user_id_api(user_id):
-    """获取用户使用次数"""
+def get_frequently_used_reagents_api(user_id):
+    """获取用户常用的试剂（按使用次数降序）"""
     try:
-        used_times = db_api.get_common_used_reagents_by_user_id(user_id)
-        return jsonify({"reagents": used_times})
+        reagents = db_api.get_frequently_used_reagents(user_id)
+        return jsonify({"reagents": reagents})
     except Exception as e:  # noqa: BLE001
         logger.exception("获取用户使用次数时发生异常: {}", e)
         return fail("获取用户使用次数失败", 500)

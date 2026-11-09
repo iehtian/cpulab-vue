@@ -14,7 +14,7 @@ bp = Blueprint("bookings", __name__)
 
 @bp.route("/info_save", methods=["POST"])
 @jwt_required()
-def save_info():
+def create_bookings():
     """保存预约信息"""
     try:
         current_user_name = get_jwt_identity()
@@ -22,22 +22,22 @@ def save_info():
 
         instrument = data.get("instrument") or "a_instrument"
         date = data.get("date")
-        slots_ids = data.get("slots")
+        slot_ids = data.get("slots")
 
-        if not date or not slots_ids:
+        if not date or not slot_ids:
             logger.warning(
                 "用户 [%s] 提交预约失败 - 缺少必要字段: date=%s, slots=%s",
                 current_user_name,
                 date,
-                slots_ids,
+                slot_ids,
             )
             return fail("请选择日期和时段后再提交")
 
-        if not isinstance(slots_ids, list) or len(slots_ids) == 0:
+        if not isinstance(slot_ids, list) or len(slot_ids) == 0:
             logger.warning(
                 "用户 [%s] 提交预约失败 - slots 格式错误: %s",
                 current_user_name,
-                slots_ids,
+                slot_ids,
             )
             return fail("请至少选择一个时段")
 
@@ -46,13 +46,13 @@ def save_info():
             current_user_name,
             instrument,
             date,
-            slots_ids,
+            slot_ids,
         )
 
-        search_by_date_result = db_api.search_booking_by_date(instrument, date)
-        if search_by_date_result:
-            booked_times = [slot["time_slot_id"] for slot in search_by_date_result]
-            for slot in slots_ids:
+        existing_bookings = db_api.get_bookings_by_date(instrument, date)
+        if existing_bookings:
+            booked_times = [slot["time_slot_id"] for slot in existing_bookings]
+            for slot in slot_ids:
                 if slot in booked_times:
                     logger.warning(
                         "用户 [%s] 预约冲突 | 仪器: %s | 日期: %s | 时间段 %s 已被占用",
@@ -64,7 +64,7 @@ def save_info():
                     return fail(f"时段 {slot} 已被预约，请选择其他时段", 409)
 
         successful_slots = []
-        for slot in slots_ids:
+        for slot in slot_ids:
             db_api.upsert_booking(current_user_name, instrument, date, slot)
             successful_slots.append(slot)
 
@@ -123,8 +123,8 @@ def cancel_booking():
             slots,
         )
 
-        search_by_date_result = db_api.search_booking_by_date(instrument, date)
-        if not search_by_date_result:
+        existing_bookings = db_api.get_bookings_by_date(instrument, date)
+        if not existing_bookings:
             logger.warning(
                 "用户 [%s] 取消预约失败 - 指定日期 %s 无预约记录",
                 current_user_name,
@@ -132,7 +132,7 @@ def cancel_booking():
             )
             return fail("该日期没有任何预约记录", 404)
 
-        booked_slot_ids = [slot["time_slot_id"] for slot in search_by_date_result]
+        booked_slot_ids = [slot["time_slot_id"] for slot in existing_bookings]
         for slot in slots:
             if slot not in booked_slot_ids:
                 logger.warning(
@@ -177,8 +177,8 @@ def get_bookings():
 
     logger.debug("查询预约信息 | 仪器: {} | 日期: {}", instrument, date)
 
-    search_by_date_result = db_api.search_booking_by_date(instrument, date)
-    if not search_by_date_result:
+    existing_bookings = db_api.get_bookings_by_date(instrument, date)
+    if not existing_bookings:
         return jsonify({"booking": ""}), 200
 
     bookings_dict = {
@@ -186,7 +186,7 @@ def get_bookings():
             "user_name": slot["user_name"],
             "color": slot.get("color", "#ffffff"),
         }
-        for slot in search_by_date_result
+        for slot in existing_bookings
     }
 
     logger.debug(
@@ -215,17 +215,17 @@ def get_user_bookings():
             logger.warning("查询个人预约失败 - 用户 [{}] 不存在", current_user_name)
             return fail("用户不存在", 404)
 
-        user_bookings = db_api.search_booking_by_user_and_date(user["id"], date)
-        times = [slot["time_slot_id"] for slot in user_bookings]
+        user_bookings = db_api.get_bookings_by_user_and_date(user["id"], date)
+        slot_ids = [slot["time_slot_id"] for slot in user_bookings]
 
         logger.debug(
             "用户 [%s] 查询个人预约 | 仪器: %s | 日期: %s | 结果: %s",
             current_user_name,
             instrument,
             date,
-            times,
+            slot_ids,
         )
-        return jsonify(times)
+        return jsonify(slot_ids)
 
     except Exception as e:  # noqa: BLE001
         logger.exception("获取用户预约信息时发生异常: {}", e)
@@ -260,7 +260,7 @@ def get_booking_users_by_range():
         return fail("查询范围不能超过一年")
 
     try:
-        users = db_api.search_booking_users_by_range(instrument, start, end)
+        users = db_api.get_booking_users_by_range(instrument, start, end)
         logger.debug(
             "查询预约用户 | 仪器: %s | 范围: %s~%s | 共 %d 人",
             instrument,

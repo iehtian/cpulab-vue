@@ -6,7 +6,7 @@ from database.pgsql_config import (
 from log_config import logger
 
 
-def _row_to_dict(row):
+def _row_to_space(row):
     """将数据库行转换为字典"""
     if row is None:
         return None
@@ -16,7 +16,7 @@ def _row_to_dict(row):
     }
 
 
-def create_space():
+def create_space_table():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
@@ -31,7 +31,7 @@ def create_space():
 
 
 def add_space(name):
-    """插入或更新空间信息"""
+    """插入空间信息（同名已存在则忽略）"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
@@ -63,5 +63,5 @@ def get_all_spaces():
         spaces = cur.fetchall()
         results = []
         for space in spaces:
-            results.append(_row_to_dict(space))
+            results.append(_row_to_space(space))
     return results

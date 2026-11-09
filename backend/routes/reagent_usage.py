@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 import database as db_api
+from database.reagent_usage import EVENT_USE
 from log_config import logger
 from utils.helpers import fail
 
@@ -19,7 +20,7 @@ def add_reagent_usage_api():
         if not reagent_id or not user_id:
             return fail("缺少试剂或用户信息，请刷新后重试")
 
-        db_api.add_reagent_usage(reagent_id, user_id, event_type=1, amount=amount)
+        db_api.add_reagent_usage(reagent_id, user_id, event_type=EVENT_USE, amount=amount)
         logger.info(
             f"Reagent usage record added for reagent_id={reagent_id}, user_id={user_id}, amount={amount}."
         )

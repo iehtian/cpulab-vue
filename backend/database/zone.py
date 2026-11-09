@@ -7,7 +7,7 @@ from database.pgsql_config import (
 from log_config import logger
 
 
-def create_zone():
+def create_zone_table():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
@@ -30,7 +30,7 @@ def create_zone():
 
 
 def add_zone(parent_id, space_id, name):
-    """插入或更新区域信息"""
+    """插入区域信息（同名已存在则忽略）"""
 
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
