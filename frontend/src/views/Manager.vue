@@ -37,7 +37,6 @@
           :key="space.id"
           :title="space.name"
           value="内容"
-          label="描述信息"
           :to="{ name: 'Spaces', params: { id: space.id } }"
         >
           <template #right-icon>
@@ -108,6 +107,7 @@ import { addZone, getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
 import { FlaskConical, PackagePlus } from '@lucide/vue'
 import { getNeed2RestockReagents } from '@/api/reagent'
+import { getReagentsByZone } from '@/api/reagent'
 
 interface DialogOptions {
   title: string
@@ -194,17 +194,26 @@ const onAddSpace = () =>
     },
   })
 
-const onAddZone = (parentId: number | null) =>
+const onAddZone = async (parentId: number | null) => {
+  if (selectedSpaceId.value === null) return
+  const Id = selectedSpaceId.value
+  if (parentId !== null) {
+    const reagents = await getReagentsByZone(parentId)
+    if (reagents.length > 0) {
+      alert('该分区下有试剂，无法添加子分区')
+      return
+    }
+  }
   openDialog({
     title: '添加分区',
     label: '分区名称',
     placeholder: '请输入分区名称',
     onSubmit: async (name) => {
-      if (selectedSpaceId.value === null) return
-      await addZone(parentId, selectedSpaceId.value, name)
-      await fetchZones(selectedSpaceId.value)
+      await addZone(parentId, Id, name)
+      await fetchZones(Id)
     },
   })
+}
 
 const confirmDelete = async () => {
   if (selectedSpaceId.value === null) return
@@ -220,6 +229,7 @@ const confirmDelete = async () => {
 
 import type { Reagent } from '@/api/reagent'
 import { computed } from 'vue'
+import { pa } from 'element-plus/es/locales.mjs'
 const need2RestockReagents = ref<Reagent[]>([])
 
 const need2RestockReagentsLength = computed(() => need2RestockReagents.value.length)

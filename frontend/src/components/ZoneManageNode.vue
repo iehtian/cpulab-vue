@@ -8,9 +8,8 @@
       />
     </div>
 
-    <!-- 递归渲染 children，用 padding-left 体现层级 -->
     <div
-      v-if="area.children?.length"
+      v-if="depth < 1"
       class="zone-children"
     >
       <ZoneNode
