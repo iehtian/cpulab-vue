@@ -78,17 +78,19 @@
         :area="area"
         @add="onAddZone"
       />
-      <van-button
-        plain
-        type="primary"
-        @click="onAddZone(null)"
-        >添加分区</van-button
-      >
-      <van-button
-        type="primary"
-        @click="showZonePopup = false"
-        >关闭</van-button
-      >
+      <div class="action-buttons">
+        <van-button
+          plain
+          type="primary"
+          @click="onAddZone(null)"
+          >添加分区</van-button
+        >
+        <van-button
+          type="primary"
+          @click="showZonePopup = false"
+          >关闭</van-button
+        >
+      </div>
     </van-popup>
     <DeleteDialog
       v-model:show="showDeleteDialog"
@@ -229,7 +231,6 @@ const confirmDelete = async () => {
 
 import type { Reagent } from '@/api/reagent'
 import { computed } from 'vue'
-import { pa } from 'element-plus/es/locales.mjs'
 const need2RestockReagents = ref<Reagent[]>([])
 
 const need2RestockReagentsLength = computed(() => need2RestockReagents.value.length)
