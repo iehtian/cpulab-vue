@@ -174,11 +174,22 @@ def get_need2restock_reagents():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
-            SELECT id, zone_id, name, CAS_number, category, capacity,
-                bottle_count, specification, open_date, need2restock
-            FROM {REAGENT_TABLE}
-            WHERE need2restock = TRUE
-            ORDER BY id
+            SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
+                r.bottle_count, r.specification, r.open_date, r.need2restock,
+                u.length, u.user_name, u.remaining_after
+            FROM {REAGENT_TABLE} AS r
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) OVER () AS length,
+                    u.user_name,
+                    ru.remaining_after
+                FROM {REAGENT_USAGE_TABLE} ru
+                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
+                WHERE ru.reagent_id = r.id
+                ORDER BY ru.usage_time DESC
+                LIMIT 1
+            ) AS u ON TRUE
+            WHERE r.need2restock = TRUE
+            ORDER BY r.id
             """)
         )
         rows = cur.fetchall()
@@ -194,6 +205,9 @@ def get_need2restock_reagents():
                 "specification": row[7],
                 "openDate": row[8].isoformat() if row[8] is not None else None,
                 "need2restock": row[9],
+                "usageLength": row[10],
+                "lastUserName": row[11],
+                "lastRemainder": row[12],
             }
             for row in rows
         ]
@@ -201,17 +215,33 @@ def get_need2restock_reagents():
 
 
 def get_common_used_reagents_by_user_id(user_id):
+    """获取指定用户常用的试剂信息（按该用户使用次数降序）"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
-            """
-                    SELECT r.*,
-                        COUNT(*) AS times
-                    FROM reagent_usage AS u
-                    JOIN reagents AS r ON r."id" = u.reagent_id
-                    WHERE u.user_id = %s
-                    GROUP BY r."id"
-                    ORDER BY times DESC;
-            """,
+            dynamic_sql(f"""
+            SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
+                r.bottle_count, r.specification, r.open_date, r.need2restock,
+                t.times,
+                u.length, u.user_name, u.remaining_after
+            FROM (
+                SELECT reagent_id, COUNT(*) AS times
+                FROM {REAGENT_USAGE_TABLE}
+                WHERE user_id = %s
+                GROUP BY reagent_id
+            ) AS t
+            JOIN {REAGENT_TABLE} AS r ON r.id = t.reagent_id
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) OVER () AS length,
+                    u.user_name,
+                    ru.remaining_after
+                FROM {REAGENT_USAGE_TABLE} ru
+                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
+                WHERE ru.reagent_id = r.id
+                ORDER BY ru.usage_time DESC
+                LIMIT 1
+            ) AS u ON TRUE
+            ORDER BY t.times DESC
+            """),
             (user_id,),
         )
         rows = cur.fetchall()
@@ -227,6 +257,10 @@ def get_common_used_reagents_by_user_id(user_id):
                 "specification": row[7],
                 "openDate": row[8].isoformat() if row[8] is not None else None,
                 "need2restock": row[9],
+                "times": row[10],
+                "usageLength": row[11],
+                "lastUserName": row[12],
+                "lastRemainder": row[13],
             }
             for row in rows
         ]
