@@ -32,26 +32,26 @@
     </div>
   </el-card>
   <div class="grid-scroll">
-    <div class="day-grid">
-      <div
+    <van-grid
+      :column-num="4"
+      clickable
+    >
+      <van-grid-item
         v-for="id of 32"
         :key="id"
-        class="grid-cell grid-corner booking-slot"
-        :class="[
-          {
-            ispast: isPastBlock({ date: 0, id: id - 1 }),
-            selected: isSelected({ date: 0, id: id - 1 }),
-            // is_ordered: isBookedByOther(id),
-          },
-        ]"
+        class="booking-slot"
+        :class="{
+          ispast: isPastBlock({ date: 0, id: id - 1 }),
+          selected: isSelected({ date: 0, id: id - 1 }),
+        }"
+        :style="{ '--slot-bg': dayBookings?.[id - 1]?.color }"
         @click="toggleSelect(id - 1)"
-        :style="{ 'background-color': dayBookings?.[id - 1]?.color }"
       >
-        <div class="slot-time">
+        <span class="slot-time">
           {{ dayBookings?.[id - 1]?.user_name ?? timeLabels.at(id - 1) }}
-        </div>
-      </div>
-    </div>
+        </span>
+      </van-grid-item>
+    </van-grid>
   </div>
   <van-button
     type="primary"
@@ -169,30 +169,22 @@ watch(date, fetchBookings, { immediate: true })
 :deep(.date-cell .van-cell__value) {
   text-align: center;
 }
-.day-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  border-left: var(--el-border);
-  border-top: var(--el-border);
-  gap: 6px;
-}
-.booking-slot {
-  background: #effaf3;
-  /* height: 26px; */
-}
-.grid-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50px;
+
+.booking-slot :deep(.van-grid-item__content) {
+  background: var(--slot-bg, #effaf3);
+  height: 70px;
+  padding: 4px;
 }
 
-.selected {
+.booking-slot.selected :deep(.van-grid-item__content) {
   background: var(--el-color-primary);
-  border: var(--el-color-primary);
 }
-.ispast {
+
+.booking-slot.ispast :deep(.van-grid-item__content) {
   background: #cbd5e0;
+}
+
+.slot-time {
+  font-size: 12px;
 }
 </style>
