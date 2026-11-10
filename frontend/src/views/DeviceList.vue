@@ -1,38 +1,37 @@
 <template>
-  <div class="device-list-page">
-    <div
-      v-loading="refreshing"
-      class="device-list"
-    >
-      <el-card
+  <van-pull-refresh
+    v-model="refreshing"
+    @refresh="fetchStats"
+  >
+    <div class="device-list">
+      <div
         v-for="device in DEVICES"
         :key="device.id"
         class="device-card"
         :class="{ disabled: !device.enabled }"
-        shadow="hover"
-        :body-style="{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }"
         @click="goDevice(device)"
       >
         <div class="card-top">
-          <component
-            :is="device.icon"
-            :size="28"
-          />
-          <el-tag
+          <span class="device-icon"
+            ><component
+              :is="device.icon"
+              :size="28"
+          /></span>
+          <van-tag
             v-if="!device.enabled"
             type="warning"
-            >维护中</el-tag
+            >维护中</van-tag
           >
-          <el-tag
+          <van-tag
             v-else-if="isFull(device)"
             type="danger"
-            >今日已约满</el-tag
+            >今日已约满</van-tag
           >
-          <el-tag
+          <van-tag
             v-else
-            type="success"
-            effect="plain"
-            >可预约</el-tag
+            type="primary"
+            plain
+            >可预约</van-tag
           >
         </div>
         <div class="device-name">{{ device.name }}</div>
@@ -40,20 +39,19 @@
         <div class="device-stats">
           今日已约 {{ bookedCount(device.id) }}/{{ device.totalSlots }} 时段
         </div>
-      </el-card>
+      </div>
     </div>
-
-    <el-empty
+    <van-empty
       v-if="DEVICES.length === 0"
       description="暂无可预约设备"
     />
-  </div>
+  </van-pull-refresh>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { showToast } from 'vant'
 import { DEVICES } from '@/config/devices'
 import type { DeviceInfo } from '@/config/devices'
 import { getBookings } from '@/api/booking'
@@ -75,14 +73,13 @@ function isFull(device: DeviceInfo): boolean {
 
 function goDevice(device: DeviceInfo) {
   if (!device.enabled) {
-    ElMessage.warning('设备维护中，暂不可预约')
+    showToast('设备维护中，暂不可预约')
     return
   }
   router.push(`/devices/${device.id}`)
 }
 
 async function fetchStats() {
-  refreshing.value = true
   const today = dateStr(new Date())
   await Promise.all(
     DEVICES.map(async (device) => {
@@ -97,30 +94,39 @@ onMounted(fetchStats)
 </script>
 
 <style scoped>
-.device-list-page {
-  padding: 12px;
-}
-
 .device-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  padding: 12px;
 }
 
 .device-card {
+  background: var(--van-background-2, #fff);
   border-radius: 8px;
-  cursor: pointer;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.device-card:active {
+  background: var(--van-active-color);
 }
 
 .device-card.disabled {
   opacity: 0.55;
-  cursor: not-allowed;
 }
 
 .card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.device-icon {
+  font-size: 28px;
 }
 
 .device-name {
@@ -130,13 +136,13 @@ onMounted(fetchStats)
 
 .device-desc {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--van-text-color-2, #969799);
 }
 
 .device-stats {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
-  border-top: 1px dashed var(--el-border-color);
+  color: var(--van-text-color-2, #969799);
+  border-top: 1px dashed var(--van-border-color, #ebedf0);
   padding-top: 6px;
 }
 </style>
