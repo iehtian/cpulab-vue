@@ -68,20 +68,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { showToast } from 'vant'
 import { changeDate, dateStr, timeLabels } from '@/utils/date'
-import { getBookings, submitBookings, cancelBookings } from '@/api/booking'
-import type { BookingInfo } from '@/api/booking'
 import { useSlotTime } from '@/composables/useSlotTime'
+import { useReservation } from '@/composables/useReservation'
+import { getDeviceById } from '@/config/devices'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
+
+// 设备 ID 来自路由参数；未知设备直接退回列表页
+const deviceId = computed(() => String(route.params.deviceId))
+if (!getDeviceById(deviceId.value)) {
+  showToast('设备不存在')
+  router.replace('/reservation')
+}
 
 const date = ref(new Date())
 const showCalendar = ref(false)
-const bookingSlots = ref<number[]>([]) // 待新预约
-const cancelingSlots = ref<number[]>([]) // 待取消
-const dayBookings = ref<Record<number, BookingInfo>>({})
+
+const { bookingSlots, cancelingSlots, dayBookings, submit, cancel } = useReservation(
+  deviceId,
+  date,
+)
 
 const dateList = computed(() => [date.value])
 const { isPastBlock, isSelected } = useSlotTime(dateList, bookingSlots, cancelingSlots)
@@ -129,28 +142,6 @@ function toggleSelect(id: number) {
   }
 }
 
-async function fetchBookings() {
-  dayBookings.value = await getBookings('a', dateStr(date.value))
-}
-
-const submit = async () => {
-  await submitBookings('a', {
-    date: date.value,
-    slots: bookingSlots.value,
-  })
-  // 刷新页面
-  window.location.reload()
-}
-
-const cancel = async () => {
-  await cancelBookings('a', {
-    date: date.value,
-    slots: cancelingSlots.value,
-  })
-  // 刷新页面
-  window.location.reload()
-}
-
 const onDateConfirm = (selectedDate: Date) => {
   date.value = selectedDate
   showCalendar.value = false
@@ -158,11 +149,7 @@ const onDateConfirm = (selectedDate: Date) => {
 
 function changeSelectedDate(offset: number) {
   date.value = changeDate(date.value, offset)
-  bookingSlots.value = []
-  cancelingSlots.value = []
 }
-
-watch(date, fetchBookings, { immediate: true })
 </script>
 
 <style scoped>

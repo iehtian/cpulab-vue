@@ -21,7 +21,7 @@
         :popper-offset="0"
       >
         <template #title>仪器设备</template>
-        <el-menu-item index="/cell-room">细胞房</el-menu-item>
+        <el-menu-item index="/reservation">设备预约</el-menu-item>
       </el-sub-menu>
       <el-sub-menu
         index="user"

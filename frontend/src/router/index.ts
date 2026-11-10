@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import { getDeviceById } from '@/config/devices'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,12 +15,21 @@ const router = createRouter({
       },
     },
     {
-      path: '/cell-room',
-      name: 'CellRoom',
-      component: () => import('../views/CellRoom.vue'),
+      path: '/devices',
+      name: 'DeviceList',
+      component: () => import('../views/DeviceList.vue'),
       meta: {
-        title: '标签',
+        title: '仪器',
         isTabPage: true,
+      },
+    },
+    {
+      path: '/devices/:deviceId',
+      name: 'Device',
+      component: () => import('../views/DeviceMobile.vue'),
+      meta: {
+        title: (route: RouteLocationNormalizedLoaded) =>
+          getDeviceById(String(route.params.deviceId))?.name ?? '设备预约',
       },
     },
     {

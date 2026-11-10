@@ -37,9 +37,9 @@
     >
     <van-tabbar-item
       replace
-      to="/cell-room"
+      to="/devices"
       icon="calendar-o"
-      >预约</van-tabbar-item
+      >仪器</van-tabbar-item
     >
     <van-tabbar-item
       replace
@@ -72,7 +72,12 @@ const userStore = useUserStore()
 const route = useRoute()
 const isMobile = viewportStore.isMobile
 const pageTitle = computed(() => {
-  return typeof route.meta.title === 'string' ? route.meta.title : 'CPU 实验室管理平台'
+  const title = route.meta.title
+  // 支持函数形式的标题（如设备详情页按路由参数显示设备名）
+  if (typeof title === 'function') {
+    return (title as (r: typeof route) => string)(route)
+  }
+  return typeof title === 'string' ? title : 'CPU 实验室管理平台'
 })
 const isTabPage = computed(() => route.meta.isTabPage === true)
 
@@ -80,8 +85,8 @@ const showRegisterDialog = ref(false)
 const showLoginDialog = ref(false)
 const currentKey = ref('')
 watch(currentKey, (newKey) => {
-  if (newKey === '/cell-room') {
-    router.push('/cell-room')
+  if (newKey === '/reservation') {
+    router.push('/reservation')
   } else if (newKey === '/user') {
     router.push('/user')
   } else if (newKey === '/register') {
