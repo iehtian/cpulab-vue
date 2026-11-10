@@ -1,5 +1,9 @@
 <template>
-  <ReagentList :reagents="need2RestockReagents">
+  <van-search
+    v-model="searchKeyword"
+    placeholder="请输入试剂名称"
+  />
+  <ReagentList :reagents="showReagents">
     <template #right-button="{ reagent }">
       <van-button
         type="primary"
@@ -12,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ReagentList from '@/components/ReagentList.vue'
 import { getNeed2RestockReagents } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
@@ -27,6 +31,14 @@ const fetchNeed2RestockReagents = async () => {
     console.error('获取需要补货的试剂失败:', err)
   }
 }
+
+const searchKeyword = ref('')
+const showReagents = computed(() => {
+  if (!searchKeyword.value) {
+    return need2RestockReagents.value
+  }
+  return need2RestockReagents.value.filter((reagent) => reagent.name.includes(searchKeyword.value))
+})
 
 const { requestRestock } = useReagentActions(fetchNeed2RestockReagents)
 
