@@ -36,7 +36,6 @@
           v-for="space in spaces"
           :key="space.id"
           :title="space.name"
-          value="内容"
           :to="{ name: 'Spaces', params: { id: space.id } }"
         >
           <template #right-icon>
@@ -68,10 +67,6 @@
       v-model:show="showZonePopup"
       position="bottom"
     >
-      <div class="container">
-        <h3>布局管理</h3>
-        <p>这里是布局管理的内容，可以根据需要进行布局设置。</p>
-      </div>
       <ZoneManageNode
         v-for="area in areas"
         :key="area.id"

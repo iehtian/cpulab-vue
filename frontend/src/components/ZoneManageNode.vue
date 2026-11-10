@@ -4,7 +4,6 @@
       <van-cell
         :key="area.id"
         :title="area.name"
-        value="内容"
       />
     </div>
 
