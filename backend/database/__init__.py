@@ -11,6 +11,7 @@ from .pgsql_config import get_connection
 from .reagent_usage import (
     add_reagent_usage,
     get_reagent_usage,
+    get_reagent_usage_list,
     open_reagent,
 )
 from .reagents import (
@@ -75,4 +76,5 @@ __all__ = [
     "upsert_plan_field",
     "upsert_reagent",
     "upsert_user",
+    "get_reagent_usage_list",
 ]

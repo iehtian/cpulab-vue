@@ -151,3 +151,41 @@ def get_reagent_usage(reagent_id):
         "user_name": record[1],
         "remaining": record[2],
     }
+
+
+def get_reagent_usage_list(reagent_id, page=1, page_size=20):
+    """分页获取指定试剂的使用记录"""
+    offset = (page - 1) * page_size
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            SELECT r.id,
+                   u.user_name,
+                   r.event_type,
+                   r.amount,
+                   r.remaining_after,
+                   r.usage_time,
+                   COUNT(*) OVER () AS total   -- 窗口函数顺带算出总数，和现有 get_reagent_usage 的写法一致
+            FROM {REAGENT_USAGE_TABLE} r
+            LEFT JOIN {USER_TABLE} u ON u.id = r.user_id
+            WHERE r.reagent_id = %s
+            ORDER BY r.usage_time DESC, r.id DESC   -- 加 id 二级排序，防止同一秒的记录顺序不稳定
+            LIMIT %s OFFSET %s
+            """),
+            (reagent_id, page_size, offset),
+        )
+        rows = cur.fetchall()
+
+    total = rows[0][6] if rows else 0
+    records = [
+        {
+            "id": row[0],
+            "user_name": row[1],
+            "event_type": row[2],
+            "amount": row[3],
+            "remaining_after": row[4],
+            "usage_time": row[5].strftime("%Y-%m-%d %H:%M:%S") if row[5] else None,
+        }
+        for row in rows
+    ]
+    return {"total": total, "records": records}
