@@ -96,6 +96,11 @@
       v-model:show="showDeleteDialog"
       @confirm="confirmDelete"
     />
+    <van-overlay :show="refreshing">
+      <div class="loading-wrapper">
+        <van-loading vertical>加载中...</van-loading>
+      </div>
+    </van-overlay>
   </div>
 </template>
 <script setup lang="ts">
@@ -245,9 +250,15 @@ const fetchNeed2RestockReagents = async () => {
   }
 }
 
-onMounted(() => {
-  fetchSpaces()
-  fetchNeed2RestockReagents()
+const refreshing = ref(false)
+
+onMounted(async () => {
+  refreshing.value = true
+  try {
+    await Promise.all([fetchSpaces(), fetchNeed2RestockReagents()])
+  } finally {
+    refreshing.value = false
+  }
 })
 </script>
 
@@ -283,5 +294,11 @@ onMounted(() => {
 .add-space {
   color: #1989fa;
   cursor: pointer;
+}
+.loading-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 </style>
