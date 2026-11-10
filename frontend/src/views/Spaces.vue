@@ -51,6 +51,7 @@
     </ReagentDetailPopup>
   </div>
   <van-submit-bar
+    v-if="selectedZoneId !== -1"
     style="bottom: 50px"
     button-text="入库新物品"
     button-color="#1989fa"
@@ -172,7 +173,7 @@ const spaceId = Number(useRoute().params.id as string) // params.id 是 string |
 
 const zones = ref<Zone[]>([])
 const reagents = ref<Reagent[]>([])
-const selectedZoneId = ref(0)
+const selectedZoneId = ref(-1)
 const activePath = ref<number[]>([])
 
 const showFormPopup = ref(false)

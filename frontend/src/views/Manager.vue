@@ -115,6 +115,7 @@ import type { Zone } from '@/api/zone'
 import { FlaskConical, PackagePlus } from '@lucide/vue'
 import { getNeed2RestockReagents } from '@/api/reagent'
 import { getReagentsByZone } from '@/api/reagent'
+import { showSuccessToast } from 'vant'
 
 interface DialogOptions {
   title: string
@@ -198,6 +199,10 @@ const onAddSpace = () =>
     onSubmit: async (name) => {
       await addSpace(name)
       await fetchSpaces()
+      showSuccessToast({
+        message: '空间添加成功，添加分区后才能入库物品',
+        duration: 3000, // 默认 2000ms，文案偏长可适当延长
+      })
     },
   })
 
