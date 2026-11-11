@@ -37,7 +37,7 @@
         <div class="device-name">{{ device.name }}</div>
         <div class="device-desc">{{ device.description }}</div>
         <div class="device-stats">
-          今日已约 {{ bookedCount(device.id) }}/{{ device.totalSlots }} 时段
+          今日剩余可约 {{ remainingCount(device) }}/{{ device.totalSlots }} 时段
         </div>
       </div>
     </div>
@@ -55,20 +55,27 @@ import { showToast } from 'vant'
 import { DEVICES } from '@/config/devices'
 import type { DeviceInfo } from '@/config/devices'
 import { getBookings } from '@/api/booking'
+import type { BookingInfo } from '@/api/booking'
+import { firstFutureSlotIndex } from '@/composables/useSlotTime'
 import { dateStr } from '@/utils/date'
 
 const router = useRouter()
 
 const refreshing = ref(false)
-/** 各设备今日已约时段数，key 为设备 id */
-const todayStats = ref<Record<string, number>>({})
+/** 各设备今日预约记录（槽位 id → 预约信息），key 为设备 id */
+const todayStats = ref<Record<string, Record<number, BookingInfo>>>({})
 
-function bookedCount(id: string): number {
-  return todayStats.value[id] ?? 0
+/** 今日剩余可约时段数 = 尚未开始的槽位数 − 其中已被预约的数量 */
+function remainingCount(device: DeviceInfo): number {
+  const first = firstFutureSlotIndex(device.totalSlots)
+  const futureSlots = device.totalSlots - first
+  const bookings = todayStats.value[device.id] ?? {}
+  const bookedFuture = Object.keys(bookings).filter((k) => Number(k) >= first).length
+  return Math.max(futureSlots - bookedFuture, 0)
 }
 
 function isFull(device: DeviceInfo): boolean {
-  return bookedCount(device.id) >= device.totalSlots
+  return remainingCount(device) <= 0
 }
 
 function goDevice(device: DeviceInfo) {
@@ -83,8 +90,7 @@ async function fetchStats() {
   const today = dateStr(new Date())
   await Promise.all(
     DEVICES.map(async (device) => {
-      const bookings = await getBookings(device.id, today)
-      todayStats.value[device.id] = Object.keys(bookings).length
+      todayStats.value[device.id] = await getBookings(device.id, today)
     }),
   )
   refreshing.value = false
