@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { Virus , TestTubes } from '@lucide/vue'
+import { Virus, TestTubes } from '@lucide/vue'
 export interface DeviceInfo {
   id: string
   name: string
@@ -24,7 +24,7 @@ export const DEVICES: DeviceInfo[] = [
     icon: TestTubes,
     description: '高效液相色谱分析仪',
     enabled: true,
-    totalSlots: 32,
+    totalSlots: 16,
   },
 ]
 

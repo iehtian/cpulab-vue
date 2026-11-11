@@ -37,7 +37,7 @@
       clickable
     >
       <van-grid-item
-        v-for="id of 32"
+        v-for="id of devicesInfo?.totalSlots ?? 0"
         :key="id"
         class="booking-slot"
         :class="{
@@ -71,7 +71,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { changeDate, dateStr, timeLabels } from '@/utils/date'
+import { changeDate, dateStr } from '@/utils/date'
 import { useSlotTime } from '@/composables/useSlotTime'
 import { useReservation } from '@/composables/useReservation'
 import { getDeviceById } from '@/config/devices'
@@ -80,6 +80,7 @@ import { useUserStore } from '@/stores/user'
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
+const devicesInfo = computed(() => getDeviceById(deviceId.value))
 
 // 设备 ID 来自路由参数；未知设备直接退回列表页
 const deviceId = computed(() => String(route.params.deviceId))
@@ -91,13 +92,16 @@ if (!getDeviceById(deviceId.value)) {
 const date = ref(new Date())
 const showCalendar = ref(false)
 
-const { bookingSlots, cancelingSlots, dayBookings, submit, cancel } = useReservation(
-  deviceId,
-  date,
-)
+const { bookingSlots, cancelingSlots, dayBookings, submit, cancel } = useReservation(deviceId, date)
 
 const dateList = computed(() => [date.value])
-const { isPastBlock, isSelected } = useSlotTime(dateList, bookingSlots, cancelingSlots)
+const { isPastBlock, isSelected, makeTimeLabels } = useSlotTime(
+  dateList,
+  bookingSlots,
+  cancelingSlots,
+)
+
+const timeLabels = computed(() => makeTimeLabels(devicesInfo.value?.totalSlots ?? 0))
 
 function toggleBookingSlot(id: number) {
   const index = bookingSlots.value.indexOf(id)

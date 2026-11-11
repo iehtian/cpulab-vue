@@ -1,29 +1,11 @@
 import type { ComputedRef, Ref } from 'vue'
-
-/**
- * 预约槽位（一个时间格）的统一表示。
- * - date: 该格所属日期在 `weekDays` 中的下标
- * - id:   一天 32 个半小时槽位的下标（0..31）
- */
 export interface SlotTime {
   date: number
   id: number
 }
 
-/**
- * 一天 32 个半小时槽位对应的时间起点：
- * - id=0   -> 08:00 (结束 08:30)
- * - id=1   -> 08:30 (结束 09:00)
- * - ...
- * 与 utils/date.ts 中 timeLabels 的定义保持一致。
- */
-function slotEndHour(id: number): number {
-  return 8 + Math.floor((id + 1) / 2)
-}
-
-function slotEndMinute(id: number): number {
-  return (id + 1) % 2 === 0 ? 0 : 30
-}
+const pad = (n: number) => String(n).padStart(2, '0')
+const fmt = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
 
 export function useSlotTime(
   weekDays: ComputedRef<Date[]> | Ref<Date[]>,
@@ -51,11 +33,12 @@ export function useSlotTime(
    * 该槽位是否已过期（含当天已过去的槽位）。
    */
   function isPastBlock(slottime: SlotTime): boolean {
-    const id = slottime.id - 1
     const day = weekDays.value.at(slottime.date)
     if (!day) return true
     const end = new Date(day)
-    end.setHours(slotEndHour(id), slotEndMinute(id), 0, 0)
+    const time = timesDate.at(slottime.id)
+    if (!time) return true
+    end.setHours(time.getHours(), time.getMinutes(), 0, 0)
     return end.getTime() <= Date.now()
   }
 
@@ -75,5 +58,26 @@ export function useSlotTime(
     return (slots as number[]).includes(slottime.id)
   }
 
-  return { isPastDay, isToday, isPastBlock, isSelected }
+  let timesDate: Date[] = []
+
+  function makeTimeLabels(totalSlots: number): string[] {
+    timesDate = []
+    let start = new Date()
+    start.setHours(8, 0, 0, 0)
+    const allminis = 960
+    const step = allminis / totalSlots
+    let current = new Date(start)
+    const times: string[] = []
+
+    for (let i = 0; i < totalSlots; i++) {
+      timesDate.push(current)
+      const next = new Date(current)
+      next.setMinutes(next.getMinutes() + step)
+      times.push(`${fmt(current)}-${fmt(next)}`)
+      current = next
+    }
+    return times
+  }
+
+  return { isPastDay, isToday, isPastBlock, isSelected, makeTimeLabels }
 }
