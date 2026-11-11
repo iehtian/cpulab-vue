@@ -16,7 +16,7 @@
           <div class="tag-row">
             <div class="tag-info">
               {{ reagent.name }}
-              <div v-if="reagent.category === 1">常规试剂</div>
+              <div v-if="reagent.category === 1">普通试剂</div>
               <div v-else-if="reagent.category === 2 || reagent.category === 3">
                 {{ reagent.usageLength ?? 0 }} 次，最近
                 {{ reagent.lastUserName ?? '-' }}

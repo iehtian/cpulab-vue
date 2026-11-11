@@ -6,6 +6,7 @@ from database.pgsql_config import (
     dynamic_sql,
     get_connection,
 )
+from database.reagent_usage import EVENT_USE
 from log_config import logger
 
 
@@ -215,7 +216,7 @@ def get_need2restock_reagents():
 
 
 def get_frequently_used_reagents(user_id):
-    """获取指定用户常用的试剂信息（按该用户使用次数降序）"""
+    """获取指定用户常用的试剂信息（按该用户实际取用次数降序）"""
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
@@ -226,7 +227,7 @@ def get_frequently_used_reagents(user_id):
             FROM (
                 SELECT reagent_id, COUNT(*) AS use_count
                 FROM {REAGENT_USAGE_TABLE}
-                WHERE user_id = %s
+                WHERE user_id = %s AND event_type = {EVENT_USE}
                 GROUP BY reagent_id
             ) AS t
             JOIN {REAGENT_TABLE} AS r ON r.id = t.reagent_id
@@ -236,7 +237,7 @@ def get_frequently_used_reagents(user_id):
                     ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
                 LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
-                WHERE ru.reagent_id = r.id
+                WHERE ru.reagent_id = r.id AND ru.event_type = {EVENT_USE}
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
             ) AS u ON TRUE
