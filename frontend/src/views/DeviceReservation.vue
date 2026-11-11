@@ -45,7 +45,7 @@
         </div>
 
         <div
-          v-for="(label, i) in timeLabels"
+          v-for="(label, i) in 32"
           :key="`h-${i}`"
           class="grid-cell grid-hour"
           :style="{ gridRow: i + 2 }"
@@ -85,7 +85,7 @@
 import { computed, ref, watch } from 'vue'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import ReservationConfirm from '@/components/ReservationConfirm.vue'
-import { changeDate, dateStr, getMonday, timeLabels, weekdayLabels } from '@/utils/date'
+import { changeDate, dateStr, getMonday, weekdayLabels } from '@/utils/date'
 import { getBookings, submitBookings } from '@/api/booking'
 import type { BookingInfo } from '@/api/booking'
 import { useSlotTime } from '@/composables/useSlotTime'
