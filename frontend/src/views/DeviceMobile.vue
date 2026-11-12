@@ -52,19 +52,19 @@
         </span>
       </van-grid-item>
     </van-grid>
+    <van-button
+      type="primary"
+      v-if="bookingSlots.length > 0"
+      @click="submit"
+      >提交预约</van-button
+    >
+    <van-button
+      type="danger"
+      v-if="cancelingSlots.length > 0"
+      @click="cancel"
+      >取消预约</van-button
+    >
   </div>
-  <van-button
-    type="primary"
-    v-if="bookingSlots.length > 0"
-    @click="submit"
-    >提交预约</van-button
-  >
-  <van-button
-    type="danger"
-    v-if="cancelingSlots.length > 0"
-    @click="cancel"
-    >取消预约</van-button
-  >
 </template>
 
 <script setup lang="ts">
@@ -177,5 +177,9 @@ function changeSelectedDate(offset: number) {
 
 .slot-time {
   font-size: 12px;
+}
+.grid-scroll {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 </style>
