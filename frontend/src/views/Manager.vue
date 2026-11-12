@@ -32,19 +32,25 @@
             </div>
           </template>
         </van-cell>
-        <van-cell
-          v-for="space in spaces"
-          :key="space.id"
-          :title="space.name"
-          :to="{ name: 'Spaces', params: { id: space.id } }"
+        <van-skeleton
+          title
+          :row="2"
+          :loading="spacesLoading"
         >
-          <template #right-icon>
-            <van-icon
-              name="ellipsis"
-              class="more-icon"
-              @click.stop="((showSpaceActions = true), (selectedSpaceId = space.id))"
-            /> </template
-        ></van-cell>
+          <van-cell
+            v-for="space in spaces"
+            :key="space.id"
+            :title="space.name"
+            :to="{ name: 'Spaces', params: { id: space.id } }"
+          >
+            <template #right-icon>
+              <van-icon
+                name="ellipsis"
+                class="more-icon"
+                @click.stop="((showSpaceActions = true), (selectedSpaceId = space.id))"
+              /> </template
+          ></van-cell>
+        </van-skeleton>
       </van-cell-group>
 
       <van-action-sheet
@@ -91,11 +97,6 @@
       v-model:show="showDeleteDialog"
       @confirm="confirmDelete"
     />
-    <van-overlay :show="refreshing">
-      <div class="loading-wrapper">
-        <van-loading vertical>加载中...</van-loading>
-      </div>
-    </van-overlay>
   </div>
 </template>
 <script setup lang="ts">
@@ -141,11 +142,16 @@ const dialogConfig = ref<DialogOptions>({
   onSubmit: async () => {},
 })
 
+const spacesLoading = ref(false)
+
 const fetchSpaces = async () => {
+  spacesLoading.value = true
   try {
     spaces.value = await getAllSpaces()
   } catch (err) {
     console.error('获取空间列表失败:', err)
+  } finally {
+    spacesLoading.value = false
   }
 }
 
@@ -250,15 +256,9 @@ const fetchNeed2RestockReagents = async () => {
   }
 }
 
-const refreshing = ref(false)
-
-onMounted(async () => {
-  refreshing.value = true
-  try {
-    await Promise.all([fetchSpaces(), fetchNeed2RestockReagents()])
-  } finally {
-    refreshing.value = false
-  }
+onMounted(() => {
+  fetchSpaces()
+  fetchNeed2RestockReagents()
 })
 </script>
 
@@ -294,11 +294,5 @@ onMounted(async () => {
 .add-space {
   color: #1989fa;
   cursor: pointer;
-}
-.loading-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
 }
 </style>
