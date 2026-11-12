@@ -36,9 +36,9 @@ from .reservation import (
     upsert_booking,
     upsert_plan_field,
 )
-from .space import add_space, delete_space_by_id, get_all_spaces, update_space_name
+from .spaces import add_space, delete_space_by_id, get_all_spaces, update_space_name
 from .user import search_user_by_name, upsert_user
-from .zone import add_zone, get_zones_by_space
+from .zones import add_zone, get_zones_by_space
 
 __version__ = "2.0.0"
 
