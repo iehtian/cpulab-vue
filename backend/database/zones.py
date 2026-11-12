@@ -24,7 +24,9 @@ def create_zone_table():
             """)
         )
         cur.execute(
-            dynamic_sql(f"COMMENT ON COLUMN {ZONE_TABLE}.sort_order  IS '区域内排序序号'")
+            dynamic_sql(
+                f"COMMENT ON COLUMN {ZONE_TABLE}.sort_order  IS '区域内排序序号'"
+            )
         )
     logger.info(f"Table '{ZONE_TABLE}' ensured.")
 
@@ -49,6 +51,18 @@ def add_zone(parent_id, space_id, name):
             """),
             (parent_id, space_id, name, sort_order),
         )
+
+
+def delete_zone_by_id(zone_id):
+    """根据区域 ID 删除区域信息"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            DELETE FROM {ZONE_TABLE} WHERE id = %s
+            """),
+            (zone_id,),
+        )
+
 
 def get_child_zones(parent_id):
     """递归获取子区域"""

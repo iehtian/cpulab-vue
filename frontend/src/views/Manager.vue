@@ -78,6 +78,7 @@
         :key="area.id"
         :area="area"
         @add="onAddZone"
+        @delete="onDeleteZone"
       />
       <div class="action-buttons">
         <van-button
@@ -95,6 +96,7 @@
     </van-popup>
     <DeleteDialog
       v-model:show="showDeleteDialog"
+      :message="deleteMessage"
       @confirm="confirmDelete"
     />
   </div>
@@ -106,12 +108,12 @@ import DeleteDialog from '@/components/DeleteDialog.vue'
 import ZoneManageNode from '@/components/ZoneManageNode.vue'
 import { getAllSpaces, addSpace, deleteSpaceById, updateSpaceName } from '@/api/space'
 import type { Space } from '@/api/space'
-import { addZone, getZonesBySpace } from '@/api/zone'
+import { addZone, getZonesBySpace, deleteZoneById } from '@/api/zone'
 import type { Zone } from '@/api/zone'
 import { FlaskConical, PackagePlus } from '@lucide/vue'
 import { getNeed2RestockReagents } from '@/api/reagent'
 import { getReagentsByZone } from '@/api/reagent'
-import { showSuccessToast } from 'vant'
+import { showSuccessToast, showFailToast } from 'vant'
 
 interface DialogOptions {
   title: string
@@ -198,6 +200,11 @@ const onSelect = (action: { name: string }) => {
     })
   } else if (action.name === '删除') {
     // 删除逻辑
+    pendingDelete.value = async () => {
+      await deleteSpaceById(selectedSpaceId.value!)
+      await fetchSpaces()
+    }
+    deleteMessage.value = '删除空间后无法恢复，是否继续？'
     showDeleteDialog.value = true
   }
 }
@@ -223,7 +230,7 @@ const onAddZone = async (parentId: number | null) => {
   if (parentId !== null) {
     const reagents = await getReagentsByZone(parentId)
     if (reagents.length > 0) {
-      alert('该分区下有试剂，无法添加子分区')
+      showFailToast('该分区下有试剂，无法添加子分区')
       return
     }
   }
@@ -238,13 +245,15 @@ const onAddZone = async (parentId: number | null) => {
   })
 }
 
+// 待确认的删除动作（空间或分区共用）
+const pendingDelete = ref<() => Promise<void>>(async () => {})
+const deleteMessage = ref('删除后无法恢复，是否继续？')
+
 const confirmDelete = async () => {
-  if (selectedSpaceId.value === null) return
   try {
-    await deleteSpaceById(selectedSpaceId.value)
-    await fetchSpaces()
+    await pendingDelete.value()
   } catch (err) {
-    console.error('删除空间失败:', err)
+    console.error('删除失败:', err)
   } finally {
     showDeleteDialog.value = false
   }
@@ -264,6 +273,17 @@ const fetchNeed2RestockReagents = async () => {
   } catch (err) {
     console.error('获取需要补货的试剂失败:', err)
   }
+}
+
+const onDeleteZone = (zoneId: number) => {
+  if (selectedSpaceId.value === null) return
+  const Id = selectedSpaceId.value
+  pendingDelete.value = async () => {
+    await deleteZoneById(zoneId)
+    await fetchZones(Id)
+  }
+  deleteMessage.value = '删除分区后无法恢复，是否继续？'
+  showDeleteDialog.value = true
 }
 
 onMounted(() => {

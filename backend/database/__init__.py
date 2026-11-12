@@ -38,7 +38,7 @@ from .reservation import (
 )
 from .spaces import add_space, delete_space_by_id, get_all_spaces, update_space_name
 from .user import search_user_by_name, upsert_user
-from .zones import add_zone, get_zones_by_space
+from .zones import add_zone, delete_zone_by_id, get_zones_by_space
 
 __version__ = "2.0.0"
 
@@ -78,4 +78,5 @@ __all__ = [
     "upsert_user",
     "get_reagent_usage_list",
     "update_space_name",
+    "delete_zone_by_id",
 ]

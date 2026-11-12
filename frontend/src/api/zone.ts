@@ -20,3 +20,11 @@ export async function addZone(
 ): Promise<void> {
   await service.post('/api/zone/add', { parent_id: parentId, space_id: spaceId, name })
 }
+
+export async function deleteZoneById(id: number): Promise<void> {
+  await service.delete(`/api/zone/delete/${id}`)
+}
+
+export async function updateZoneName(id: number, newName: string): Promise<void> {
+  await service.put(`/api/zone/update/${id}`, { name: newName })
+}
