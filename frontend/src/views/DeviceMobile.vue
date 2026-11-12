@@ -171,15 +171,14 @@ function changeSelectedDate(offset: number) {
   background: var(--el-color-primary);
 }
 
-.booking-slot.ispast :deep(.van-grid-item__content) {
-  background: #cbd5e0;
-}
-
 .slot-time {
   font-size: 12px;
 }
 .grid-scroll {
   overflow-y: auto;
   max-height: calc(100vh - 200px);
+}
+.booking-slot.ispast :deep(.van-grid-item__content) {
+  background: var(--slot-bg, #f4f5f7);
 }
 </style>
