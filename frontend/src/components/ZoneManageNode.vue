@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Zone } from '@/api/zone'
+import type { Zone } from '@/api/zones'
 
 // script setup 下要递归引用自己，必须通过 name 选项
 defineOptions({ name: 'ZoneNode' })
