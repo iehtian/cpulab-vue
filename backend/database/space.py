@@ -42,6 +42,20 @@ def add_space(name):
             (name,),
         )
 
+
+def update_space_name(space_id, new_name):
+    """更新空间名称"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            UPDATE {SPACE_TABLE}
+            SET name = %s
+            WHERE id = %s
+            """),
+            (new_name, space_id),
+        )
+
+
 def delete_space_by_id(space_id):
     """根据空间 ID 删除空间信息"""
     with get_connection() as conn, conn.cursor() as cur:
@@ -51,6 +65,7 @@ def delete_space_by_id(space_id):
             """),
             (space_id,),
         )
+
 
 def get_all_spaces():
     """获取所有空间信息"""

@@ -17,3 +17,7 @@ export async function addSpace(name: string): Promise<void> {
 export async function deleteSpaceById(id: number): Promise<void> {
   await service.delete(`/api/space/delete/${id}`)
 }
+
+export async function updateSpaceName(id: number, newName: string): Promise<void> {
+  await service.put(`/api/space/update/${id}`, { name: newName })
+}

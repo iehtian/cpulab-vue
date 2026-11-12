@@ -28,6 +28,25 @@ def add_space_api():
         return fail("保存空间信息失败", 500)
 
 
+@bp.route("/space/update/<int:space_id>", methods=["PUT"])
+def update_space_name_api(space_id):
+    """更新空间名称"""
+    try:
+        data = request.get_json()
+        new_name = data.get("name")
+
+        if not new_name:
+            return fail("请填写新的空间名称")
+
+        db_api.update_space_name(space_id, new_name)
+        logger.info("空间名称已更新 | ID: {}, 新名称: {}", space_id, new_name)
+        return jsonify({"message": "空间名称已更新"})
+
+    except Exception as e:  # noqa: BLE001
+        logger.exception("空间名称更新时发生异常: {}", e)
+        return fail("更新空间名称失败", 500)
+
+
 @bp.route("/space/delete/<int:space_id>", methods=["DELETE"])
 def delete_space_api(space_id):
     """根据空间 ID 删除空间信息"""

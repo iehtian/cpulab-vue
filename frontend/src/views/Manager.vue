@@ -104,7 +104,7 @@ import { ref, onMounted } from 'vue'
 import DialogField from '@/components/DialogField.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
 import ZoneManageNode from '@/components/ZoneManageNode.vue'
-import { getAllSpaces, addSpace, deleteSpaceById } from '@/api/space'
+import { getAllSpaces, addSpace, deleteSpaceById, updateSpaceName } from '@/api/space'
 import type { Space } from '@/api/space'
 import { addZone, getZonesBySpace } from '@/api/zone'
 import type { Zone } from '@/api/zone'
@@ -123,7 +123,7 @@ interface DialogOptions {
 
 const spaceActions = [
   { name: '布局管理', color: '#1989fa' },
-  { name: '编辑', color: '#1989fa' },
+  { name: '重命名', color: '#1989fa' },
   { name: '删除', color: '#ee0a24' },
 ]
 
@@ -184,8 +184,18 @@ const onSelect = (action: { name: string }) => {
     // 布局管理逻辑
     fetchZones(selectedSpaceId.value!)
     showZonePopup.value = true
-  } else if (action.name === '编辑') {
-    // 编辑逻辑
+  } else if (action.name === '重命名') {
+    // 重命名逻辑
+    openDialog({
+      title: '重命名空间',
+      label: '新的空间名称',
+      placeholder: '请输入新的空间名称',
+      initialValue: spaces.value.find((s) => s.id === selectedSpaceId.value)?.name,
+      onSubmit: async (newName) => {
+        await updateSpaceName(selectedSpaceId.value!, newName)
+        await fetchSpaces()
+      },
+    })
   } else if (action.name === '删除') {
     // 删除逻辑
     showDeleteDialog.value = true
