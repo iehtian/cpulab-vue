@@ -1,37 +1,40 @@
 <template>
-  <el-card>
-    <div style="display: flex; justify-content: space-between; align-items: center">
-      <van-cell
-        class="date-cell"
-        :value="dateStr(date)"
-        @click="showCalendar = true"
-      >
-        <template #icon>
-          <van-button
-            size="small"
-            @click.stop="changeSelectedDate(-1)"
-          >
-            前一天
-          </van-button>
-        </template>
+  <div
+    class="mobile-booking"
+    :class="{ 'has-action-bar': hasSelection }"
+  >
+    <el-card>
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <van-cell
+          class="date-cell"
+          :value="dateStr(date)"
+          @click="showCalendar = true"
+        >
+          <template #icon>
+            <van-button
+              size="small"
+              @click.stop="changeSelectedDate(-1)"
+            >
+              前一天
+            </van-button>
+          </template>
 
-        <template #right-icon>
-          <van-button
-            size="small"
-            @click.stop="changeSelectedDate(1)"
-          >
-            后一天
-          </van-button>
-        </template>
-      </van-cell>
-      <van-calendar
-        v-model:show="showCalendar"
-        :show-confirm="false"
-        @confirm="onDateConfirm"
-      />
-    </div>
-  </el-card>
-  <div class="grid-scroll">
+          <template #right-icon>
+            <van-button
+              size="small"
+              @click.stop="changeSelectedDate(1)"
+            >
+              后一天
+            </van-button>
+          </template>
+        </van-cell>
+        <van-calendar
+          v-model:show="showCalendar"
+          :show-confirm="false"
+          @confirm="onDateConfirm"
+        />
+      </div>
+    </el-card>
     <van-grid
       :column-num="4"
       clickable
@@ -52,18 +55,23 @@
         </span>
       </van-grid-item>
     </van-grid>
-    <van-button
-      type="primary"
-      v-if="bookingSlots.length > 0"
-      @click="submit"
-      >提交预约</van-button
+    <div
+      v-if="hasSelection"
+      class="action-bar"
     >
-    <van-button
-      type="danger"
-      v-if="cancelingSlots.length > 0"
-      @click="cancel"
-      >取消预约</van-button
-    >
+      <van-button
+        type="primary"
+        v-if="bookingSlots.length > 0"
+        @click="submit"
+        >提交预约</van-button
+      >
+      <van-button
+        type="danger"
+        v-if="cancelingSlots.length > 0"
+        @click="cancel"
+        >取消预约</van-button
+      >
+    </div>
   </div>
 </template>
 
@@ -102,6 +110,8 @@ const { isPastBlock, isSelected, makeTimeLabels } = useSlotTime(
 )
 
 const timeLabels = computed(() => makeTimeLabels(devicesInfo.value?.totalSlots ?? 0))
+
+const hasSelection = computed(() => bookingSlots.value.length > 0 || cancelingSlots.value.length > 0)
 
 function toggleBookingSlot(id: number) {
   const index = bookingSlots.value.indexOf(id)
@@ -174,9 +184,28 @@ function changeSelectedDate(offset: number) {
 .slot-time {
   font-size: 12px;
 }
-.grid-scroll {
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
+
+/* 操作栏悬浮时给页面底部留空，避免遮住最后一排 */
+.mobile-booking.has-action-bar {
+  padding-bottom: 72px;
+}
+
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* 悬浮在固定 tabbar 上方 */
+  bottom: calc(var(--van-tabbar-height, 50px) + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--van-background-2, #fff);
+  box-shadow: 0 -2px 8px rgb(0 0 0 / 8%);
+}
+
+.action-bar .van-button {
+  flex: 1;
 }
 .booking-slot.ispast :deep(.van-grid-item__content) {
   background: var(--slot-bg, #f4f5f7);

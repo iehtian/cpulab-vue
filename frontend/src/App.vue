@@ -28,7 +28,10 @@
     @click-left="onClickLeft"
   />
   <router-view />
-  <van-tabbar route>
+  <van-tabbar
+    route
+    placeholder
+  >
     <van-tabbar-item
       replace
       to="/home"
