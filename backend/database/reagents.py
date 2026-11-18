@@ -119,7 +119,10 @@ def get_reagents_by_zone(zone_id):
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count,  r.need2restock,
-                u.usage_count, u.user_name, u.remaining_after  -- 子查询结果列
+                u.usage_count, u.user_name, u.remaining_after,  -- 子查询结果列
+                (SELECT COUNT(*) FROM {REAGENT_USAGE_TABLE} ru2
+                 WHERE ru2.reagent_id = r.id
+                   AND ru2.event_type = {EVENT_USE}) AS use_count
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
                 SELECT COUNT(*) OVER () AS usage_count,
@@ -149,10 +152,29 @@ def get_reagents_by_zone(zone_id):
                 "usageLength": row[8],
                 "lastUserName": row[9],
                 "lastRemainder": row[10],
+                "useCount": row[11],
             }
             for row in rows
         ]
         return reagents
+
+
+def reagent_has_usage(zone_id, name):
+    """检查指定试剂（按区域+名称定位）是否已有取用记录"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            SELECT EXISTS (
+                SELECT 1
+                FROM {REAGENT_USAGE_TABLE} ru
+                JOIN {REAGENT_TABLE} r ON r.id = ru.reagent_id
+                WHERE r.zone_id = %s AND r.name = %s AND ru.event_type = {EVENT_USE}
+            )
+            """),
+            (zone_id, name),
+        )
+        row = cur.fetchone()
+        return bool(row[0]) if row else False
 
 
 def delete_reagent_by_id(reagent_id):

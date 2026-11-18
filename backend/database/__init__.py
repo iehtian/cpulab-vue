@@ -19,6 +19,7 @@ from .reagents import (
     get_frequently_used_reagents,
     get_need2restock_reagents,
     get_reagents_by_zone,
+    reagent_has_usage,
     set_needs_restock,
     upsert_reagent,
 )
@@ -68,6 +69,7 @@ __all__ = [
     "get_zones_by_space",
     "initialize_database",
     "open_reagent",
+    "reagent_has_usage",
     "search_user_by_name",
     "set_needs_restock",
     "upsert_booking",

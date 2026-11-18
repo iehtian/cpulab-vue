@@ -36,13 +36,13 @@
           :disabled="!currentReagent?.openDate"
           @click="openUsageList"
           >使用记录</van-button
-        >
+        >-->
         <van-button
-          v-if="!currentReagent?.openDate"
+          v-if="!currentReagent?.useCount"
           type="danger"
           @click="onReagentEdit"
           >编辑</van-button
-        > -->
+        >
         <van-button
           type="danger"
           @click="requestDelete"

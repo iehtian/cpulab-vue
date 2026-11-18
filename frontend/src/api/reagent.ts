@@ -12,10 +12,11 @@ export interface Reagent {
   usageLength: number | null
   lastUserName: string | null
   lastRemainder: number | null
+  useCount: number
 }
 export type ReagentPayload = Omit<
   Reagent,
-  'id' | 'openDate' | 'need2restock' | 'usageLength' | 'lastUserName' | 'lastRemainder'
+  'id' | 'need2restock' | 'usageLength' | 'lastUserName' | 'lastRemainder' | 'useCount'
 >
 export type ReagentTimes = Reagent & {
   times: number

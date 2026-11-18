@@ -25,6 +25,10 @@ def upsert_reagent_api():
         if not user_id:
             return fail("缺少用户信息，请刷新后重试")
 
+        # 已有取用记录的试剂不允许再编辑，防止历史记录的余量失去意义
+        if db_api.reagent_has_usage(zone_id, name):
+            return fail("该试剂已有取用记录，不能编辑")
+
         db_api.upsert_reagent(
             zone_id,
             user_id,
