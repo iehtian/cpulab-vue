@@ -8,7 +8,6 @@ export interface Reagent {
   category: number
   capacity: number | null
   bottleCount: number | null
-  specification: string
   need2restock: boolean | null
   usageLength: number | null
   lastUserName: string | null
@@ -36,7 +35,6 @@ export async function upsertReagent(payload: ReagentPayload, userId: number): Pr
     category: payload.category,
     capacity: payload.capacity,
     bottle_count: payload.bottleCount,
-    specification: payload.specification,
   })
 }
 

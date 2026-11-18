@@ -24,8 +24,6 @@ def create_reagent_table():
                 -- 仅色谱级试剂(category=4)使用, 其余类别必须为 NULL
                 capacity NUMERIC CHECK (capacity > 0),
                 bottle_count INTEGER CHECK (bottle_count > 0),
-                -- 规格, 所有类别均可填, 可为空
-                specification TEXT,
                 need2restock BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
                 UNIQUE (zone_id, name),
@@ -49,7 +47,6 @@ def upsert_reagent(
     cas_number=_unset,
     capacity=_unset,
     bottle_count=_unset,
-    specification=_unset,
     needs_restock=_unset,
 ):
     """插入或更新试剂信息"""
@@ -63,7 +60,6 @@ def upsert_reagent(
         "CAS_number": cas_number,
         "capacity": capacity,
         "bottle_count": bottle_count,
-        "specification": specification,
         "need2restock": needs_restock,
     }
     update_fields = {k: v for k, v in candidate_fields.items() if v is not _unset}
@@ -122,7 +118,7 @@ def get_reagents_by_zone(zone_id):
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification,  r.need2restock,
+                r.bottle_count,  r.need2restock,
                 u.usage_count, u.user_name, u.remaining_after  -- 子查询结果列
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
@@ -149,11 +145,10 @@ def get_reagents_by_zone(zone_id):
                 "category": row[4],
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
-                "specification": row[7],
-                "need2restock": row[8],
-                "usageLength": row[9],
-                "lastUserName": row[10],
-                "lastRemainder": row[11],
+                "need2restock": row[7],
+                "usageLength": row[8],
+                "lastUserName": row[9],
+                "lastRemainder": row[10],
             }
             for row in rows
         ]
@@ -178,7 +173,7 @@ def get_need2restock_reagents():
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification,  r.need2restock,
+                r.bottle_count,  r.need2restock,
                 u.usage_count, u.user_name, u.remaining_after
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
@@ -205,11 +200,10 @@ def get_need2restock_reagents():
                 "category": row[4],
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
-                "specification": row[7],
-                "need2restock": row[8],
-                "usageLength": row[9],
-                "lastUserName": row[10],
-                "lastRemainder": row[11],
+                "need2restock": row[7],
+                "usageLength": row[8],
+                "lastUserName": row[9],
+                "lastRemainder": row[10],
             }
             for row in rows
         ]
@@ -222,7 +216,7 @@ def get_frequently_used_reagents(user_id):
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification,  r.need2restock,
+                r.bottle_count,  r.need2restock,
                 t.use_count,
                 u.usage_count, u.user_name, u.remaining_after
             FROM (
@@ -256,12 +250,11 @@ def get_frequently_used_reagents(user_id):
                 "category": row[4],
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
-                "specification": row[7],
-                "need2restock": row[8],
-                "times": row[9],
-                "usageLength": row[10],
-                "lastUserName": row[11],
-                "lastRemainder": row[12],
+                "need2restock": row[7],
+                "times": row[8],
+                "usageLength": row[9],
+                "lastUserName": row[10],
+                "lastRemainder": row[11],
             }
             for row in rows
         ]

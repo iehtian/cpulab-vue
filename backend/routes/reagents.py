@@ -19,7 +19,6 @@ def upsert_reagent_api():
         category = data.get("category")
         capacity = data.get("capacity")
         bottle_count = data.get("bottle_count")
-        specification = data.get("specification")
 
         if not zone_id or not name or not category:
             return fail("请填写完整：所在区域、试剂名称、类别")
@@ -34,17 +33,15 @@ def upsert_reagent_api():
             category=category,
             capacity=capacity,
             bottle_count=bottle_count,
-            specification=specification,
         )
         logger.info(
             "试剂信息已添加/更新| 区域ID: {}, 名称: {}, 类别: {}, "
-            "容量: {}, 瓶数: {}, 规格: {}, 用户ID: {}".format(
+            "容量: {}, 瓶数: {}, 用户ID: {}".format(
                 zone_id,
                 name,
                 category,
                 capacity,
                 bottle_count,
-                specification,
                 user_id,
             )
         )

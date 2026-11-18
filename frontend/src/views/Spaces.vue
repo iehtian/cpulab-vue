@@ -93,12 +93,6 @@
             @click="showCategoryPicker = true"
           />
           <van-field
-            v-model="form.specification"
-            name="specification"
-            label="规格/包装"
-            placeholder="请输入规格/包装"
-          />
-          <van-field
             v-if="form.category === 4"
             v-model="form.capacity"
             name="capacity"
@@ -219,7 +213,6 @@ const initialForm = () => ({
   name: '',
   casNumber: '',
   category: 1,
-  specification: '',
   capacity: '',
   bottleCount: '',
 })
@@ -302,13 +295,12 @@ const onSubmit = async (values: Record<string, string>) => {
     return
   }
   // 项目开了 noUncheckedIndexedAccess，索引取值带 undefined，这里解构给默认值
-  const { name = '', casNumber = '', specification = '', capacity = '', bottleCount = '' } = values
+  const { name = '', casNumber = '', capacity = '', bottleCount = '' } = values
   const payload: ReagentPayload = {
     zoneId: selectedZoneId.value,
     name,
     casNumber,
     category: form.category,
-    specification,
     capacity: capacity ? Number(capacity) : null,
     bottleCount: bottleCount ? Number(bottleCount) : null,
   }
@@ -330,7 +322,6 @@ const onReagentEdit = () => {
   form.name = reagent.name
   form.casNumber = reagent.casNumber
   form.category = reagent.category
-  form.specification = reagent.specification
   form.capacity = reagent.capacity != null ? String(reagent.capacity) : ''
   form.bottleCount = reagent.bottleCount != null ? String(reagent.bottleCount) : ''
   showFormPopup.value = true
