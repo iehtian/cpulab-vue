@@ -83,6 +83,8 @@ def add_reagent_usage(reagent_id, user_id, amount=None):
         last_record = cur.fetchone()
         last_remainder = last_record[0] if last_record else None
         new_remainder = last_remainder - amount if last_remainder is not None else None
+        if new_remainder is not None and new_remainder < 0:
+            raise ValueError("试剂余量不足，无法取用")
 
         cur.execute(
             dynamic_sql(f"""
