@@ -90,7 +90,7 @@
             readonly
             label="类别"
             placeholder="请选择类别"
-            @click="showCategoryPicker = true"
+            @click="openCategoryPicker"
           />
           <van-field
             v-if="form.category === 4"
@@ -133,6 +133,7 @@
     position="bottom"
   >
     <van-picker
+      v-model="categoryPickerValue"
       :columns="categoryColumns"
       @confirm="onCategoryConfirm"
       @cancel="showCategoryPicker = false"
@@ -217,12 +218,21 @@ const initialForm = () => ({
   bottleCount: '',
 })
 const form = reactive(initialForm())
-const categoryText = ref('普通试剂')
+// 显示文本直接派生自 form.category，新增/编辑/重置三条路径都不用单独维护
+const categoryText = computed(
+  () => categoryColumns.find((c) => c.value === form.category)?.text ?? '普通试剂',
+)
 const showCategoryPicker = ref(false)
+// 滚动过程只改中间变量，点取消丢弃、点确认才写入 form.category
+const categoryPickerValue = ref<number[]>([])
 
-const onCategoryConfirm = ({ selectedOptions }: any) => {
-  form.category = selectedOptions[0].value as number
-  categoryText.value = selectedOptions[0].text as string
+const openCategoryPicker = () => {
+  categoryPickerValue.value = [form.category] // 打开时定位到当前类别
+  showCategoryPicker.value = true
+}
+
+const onCategoryConfirm = ({ selectedValues }: any) => {
+  form.category = selectedValues[0] as number
   showCategoryPicker.value = false
 }
 const usageList = ref<ReagentUsage[]>([])
@@ -306,9 +316,8 @@ const onSubmit = async (values: Record<string, string>) => {
   }
   await upsertReagent(payload, userStore.userId)
   await fetchReagents()
-  // 提交后重置表单
+  // 提交后重置表单（form.category 回到 1 后 categoryText 自动跟随）
   Object.assign(form, initialForm())
-  categoryText.value = '普通试剂'
   showFormPopup.value = false
 }
 

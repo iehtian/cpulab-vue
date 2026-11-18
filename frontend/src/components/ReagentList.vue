@@ -15,14 +15,34 @@
         >
           <div class="tag-row">
             <div class="tag-info">
-              {{ reagent.name }}
-              <div v-if="reagent.category === 1">普通试剂</div>
-              <div v-else-if="reagent.category === 2 || reagent.category === 3">
+              <div class="name-row">
+                <span class="reagent-name">{{ reagent.name }}</span>
+                <van-tag
+                  :type="CATEGORY_MAP[reagent.category]?.type ?? 'default'"
+                  plain
+                  round
+                >
+                  {{ CATEGORY_MAP[reagent.category]?.text ?? '未知' }}
+                </van-tag>
+              </div>
+              <div
+                v-if="reagent.category === 2 || reagent.category === 3"
+                class="usage-info"
+              >
                 {{ reagent.usageLength ?? 0 }} 次，最近
                 {{ reagent.lastUserName ?? '-' }}
               </div>
-              <div v-else>
-                剩余{{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
+              <div
+                v-else-if="reagent.category === 4"
+                class="usage-info"
+              >
+                {{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
+              </div>
+              <div
+                v-else
+                class="usage-info"
+              >
+                -
               </div>
             </div>
             <div class="tag-action">
@@ -45,6 +65,7 @@
 
 <script setup lang="ts">
 import type { Reagent } from '@/api/reagent'
+import { CATEGORY_MAP } from '@/constants/reagent'
 
 defineProps<{ reagents: Reagent[] }>()
 
@@ -83,5 +104,21 @@ const emit = defineEmits<{
 .tag-action {
   flex-shrink: 0; /* 不被压缩 */
   margin-left: auto; /* 无论左侧内容多长，都推到最右 */
+}
+.tag-info {
+  min-width: 0; /* 允许收缩，内部名字才能触发省略号 */
+}
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.usage-info {
+  font-size: 14px;
+}
+.reagent-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
