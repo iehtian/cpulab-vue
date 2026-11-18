@@ -22,10 +22,7 @@
                 {{ reagent.lastUserName ?? '-' }}
               </div>
               <div v-else>
-                <div v-if="reagent.openDate">
-                  剩余{{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
-                </div>
-                <div v-else>尚未开瓶</div>
+                剩余{{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
               </div>
             </div>
             <div class="tag-action">

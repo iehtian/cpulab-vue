@@ -9,7 +9,7 @@ from log_config import logger
 
 # 使用记录的事件类型
 EVENT_USE = 1  # 取用
-EVENT_OPEN = 2  # 开瓶贴标设置总量
+EVENT_SET = 2  # 设置总量,如创建新瓶或补货
 
 
 def create_reagent_usage_table():
@@ -20,19 +20,12 @@ def create_reagent_usage_table():
                 id SERIAL PRIMARY KEY,
                 reagent_id INTEGER REFERENCES {REAGENT_TABLE}(id) ON DELETE CASCADE,
                 user_id INTEGER REFERENCES {USER_TABLE}(id) ON DELETE SET NULL,
-                event_type SMALLINT NOT NULL, -- 1=取用, 2=开瓶贴标设置总量
+                event_type SMALLINT NOT NULL, -- 1=取用, 2=设置总量
                 amount NUMERIC, -- 取用量或修改总量
                 remaining_after NUMERIC, -- 余量
                 usage_time TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
                 UNIQUE (reagent_id, user_id, usage_time)
             )
-            """)
-        )
-        cur.execute(
-            dynamic_sql(f"""
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_usage_open_once
-            ON {REAGENT_USAGE_TABLE} (reagent_id)
-            WHERE event_type = 2
             """)
         )
 
@@ -58,34 +51,25 @@ def open_reagent(reagent_id, user_id):
             dynamic_sql(f"""
             INSERT INTO {REAGENT_USAGE_TABLE} (reagent_id, user_id, event_type, amount, remaining_after)
             VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (reagent_id) WHERE event_type = 2 DO NOTHING
             """),
-            (reagent_id, user_id, EVENT_OPEN, 0, capacity),
+            (reagent_id, user_id, EVENT_SET, 0, capacity),
         )
     logger.info(f"Reagent opened for reagent_id={reagent_id}, user_id={user_id}.")
 
 
-def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
+def add_reagent_usage(reagent_id, user_id, amount=None):
     """插入试剂使用记录"""
 
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
-            SELECT id FROM {REAGENT_TABLE} WHERE id = %s FOR UPDATE
+            SELECT id,capacity,bottle_count FROM {REAGENT_TABLE} WHERE id = %s FOR UPDATE
             """),
             (reagent_id,),
         )
-        if cur.fetchone() is None:
+        result = cur.fetchone()
+        if result is None:
             raise ValueError("该试剂不存在或已被删除")
-
-        cur.execute(
-            dynamic_sql(f"""
-            SELECT reagent_id FROM {REAGENT_USAGE_TABLE} WHERE reagent_id = %s AND event_type = 2
-            """),
-            (reagent_id,),
-        )
-        if cur.fetchone() is None:
-            raise ValueError("该试剂尚未开封，无法记录使用")
 
         cur.execute(
             dynamic_sql(f"""
@@ -98,13 +82,7 @@ def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
         )
         last_record = cur.fetchone()
         last_remainder = last_record[0] if last_record else None
-
-        if event_type == EVENT_USE:
-            new_remainder = (
-                last_remainder - amount if last_remainder is not None else None
-            )
-        else:
-            new_remainder = amount if amount is not None else None
+        new_remainder = last_remainder - amount if last_remainder is not None else None
 
         cur.execute(
             dynamic_sql(f"""
@@ -115,7 +93,7 @@ def add_reagent_usage(reagent_id, user_id, event_type, amount=None):
             (
                 reagent_id,
                 user_id,
-                event_type,
+                EVENT_USE,
                 amount,
                 new_remainder,
             ),
@@ -134,7 +112,7 @@ def get_reagent_usage(reagent_id):
                    u.user_name,
                    r.remaining_after
             FROM {REAGENT_USAGE_TABLE} r
-            LEFT JOIN {USER_TABLE} u ON u.id = r.user_id
+            LEFT JOIN {USER_TABLE} u ON u.id = r.user_id AND r.event_type = {EVENT_USE}
             WHERE r.reagent_id = %s
             ORDER BY r.usage_time DESC
             LIMIT 1
@@ -147,7 +125,7 @@ def get_reagent_usage(reagent_id):
         return {"usage_count": 0, "user_name": None, "remaining": None}
     #  开瓶贴标不应算作一次使用
     return {
-        "usage_count": record[0] - 1,
+        "usage_count": record[0],
         "user_name": record[1],
         "remaining": record[2],
     }

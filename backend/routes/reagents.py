@@ -13,6 +13,7 @@ def upsert_reagent_api():
     try:
         data = request.get_json()
         zone_id = data.get("zone_id")
+        user_id = data.get("user_id")
         name = data.get("name")
         cas_number = data.get("CAS_number")
         category = data.get("category")
@@ -22,9 +23,12 @@ def upsert_reagent_api():
 
         if not zone_id or not name or not category:
             return fail("请填写完整：所在区域、试剂名称、类别")
+        if not user_id:
+            return fail("缺少用户信息，请刷新后重试")
 
         db_api.upsert_reagent(
             zone_id,
+            user_id,
             name=name,
             cas_number=cas_number,
             category=category,
@@ -33,13 +37,15 @@ def upsert_reagent_api():
             specification=specification,
         )
         logger.info(
-            "试剂信息已添加/更新| 区域ID: {}, 名称: {}, 类别: {}, 容量: {}, 瓶数: {}, 规格: {}".format(
+            "试剂信息已添加/更新| 区域ID: {}, 名称: {}, 类别: {}, "
+            "容量: {}, 瓶数: {}, 规格: {}, 用户ID: {}".format(
                 zone_id,
                 name,
                 category,
                 capacity,
                 bottle_count,
                 specification,
+                user_id,
             )
         )
         return jsonify({"message": "试剂信息已保存"})
@@ -47,39 +53,6 @@ def upsert_reagent_api():
     except Exception as e:  # noqa: BLE001
         logger.exception("试剂信息添加/更新时发生异常: {}", e)
         return fail("保存试剂信息失败", 500)
-
-
-@bp.route("/reagent/open", methods=["POST"])
-def open_reagent_api():
-    """开瓶贴标"""
-    try:
-        data = request.get_json()
-        reagent_id = data.get("id")
-        open_date = data.get("open_date")
-        user_id = data.get("user_id")  # 默认用户ID为1，如果未提供
-
-        if not reagent_id or not open_date:
-            return fail("请填写开封日期")
-
-        db_api.update_open_date(
-            reagent_id,
-            open_date,
-        )
-        logger.info(
-            "试剂信息已添加/更新| 试剂ID: {}, 开封日期: {}".format(
-                reagent_id,
-                open_date,
-            )
-        )
-        db_api.open_reagent(
-            reagent_id,
-            user_id,
-        )
-        return jsonify({"message": "试剂信息已保存"})
-
-    except Exception as e:  # noqa: BLE001
-        logger.exception("试剂信息添加/更新时发生异常: {}", e)
-        return fail("开瓶贴标失败", 500)
 
 
 @bp.route("/reagent/all/<int:zone_id>", methods=["GET"])

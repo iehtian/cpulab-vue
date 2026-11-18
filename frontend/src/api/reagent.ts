@@ -9,7 +9,6 @@ export interface Reagent {
   capacity: number | null
   bottleCount: number | null
   specification: string
-  openDate: string | null
   need2restock: boolean | null
   usageLength: number | null
   lastUserName: string | null
@@ -28,9 +27,10 @@ export async function getReagentsByZone(zoneId: number): Promise<Reagent[]> {
   return response.data.reagents || []
 }
 
-export async function upsertReagent(payload: ReagentPayload): Promise<void> {
+export async function upsertReagent(payload: ReagentPayload, userId: number): Promise<void> {
   await service.post('/api/reagent/upsert', {
     zone_id: payload.zoneId,
+    user_id: userId,
     name: payload.name,
     CAS_number: payload.casNumber,
     category: payload.category,
@@ -42,10 +42,6 @@ export async function upsertReagent(payload: ReagentPayload): Promise<void> {
 
 export async function deleteReagentById(id: number): Promise<void> {
   await service.delete(`/api/reagent/delete/${id}`)
-}
-
-export async function openReagentById(id: number, openDate: string, userId: number): Promise<void> {
-  await service.post('/api/reagent/open', { id, open_date: openDate, user_id: userId })
 }
 
 export async function markReagentNeed2Restock(id: number, need2restock: boolean): Promise<void> {

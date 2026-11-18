@@ -20,7 +20,6 @@ from .reagents import (
     get_need2restock_reagents,
     get_reagents_by_zone,
     set_needs_restock,
-    update_open_date,
     upsert_reagent,
 )
 from .reservation import (
@@ -71,7 +70,6 @@ __all__ = [
     "open_reagent",
     "search_user_by_name",
     "set_needs_restock",
-    "update_open_date",
     "upsert_booking",
     "upsert_plan_field",
     "upsert_reagent",

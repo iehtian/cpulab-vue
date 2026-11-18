@@ -18,7 +18,6 @@
         <van-button
           v-if="currentReagent?.category !== 1"
           type="primary"
-          :disabled="!currentReagent?.openDate"
           @click="currentReagent && requestUse(currentReagent)"
         >
           取用
@@ -29,14 +28,8 @@
         >
           {{ currentReagent?.need2restock ? '完成补货' : '需要补货' }}
         </van-button>
-        <van-button
-          v-if="!currentReagent?.openDate"
-          plain
-          type="primary"
-          @click="openReagent"
-          >开瓶贴标</van-button
-        >
-        <van-button
+
+        <!-- <van-button
           v-if="currentReagent?.category !== 1"
           plain
           type="primary"
@@ -49,7 +42,7 @@
           type="danger"
           @click="onReagentEdit"
           >编辑</van-button
-        >
+        > -->
         <van-button
           type="danger"
           @click="requestDelete"
@@ -212,8 +205,10 @@ import { upsertReagent, getReagentsByZone } from '@/api/reagent'
 import type { Reagent, ReagentPayload } from '@/api/reagent'
 import { useReagentActions } from '@/composables/useReagentActions'
 import { getReagentUsage, type ReagentUsage, type ReagentUsageList } from '@/api/reagentusage'
+import { useUserStore } from '@/stores/user'
 
 const spaceId = Number(useRoute().params.id as string)
+const userStore = useUserStore()
 const zones = ref<Zone[]>([])
 const reagents = ref<Reagent[]>([])
 const selectedZoneId = ref(-1)
@@ -284,7 +279,6 @@ const {
   showDeleteDialog,
   requestDelete,
   confirmDelete,
-  openReagent,
   requestRestock,
 } = useReagentActions(fetchReagents)
 
@@ -303,6 +297,10 @@ const validatePositive = (val: string) => val !== '' && Number(val) > 0
 
 // 校验全部通过后触发，values 是 van-form 按各 field 的 name 聚合出的对象
 const onSubmit = async (values: Record<string, string>) => {
+  if (userStore.userId === null) {
+    showToast('请先登录')
+    return
+  }
   // 项目开了 noUncheckedIndexedAccess，索引取值带 undefined，这里解构给默认值
   const { name = '', casNumber = '', specification = '', capacity = '', bottleCount = '' } = values
   const payload: ReagentPayload = {
@@ -314,7 +312,7 @@ const onSubmit = async (values: Record<string, string>) => {
     capacity: capacity ? Number(capacity) : null,
     bottleCount: bottleCount ? Number(bottleCount) : null,
   }
-  await upsertReagent(payload)
+  await upsertReagent(payload, userStore.userId)
   await fetchReagents()
   // 提交后重置表单
   Object.assign(form, initialForm())

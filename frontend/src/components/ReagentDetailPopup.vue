@@ -15,7 +15,6 @@
       <p><span class="label">容量：</span>{{ currentReagent.capacity ?? '-' }}</p>
       <p><span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}</p>
       <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>
-      <p><span class="label">开瓶日期：</span>{{ currentReagent.openDate || '-' }}</p>
     </div>
     <div class="action-buttons">
       <slot name="action-buttons" />

@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { openReagentById, deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
+import { deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
 import { addReagentUsage } from '@/api/reagentusage'
 import type { Reagent } from '@/api/reagent'
 import { useUserStore } from '@/stores/user'
@@ -60,17 +60,6 @@ export function useReagentActions(refresh: () => void) {
     }
   }
 
-  const openReagent = async () => {
-    if (userStore.userId === null) return
-    try {
-      await openReagentById(currentReagentId.value, new Date().toISOString(), userStore.userId)
-      refresh()
-      showDetailPopup.value = false
-    } catch (error) {
-      console.error('打开试剂失败:', error)
-    }
-  }
-
   const requestRestock = async (reagentId: number, need2restock: boolean) => {
     try {
       await markReagentNeed2Restock(reagentId, need2restock)
@@ -92,7 +81,6 @@ export function useReagentActions(refresh: () => void) {
     showUsagePopup,
     requestUse,
     confirmUsage,
-    openReagent,
     requestRestock,
   }
 }

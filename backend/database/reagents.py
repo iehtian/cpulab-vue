@@ -6,7 +6,7 @@ from database.pgsql_config import (
     dynamic_sql,
     get_connection,
 )
-from database.reagent_usage import EVENT_USE
+from database.reagent_usage import EVENT_SET, EVENT_USE
 from log_config import logger
 
 
@@ -19,8 +19,6 @@ def create_reagent_table():
                 zone_id INTEGER REFERENCES {ZONE_TABLE}(id) ON DELETE CASCADE,
                 name TEXT NOT NULL,
                 CAS_number TEXT,
-                -- 开瓶贴标日期
-                open_date DATE,
                 -- 试剂类别: 1=普通试剂, 2=危化品, 3=生物试剂, 4=色谱级试剂
                 category INTEGER NOT NULL,
                 -- 仅色谱级试剂(category=4)使用, 其余类别必须为 NULL
@@ -44,6 +42,7 @@ _unset = object()
 
 def upsert_reagent(
     zone_id,
+    user_id,
     *,
     name=_unset,
     category=_unset,
@@ -51,12 +50,13 @@ def upsert_reagent(
     capacity=_unset,
     bottle_count=_unset,
     specification=_unset,
-    open_date=_unset,
     needs_restock=_unset,
 ):
     """插入或更新试剂信息"""
     if zone_id is None:
         raise ValueError("zone_id cannot be None")
+    if user_id is None:
+        raise ValueError("user_id cannot be None")
     candidate_fields = {
         "name": name,
         "category": category,
@@ -64,7 +64,6 @@ def upsert_reagent(
         "capacity": capacity,
         "bottle_count": bottle_count,
         "specification": specification,
-        "open_date": open_date,
         "need2restock": needs_restock,
     }
     update_fields = {k: v for k, v in candidate_fields.items() if v is not _unset}
@@ -81,21 +80,25 @@ def upsert_reagent(
             INSERT INTO {REAGENT_TABLE} (zone_id, {columns})
             VALUES (%s, {placeholders})
             ON CONFLICT (zone_id, name) DO UPDATE SET {set_clause}
+            RETURNING id, capacity, bottle_count
             """),
             [zone_id] + values,
         )
+        result = cur.fetchone()
+        if result is None:
+            raise RuntimeError("upsert 后未能取回试剂记录")
+        reagent_id = result[0]
+        total_capacity = None
+        if result[1] is not None and result[2] is not None:
+            total_capacity = result[1] * result[2]
 
-
-def update_open_date(reagent_id, open_date):
-    """更新试剂的开瓶贴标日期"""
-    with get_connection() as conn, conn.cursor() as cur:
+        # 记录创建者
         cur.execute(
             dynamic_sql(f"""
-            UPDATE {REAGENT_TABLE}
-            SET open_date = %s
-            WHERE id = %s
+            INSERT INTO {REAGENT_USAGE_TABLE} (reagent_id, user_id, event_type, amount, remaining_after)
+            VALUES (%s, %s, %s, %s, %s)
             """),
-            (open_date, reagent_id),
+            (reagent_id, user_id, EVENT_SET, 0, total_capacity),
         )
 
 
@@ -119,7 +122,7 @@ def get_reagents_by_zone(zone_id):
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification, r.open_date, r.need2restock,
+                r.bottle_count, r.specification,  r.need2restock,
                 u.usage_count, u.user_name, u.remaining_after  -- 子查询结果列
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
@@ -147,11 +150,10 @@ def get_reagents_by_zone(zone_id):
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
                 "specification": row[7],
-                "openDate": row[8].isoformat() if row[8] is not None else None,
-                "need2restock": row[9],
-                "usageLength": row[10],
-                "lastUserName": row[11],
-                "lastRemainder": row[12],
+                "need2restock": row[8],
+                "usageLength": row[9],
+                "lastUserName": row[10],
+                "lastRemainder": row[11],
             }
             for row in rows
         ]
@@ -176,7 +178,7 @@ def get_need2restock_reagents():
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification, r.open_date, r.need2restock,
+                r.bottle_count, r.specification,  r.need2restock,
                 u.usage_count, u.user_name, u.remaining_after
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
@@ -204,11 +206,10 @@ def get_need2restock_reagents():
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
                 "specification": row[7],
-                "openDate": row[8].isoformat() if row[8] is not None else None,
-                "need2restock": row[9],
-                "usageLength": row[10],
-                "lastUserName": row[11],
-                "lastRemainder": row[12],
+                "need2restock": row[8],
+                "usageLength": row[9],
+                "lastUserName": row[10],
+                "lastRemainder": row[11],
             }
             for row in rows
         ]
@@ -221,7 +222,7 @@ def get_frequently_used_reagents(user_id):
         cur.execute(
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count, r.specification, r.open_date, r.need2restock,
+                r.bottle_count, r.specification,  r.need2restock,
                 t.use_count,
                 u.usage_count, u.user_name, u.remaining_after
             FROM (
@@ -256,12 +257,11 @@ def get_frequently_used_reagents(user_id):
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
                 "specification": row[7],
-                "openDate": row[8].isoformat() if row[8] is not None else None,
-                "need2restock": row[9],
-                "times": row[10],
-                "usageLength": row[11],
-                "lastUserName": row[12],
-                "lastRemainder": row[13],
+                "need2restock": row[8],
+                "times": row[9],
+                "usageLength": row[10],
+                "lastUserName": row[11],
+                "lastRemainder": row[12],
             }
             for row in rows
         ]
