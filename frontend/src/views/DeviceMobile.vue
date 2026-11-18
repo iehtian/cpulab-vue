@@ -3,38 +3,37 @@
     class="mobile-booking"
     :class="{ 'has-action-bar': hasSelection }"
   >
-    <el-card>
-      <div style="display: flex; justify-content: space-between; align-items: center">
-        <van-cell
-          class="date-cell"
-          :value="dateStr(date)"
-          @click="showCalendar = true"
-        >
-          <template #icon>
-            <van-button
-              size="small"
-              @click.stop="changeSelectedDate(-1)"
-            >
-              前一天
-            </van-button>
-          </template>
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <van-cell
+        class="date-cell"
+        :value="dateStr(date)"
+        @click="showCalendar = true"
+      >
+        <template #icon>
+          <van-button
+            size="small"
+            @click.stop="changeSelectedDate(-1)"
+          >
+            前一天
+          </van-button>
+        </template>
 
-          <template #right-icon>
-            <van-button
-              size="small"
-              @click.stop="changeSelectedDate(1)"
-            >
-              后一天
-            </van-button>
-          </template>
-        </van-cell>
-        <van-calendar
-          v-model:show="showCalendar"
-          :show-confirm="false"
-          @confirm="onDateConfirm"
-        />
-      </div>
-    </el-card>
+        <template #right-icon>
+          <van-button
+            size="small"
+            @click.stop="changeSelectedDate(1)"
+          >
+            后一天
+          </van-button>
+        </template>
+      </van-cell>
+      <van-calendar
+        v-model:show="showCalendar"
+        :show-confirm="false"
+        @confirm="onDateConfirm"
+      />
+    </div>
+
     <van-grid
       :column-num="4"
       clickable
@@ -111,7 +110,9 @@ const { isPastBlock, isSelected, makeTimeLabels } = useSlotTime(
 
 const timeLabels = computed(() => makeTimeLabels(devicesInfo.value?.totalSlots ?? 0))
 
-const hasSelection = computed(() => bookingSlots.value.length > 0 || cancelingSlots.value.length > 0)
+const hasSelection = computed(
+  () => bookingSlots.value.length > 0 || cancelingSlots.value.length > 0,
+)
 
 function toggleBookingSlot(id: number) {
   const index = bookingSlots.value.indexOf(id)
