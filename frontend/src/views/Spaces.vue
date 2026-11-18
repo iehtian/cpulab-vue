@@ -93,7 +93,7 @@
             @click="openCategoryPicker"
           />
           <van-field
-            v-if="form.category === 4"
+            v-if="form.category === ReagentCategory.CHROMATOGRAPHY"
             v-model="form.capacity"
             name="capacity"
             label="单瓶容量"
@@ -103,7 +103,7 @@
             :rules="[{ validator: validatePositive, message: '容量必须大于0' }]"
           />
           <van-field
-            v-if="form.category === 4"
+            v-if="form.category === ReagentCategory.CHROMATOGRAPHY"
             v-model="form.bottleCount"
             name="bottleCount"
             label="瓶数"
@@ -193,7 +193,7 @@ import ReagentList from '@/components/ReagentList.vue'
 import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
 import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
-import { categoryColumns } from '@/constants/reagent'
+import { categoryColumns, ReagentCategory } from '@/constants/reagent'
 import { getZonesBySpace } from '@/api/zones'
 import type { Zone } from '@/api/zones'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
@@ -213,7 +213,7 @@ const showFormPopup = ref(false)
 const initialForm = () => ({
   name: '',
   casNumber: '',
-  category: 1,
+  category: ReagentCategory.NORMAL as ReagentCategory,
   capacity: '',
   bottleCount: '',
 })
@@ -232,7 +232,7 @@ const openCategoryPicker = () => {
 }
 
 const onCategoryConfirm = ({ selectedValues }: any) => {
-  form.category = selectedValues[0] as number
+  form.category = selectedValues[0] as ReagentCategory
   showCategoryPicker.value = false
 }
 const usageList = ref<ReagentUsage[]>([])
@@ -289,7 +289,9 @@ const currentReagent = computed(
   () => reagents.value.find((r) => r.id === currentReagentId.value) ?? undefined,
 )
 
-const showAmountCols = computed(() => currentReagent.value?.category === 4)
+const showAmountCols = computed(
+  () => currentReagent.value?.category === ReagentCategory.CHROMATOGRAPHY,
+)
 
 const openDetailById = (id: number) => {
   const reagent = reagents.value.find((r) => r.id === id)

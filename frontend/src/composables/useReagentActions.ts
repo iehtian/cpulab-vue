@@ -3,6 +3,7 @@ import { deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
 import { addReagentUsage } from '@/api/reagentusage'
 import type { Reagent } from '@/api/reagent'
 import { useUserStore } from '@/stores/user'
+import { COUNT_BASED_CATEGORIES } from '@/constants/reagent'
 
 export function useReagentActions(refresh: () => void) {
   const userStore = useUserStore()
@@ -36,7 +37,7 @@ export function useReagentActions(refresh: () => void) {
     if (userStore.userId === null) return
     currentReagentId.value = reagent.id
     // 危化品/生物试剂按次计数，其余类别弹窗手动录入用量
-    if (reagent.category === 2 || reagent.category === 3) {
+    if (COUNT_BASED_CATEGORIES.has(reagent.category)) {
       try {
         await addReagentUsage(reagent.id, userStore.userId, 0)
         refresh()

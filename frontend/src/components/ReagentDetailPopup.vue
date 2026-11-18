@@ -11,8 +11,12 @@
     >
       <h3>{{ currentReagent.name }}</h3>
       <p><span class="label">CAS 号：</span>{{ currentReagent.casNumber || '-' }}</p>
-      <p><span class="label">容量：</span>{{ currentReagent.capacity ?? '-' }}</p>
-      <p><span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}</p>
+      <p v-if="currentReagent.category === ReagentCategory.CHROMATOGRAPHY">
+        <span class="label">容量：</span>{{ currentReagent.capacity ?? '-' }}
+      </p>
+      <p v-if="currentReagent.category === ReagentCategory.CHROMATOGRAPHY">
+        <span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}
+      </p>
       <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>
     </div>
     <div class="action-buttons">
@@ -23,6 +27,7 @@
 
 <script setup lang="ts">
 import type { Reagent } from '@/api/reagent'
+import { ReagentCategory } from '@/constants/reagent'
 
 defineProps<{
   currentReagent?: Reagent

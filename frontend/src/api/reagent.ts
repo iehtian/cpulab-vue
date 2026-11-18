@@ -1,11 +1,12 @@
 import service from '@/utils/request'
+import type { ReagentCategory } from '@/constants/reagent'
 
 export interface Reagent {
   id: number
   zoneId: number
   name: string
   casNumber: string
-  category: number
+  category: ReagentCategory
   capacity: number | null
   bottleCount: number | null
   need2restock: boolean | null

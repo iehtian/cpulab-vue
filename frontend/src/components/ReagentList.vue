@@ -26,14 +26,14 @@
                 </van-tag>
               </div>
               <div
-                v-if="reagent.category === 2 || reagent.category === 3"
+                v-if="COUNT_BASED_CATEGORIES.has(reagent.category)"
                 class="usage-info"
               >
                 {{ reagent.usageLength ?? 0 }} 次，最近
                 {{ reagent.lastUserName ?? '-' }}
               </div>
               <div
-                v-else-if="reagent.category === 4"
+                v-else-if="reagent.category === ReagentCategory.CHROMATOGRAPHY"
                 class="usage-info"
               >
                 {{ reagent.lastRemainder ?? '-' }}ml，最近{{ reagent.lastUserName ?? '-' }}
@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import type { Reagent } from '@/api/reagent'
-import { CATEGORY_MAP } from '@/constants/reagent'
+import { CATEGORY_MAP, COUNT_BASED_CATEGORIES, ReagentCategory } from '@/constants/reagent'
 
 defineProps<{ reagents: Reagent[] }>()
 

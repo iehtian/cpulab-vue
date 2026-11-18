@@ -1,14 +1,28 @@
+/** 试剂类别枚举（值与后端约定，不要随意改动） */
+export enum ReagentCategory {
+  NORMAL = 1, // 普通试剂
+  HAZARDOUS = 2, // 危化品
+  BIOLOGICAL = 3, // 生物试剂
+  CHROMATOGRAPHY = 4, // 色谱级试剂
+}
+
 export const CATEGORY_MAP: Record<
-  number,
+  ReagentCategory,
   { text: string; type: 'primary' | 'danger' | 'warning' | 'success' }
 > = {
-  1: { text: '普通试剂', type: 'primary' },
-  2: { text: '危化品', type: 'danger' },
-  3: { text: '生物试剂', type: 'warning' },
-  4: { text: '色谱级试剂', type: 'success' },
+  [ReagentCategory.NORMAL]: { text: '普通试剂', type: 'primary' },
+  [ReagentCategory.HAZARDOUS]: { text: '危化品', type: 'danger' },
+  [ReagentCategory.BIOLOGICAL]: { text: '生物试剂', type: 'warning' },
+  [ReagentCategory.CHROMATOGRAPHY]: { text: '色谱级试剂', type: 'success' },
 }
 
 export const categoryColumns = Object.entries(CATEGORY_MAP).map(([value, { text }]) => ({
   text,
   value: Number(value),
 }))
+
+/** 按次计数的类别（危化品/生物试剂）：取用时不录入用量，只累计次数 */
+export const COUNT_BASED_CATEGORIES = new Set<ReagentCategory>([
+  ReagentCategory.HAZARDOUS,
+  ReagentCategory.BIOLOGICAL,
+])
