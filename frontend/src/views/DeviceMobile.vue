@@ -183,7 +183,7 @@ function changeSelectedDate(offset: number) {
 }
 
 .slot-time {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* 操作栏悬浮时给页面底部留空，避免遮住最后一排 */
