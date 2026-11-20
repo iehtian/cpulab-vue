@@ -95,7 +95,7 @@
       </div>
     </van-popup>
     <DeleteDialog
-      v-model:show="showDeleteDialog"
+      v-model:visible="showDeleteDialog"
       :message="deleteMessage"
       @confirm="confirmDelete"
     />
