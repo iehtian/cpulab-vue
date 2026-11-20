@@ -28,7 +28,15 @@
         </template>
       </van-cell>
       <van-cell>
-        <template #icon> 今日值日生 {{ duty[0] }}</template>
+        <template #icon> 本周值日生 {{ duty[0] }}</template>
+        <template #right-icon>
+          <van-button
+            size="mini"
+            @click.stop="showDutyList = true"
+          >
+            值日生列表
+          </van-button>
+        </template>
       </van-cell>
       <van-calendar
         v-model:show="showCalendar"
@@ -75,6 +83,18 @@
       >
     </div>
   </div>
+  <van-dialog
+    v-model:show="showDutyList"
+    title="值日生列表"
+  >
+    <van-list>
+      <van-cell
+        v-for="item in dutyRoster"
+        :key="item"
+        :title="item"
+      />
+    </van-list>
+  </van-dialog>
 </template>
 
 <script setup lang="ts">
@@ -86,18 +106,20 @@ import { useSlotTime } from '@/composables/useSlotTime'
 import { useReservation } from '@/composables/useReservation'
 import { getDeviceById } from '@/config/devices'
 import { useUserStore } from '@/stores/user'
-import { getDutyLog } from '@/api/duty'
+import { getDutyLog, getDutyRoster } from '@/api/duty'
 
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 const devicesInfo = computed(() => getDeviceById(deviceId.value))
-
 const duty = ref([])
+const dutyRoster = ref([])
+const showDutyList = ref(false)
 
 async function fetchDuty() {
   if (!devicesInfo.value) return
   duty.value = await getDutyLog(devicesInfo.value.id, dateStr(getMonday(date.value)))
+  dutyRoster.value = await getDutyRoster(devicesInfo.value.id, dateStr(getMonday(date.value)))
   console.log('duty', duty.value)
 }
 
