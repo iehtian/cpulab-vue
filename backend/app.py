@@ -10,6 +10,7 @@ from routes import (
     auth,
     bookings,
     daily_plan,
+    duty_log,
     dygx,
     misc,
     oauth,
@@ -38,6 +39,7 @@ API_BLUEPRINTS = (
     zones,
     reagents,
     reagent_usage,
+    duty_log,
 )
 
 

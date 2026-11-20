@@ -5,6 +5,7 @@ Database operations package.
 
 """
 
+from .duty_log import get_duty_log
 from .oauth import create_client, create_oauth_client_table, get_client
 from .pgsql_client import initialize_database
 from .pgsql_config import get_connection
@@ -79,4 +80,5 @@ __all__ = [
     "get_reagent_usage_list",
     "update_space_name",
     "delete_zone_by_id",
+    "get_duty_log",
 ]

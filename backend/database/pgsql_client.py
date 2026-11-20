@@ -1,5 +1,6 @@
 import psycopg
 
+from database.duty_log import create_duty_log_table
 from database.oauth import create_oauth_client_table
 from database.reagent_usage import create_reagent_usage_table
 from database.reagents import create_reagent_table
@@ -21,6 +22,7 @@ def initialize_database():
         create_reagent_table()
         create_reagent_usage_table()
         create_oauth_client_table()
+        create_duty_log_table()
         return True
     except psycopg.Error as e:
         logger.error(f"数据库初始化失败: {e}")

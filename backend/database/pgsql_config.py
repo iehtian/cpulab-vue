@@ -21,9 +21,8 @@ ZONE_TABLE = "zones"
 REAGENT_TABLE = "reagents"
 REAGENT_CATEGORY_TABLE = "reagent_categories"
 REAGENT_USAGE_TABLE = "reagent_usage"
-
-
 OAUTH_CLIENT_TABLE = "oauth_clients"
+DUTY_LOG_TABLE = "duty_logs"
 
 
 @contextmanager

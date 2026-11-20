@@ -12,11 +12,6 @@
         @click="goDevice(device)"
       >
         <div class="card-top">
-          <span class="device-icon"
-            ><component
-              :is="device.icon"
-              :size="28"
-          /></span>
           <van-tag
             v-if="!device.enabled"
             type="warning"

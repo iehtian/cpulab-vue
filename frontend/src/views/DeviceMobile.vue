@@ -3,7 +3,7 @@
     class="mobile-booking"
     :class="{ 'has-action-bar': hasSelection }"
   >
-    <div style="display: flex; justify-content: space-between; align-items: center">
+    <div>
       <van-cell
         class="date-cell"
         :value="dateStr(date)"
@@ -26,6 +26,9 @@
             后一天
           </van-button>
         </template>
+      </van-cell>
+      <van-cell>
+        <template #icon> 今日值日生 {{ duty[0] }}</template>
       </van-cell>
       <van-calendar
         v-model:show="showCalendar"
@@ -75,19 +78,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { changeDate, dateStr } from '@/utils/date'
+import { changeDate, dateStr, getMonday } from '@/utils/date'
 import { useSlotTime } from '@/composables/useSlotTime'
 import { useReservation } from '@/composables/useReservation'
 import { getDeviceById } from '@/config/devices'
 import { useUserStore } from '@/stores/user'
+import { getDutyLog } from '@/api/duty'
 
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 const devicesInfo = computed(() => getDeviceById(deviceId.value))
+
+const duty = ref([])
+
+async function fetchDuty() {
+  if (!devicesInfo.value) return
+  duty.value = await getDutyLog(devicesInfo.value.id, dateStr(getMonday(date.value)))
+  console.log('duty', duty.value)
+}
 
 // 设备 ID 来自路由参数；未知设备直接退回列表页
 const deviceId = computed(() => String(route.params.deviceId))
@@ -165,6 +177,8 @@ const onDateConfirm = (selectedDate: Date) => {
 function changeSelectedDate(offset: number) {
   date.value = changeDate(date.value, offset)
 }
+
+onMounted(fetchDuty)
 </script>
 
 <style scoped>
