@@ -4,30 +4,24 @@
     placeholder="请输入试剂名称"
   />
 
-  <ReagentList :reagents="showReagents">
-    <template #right-button="{ reagent }">
-      <van-button
-        type="primary"
-        @click="requestUse(reagent)"
-      >
-        取用
-      </van-button>
-    </template>
-  </ReagentList>
-  <ReagentUsePopup
-    v-model:show="showUsagePopup"
-    @confirm="confirmUsage"
+  <ReagentList
+    :reagents="showReagents"
+    @select="openDetailById"
+  />
+  <ReagentDetailActions
+    v-model:show="showDetailPopup"
+    :reagent="currentReagent"
+    @refresh="fetchCommonUsedReagents"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import ReagentList from '@/components/ReagentList.vue'
-import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
+import ReagentDetailActions from '@/components/ReagentDetailActions.vue'
 import { getCommonUsedReagents } from '@/api/reagent'
 import type { ReagentTimes } from '@/api/reagent'
 import { useUserStore } from '@/stores/user'
-import { useReagentActions } from '@/composables/useReagentActions'
 
 const userStore = useUserStore()
 const searchKeyword = ref('')
@@ -49,7 +43,15 @@ const showReagents = computed(() => {
   return commonUsedReagents.value.filter((reagent) => reagent.name.includes(searchKeyword.value))
 })
 
-const { showUsagePopup, requestUse, confirmUsage } = useReagentActions(fetchCommonUsedReagents)
+const showDetailPopup = ref(false)
+const currentReagentId = ref(-1)
+const currentReagent = computed(() =>
+  commonUsedReagents.value.find((r) => r.id === currentReagentId.value),
+)
+const openDetailById = (id: number) => {
+  currentReagentId.value = id
+  showDetailPopup.value = true
+}
 
 onMounted(fetchCommonUsedReagents)
 </script>

@@ -10,46 +10,14 @@
       :reagents="reagents"
       @select="openDetailById"
     />
-    <ReagentDetailPopup
+    <ReagentDetailActions
       v-model:show="showDetailPopup"
-      :currentReagent="currentReagent"
-    >
-      <template #action-buttons>
-        <van-button
-          v-if="currentReagent?.category !== 1"
-          type="primary"
-          @click="currentReagent && requestUse(currentReagent)"
-        >
-          取用
-        </van-button>
-        <van-button
-          type="danger"
-          @click="currentReagent && requestRestock(currentReagent.id, !currentReagent.need2restock)"
-        >
-          {{ currentReagent?.need2restock ? '完成补货' : '需要补货' }}
-        </van-button>
-
-        <!-- <van-button
-          v-if="currentReagent?.category !== 1"
-          plain
-          type="primary"
-          :disabled="!currentReagent?.openDate"
-          @click="openUsageList"
-          >使用记录</van-button
-        >-->
-        <van-button
-          v-if="!currentReagent?.useCount"
-          type="danger"
-          @click="onReagentEdit"
-          >编辑</van-button
-        >
-        <van-button
-          type="danger"
-          @click="requestDelete"
-          >删除</van-button
-        >
-      </template>
-    </ReagentDetailPopup>
+      :reagent="currentReagent"
+      show-edit
+      show-delete
+      @refresh="fetchReagents"
+      @edit="onReagentEdit"
+    />
   </div>
   <van-submit-bar
     v-if="selectedZoneId !== -1"
@@ -139,14 +107,6 @@
       @cancel="showCategoryPicker = false"
     />
   </van-popup>
-  <ReagentUsePopup
-    v-model:show="showUsagePopup"
-    @confirm="confirmUsage"
-  />
-  <DeleteDialog
-    v-model:visible="showDeleteDialog"
-    @confirm="confirmDelete"
-  />
   <van-popup
     v-model:show="showUsageListPopup"
     position="bottom"
@@ -190,15 +150,12 @@ import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import ZoneDisplayNode from '@/components/ZoneDisplayNode.vue'
 import ReagentList from '@/components/ReagentList.vue'
-import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
-import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
-import DeleteDialog from '@/components/DeleteDialog.vue'
+import ReagentDetailActions from '@/components/ReagentDetailActions.vue'
 import { categoryColumns, ReagentCategory } from '@/constants/reagent'
 import { getZonesBySpace } from '@/api/zones'
 import type { Zone } from '@/api/zones'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
 import type { Reagent, ReagentPayload } from '@/api/reagent'
-import { useReagentActions } from '@/composables/useReagentActions'
 import { getReagentUsage, type ReagentUsage, type ReagentUsageList } from '@/api/reagentusage'
 import { useUserStore } from '@/stores/user'
 
@@ -272,18 +229,8 @@ const fetchReagents = async () => {
   reagents.value = await getReagentsByZone(selectedZoneId.value)
 }
 
-const {
-  showDetailPopup,
-  currentReagentId,
-  openDetail,
-  showUsagePopup,
-  requestUse,
-  confirmUsage,
-  showDeleteDialog,
-  requestDelete,
-  confirmDelete,
-  requestRestock,
-} = useReagentActions(fetchReagents)
+const showDetailPopup = ref(false)
+const currentReagentId = ref(-1)
 
 const currentReagent = computed(
   () => reagents.value.find((r) => r.id === currentReagentId.value) ?? undefined,
@@ -294,8 +241,8 @@ const showAmountCols = computed(
 )
 
 const openDetailById = (id: number) => {
-  const reagent = reagents.value.find((r) => r.id === id)
-  if (reagent) openDetail(reagent)
+  currentReagentId.value = id
+  showDetailPopup.value = true
 }
 
 const validatePositive = (val: string) => val !== '' && Number(val) > 0

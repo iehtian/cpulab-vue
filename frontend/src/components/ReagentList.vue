@@ -45,12 +45,6 @@
                 -
               </div>
             </div>
-            <div class="tag-action">
-              <slot
-                name="right-button"
-                :reagent="reagent"
-              />
-            </div>
           </div>
         </van-tag>
       </div>
