@@ -10,7 +10,13 @@ export async function getDutyLog(instrumentId: string, weekStart: string) {
   return response.data || []
 }
 
-export async function getDutyRoster(instrumentId: string, weekStart: string) {
+export type roster = {
+  userName: string
+  joinDate: string
+  lastServed: string
+}
+
+export async function getDutyRoster(instrumentId: string, weekStart: string): Promise<roster[]> {
   const response = await service.get(`/api/duty_log/get_duty_roster`, {
     params: {
       instrument_id: instrumentId,

@@ -28,7 +28,9 @@
         </template>
       </van-cell>
       <van-cell>
-        <template #icon> 本周值日生 {{ duty[0] }}</template>
+        <template #icon>
+          本周值日生 <span style="font-weight: bold">{{ duty[0] }}</span></template
+        >
         <template #right-icon>
           <van-button
             size="mini"
@@ -87,12 +89,27 @@
     v-model:show="showDutyList"
     title="值日生列表"
   >
-    <van-list>
-      <van-cell
+    <van-list style="text-align: center">
+      <van-row>
+        <van-col
+          style="font-weight: bold"
+          span="12"
+          >姓名</van-col
+        >
+
+        <van-col
+          style="font-weight: bold"
+          span="12"
+          >上次值日</van-col
+        >
+      </van-row>
+      <van-row
         v-for="item in dutyRoster"
-        :key="item"
-        :title="item"
-      />
+        :key="item.userName"
+      >
+        <van-col span="12">{{ item.userName }}</van-col>
+        <van-col span="12">{{ formatDate(item.lastServed) ?? '-' }}</van-col>
+      </van-row>
     </van-list>
   </van-dialog>
 </template>
@@ -106,14 +123,14 @@ import { useSlotTime } from '@/composables/useSlotTime'
 import { useReservation } from '@/composables/useReservation'
 import { getDeviceById } from '@/config/devices'
 import { useUserStore } from '@/stores/user'
-import { getDutyLog, getDutyRoster } from '@/api/duty'
+import { getDutyLog, getDutyRoster, type roster } from '@/api/duty'
 
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 const devicesInfo = computed(() => getDeviceById(deviceId.value))
 const duty = ref([])
-const dutyRoster = ref([])
+const dutyRoster = ref<roster[]>([])
 const showDutyList = ref(false)
 
 async function fetchDuty() {
@@ -121,6 +138,7 @@ async function fetchDuty() {
   duty.value = await getDutyLog(devicesInfo.value.id, dateStr(getMonday(date.value)))
   dutyRoster.value = await getDutyRoster(devicesInfo.value.id, dateStr(getMonday(date.value)))
   console.log('duty', duty.value)
+  console.log('dutyRoster', dutyRoster.value)
 }
 
 // 设备 ID 来自路由参数；未知设备直接退回列表页
@@ -198,6 +216,11 @@ const onDateConfirm = (selectedDate: Date) => {
 
 function changeSelectedDate(offset: number) {
   date.value = changeDate(date.value, offset)
+}
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
 onMounted(fetchDuty)

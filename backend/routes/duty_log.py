@@ -24,7 +24,7 @@ def get_all_duty_logs():
         return fail("获取值班日志失败", 500)
 
 
-@bp.route("/duty_log/get_roster", methods=["GET"])
+@bp.route("/duty_log/get_duty_roster", methods=["GET"])
 def get_duty_roster():
     try:
         week_start = request.args.get("week_start")

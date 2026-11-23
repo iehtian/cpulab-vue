@@ -139,4 +139,8 @@ def get_duty_roster(instrument_id, last_days, week_start):
         """,
             (instrument_id, last_days, week_start, week_start, instrument_id),
         )
-        return cur.fetchall()
+        result = cur.fetchall()
+        return [
+            {"userName": row[0], "joinDate": row[1], "lastServed": row[2]}
+            for row in result
+        ]
