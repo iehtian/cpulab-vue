@@ -29,10 +29,12 @@
       </van-cell>
       <van-cell v-if="devicesInfo?.hasDuty">
         <template #icon>
-          本周值日生 <span style="font-weight: bold">{{ duty[0] }}</span></template
+          本周值日生:
+          <span style="font-weight: bold; margin-left: 6px">{{ duty[0] }}</span></template
         >
         <template #right-icon>
           <van-button
+            style="margin-left: 6px"
             size="mini"
             @click.stop="showDutyList = true"
           >
