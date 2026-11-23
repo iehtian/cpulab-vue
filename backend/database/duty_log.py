@@ -32,7 +32,7 @@ WITH b AS (
     SELECT DISTINCT ON (user_id) user_id, join_date
     FROM streaks
     WHERE last_booking >= %s - INTERVAL '30 days'   -- 参数：本周一
-        AND last_booking <  %s
+        AND last_booking <  %s + INTERVAL '7 days'  -- 窗口含本周：周内新预约即时入队
     ORDER BY user_id, streak DESC
     ),
     cand_base AS (
