@@ -7,18 +7,16 @@ export interface SlotTime {
 const pad = (n: number) => String(n).padStart(2, '0')
 const fmt = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
 
-const DAY_START_HOUR = 8
-const DAY_TOTAL_MINUTES = 960
-
 /**
  * 今日第一个仍可预约的槽位下标（开始时间晚于当前时刻）。
  * 若今日槽位已全部过期，返回 totalSlots。
  */
-export function firstFutureSlotIndex(totalSlots: number): number {
+export function firstFutureSlotIndex(dayStartHour: number, totalSlots: number): number {
   if (totalSlots <= 0) return 0
-  const step = DAY_TOTAL_MINUTES / totalSlots
+  const dayTotalMinutes = (24 - dayStartHour) * 60
+  const step = dayTotalMinutes / totalSlots
   const start = new Date()
-  start.setHours(DAY_START_HOUR, 0, 0, 0)
+  start.setHours(dayStartHour, 0, 0, 0)
   const now = Date.now()
   for (let i = 0; i < totalSlots; i++) {
     if (start.getTime() + i * step * 60000 > now) return i
@@ -79,11 +77,12 @@ export function useSlotTime(
 
   let timesDate: Date[] = []
 
-  function makeTimeLabels(totalSlots: number): string[] {
+  function makeTimeLabels(dayStartHour: number, totalSlots: number): string[] {
     timesDate = []
     let start = new Date()
-    start.setHours(DAY_START_HOUR, 0, 0, 0)
-    const step = DAY_TOTAL_MINUTES / totalSlots
+    const dayTotalMinutes = (24 - dayStartHour) * 60
+    start.setHours(dayStartHour, 0, 0, 0)
+    const step = dayTotalMinutes / totalSlots
     let current = new Date(start)
     const times: string[] = []
 

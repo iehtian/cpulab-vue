@@ -3,6 +3,7 @@ export interface DeviceInfo {
   name: string
   description: string
   enabled: boolean
+  daystarthour: number
   totalSlots: number
   hasDuty: boolean
 }
@@ -13,6 +14,7 @@ export const DEVICES: DeviceInfo[] = [
     name: '细胞房',
     description: '细胞房',
     enabled: true,
+    daystarthour: 8,
     totalSlots: 32,
     hasDuty: true,
   },
@@ -21,6 +23,7 @@ export const DEVICES: DeviceInfo[] = [
     name: '高效液相色谱分析仪',
     description: '高效液相色谱分析仪',
     enabled: true,
+    daystarthour: 0,
     totalSlots: 16,
     hasDuty: false,
   },

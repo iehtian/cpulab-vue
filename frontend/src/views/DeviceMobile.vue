@@ -27,7 +27,7 @@
           </van-button>
         </template>
       </van-cell>
-      <van-cell>
+      <van-cell v-if="devicesInfo?.hasDuty">
         <template #icon>
           本周值日生 <span style="font-weight: bold">{{ duty[0] }}</span></template
         >
@@ -160,7 +160,9 @@ const { isPastBlock, isSelected, makeTimeLabels } = useSlotTime(
   cancelingSlots,
 )
 
-const timeLabels = computed(() => makeTimeLabels(devicesInfo.value?.totalSlots ?? 0))
+const timeLabels = computed(() =>
+  makeTimeLabels(devicesInfo.value?.daystarthour ?? 0, devicesInfo.value?.totalSlots ?? 0),
+)
 
 const hasSelection = computed(
   () => bookingSlots.value.length > 0 || cancelingSlots.value.length > 0,
@@ -242,7 +244,7 @@ onMounted(fetchDuty)
 }
 
 .slot-time {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* 操作栏悬浮时给页面底部留空，避免遮住最后一排 */

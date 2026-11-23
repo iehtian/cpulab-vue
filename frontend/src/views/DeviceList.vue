@@ -62,7 +62,7 @@ const todayStats = ref<Record<string, Record<number, BookingInfo>>>({})
 
 /** 今日剩余可约时段数 = 尚未开始的槽位数 − 其中已被预约的数量 */
 function remainingCount(device: DeviceInfo): number {
-  const first = firstFutureSlotIndex(device.totalSlots)
+  const first = firstFutureSlotIndex(device.daystarthour, device.totalSlots)
   const futureSlots = device.totalSlots - first
   const bookings = todayStats.value[device.id] ?? {}
   const bookedFuture = Object.keys(bookings).filter((k) => Number(k) >= first).length
