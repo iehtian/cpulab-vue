@@ -24,7 +24,7 @@ export const DEVICES: DeviceInfo[] = [
     description: '高效液相色谱分析仪',
     enabled: true,
     daystarthour: 0,
-    totalSlots: 16,
+    totalSlots: 24,
     hasDuty: false,
   },
 ]
