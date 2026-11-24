@@ -75,6 +75,14 @@ const router = createRouter({
       },
     },
     {
+      path: '/reagent-search',
+      name: 'ReagentSearch',
+      component: () => import('../views/ReagentSearch.vue'),
+      meta: {
+        title: '搜索',
+      },
+    },
+    {
       path: '/oauth/authorize',
       name: 'OAuthAuthorize',
       component: () => import('../views/OAuthAuthorize.vue'),

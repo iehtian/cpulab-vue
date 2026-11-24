@@ -124,3 +124,14 @@ def get_frequently_used_reagents_api(user_id):
     except Exception as e:  # noqa: BLE001
         logger.exception("获取用户使用次数时发生异常: {}", e)
         return fail("获取用户使用次数失败", 500)
+
+
+@bp.route("/reagent/all", methods=["GET"])
+def get_all_reagents_api():
+    """获取所有需要补货的试剂"""
+    try:
+        reagents = db_api.get_all_reagents()
+        return jsonify({"reagents": reagents})
+    except Exception as e:  # noqa: BLE001
+        logger.exception("获取所有试剂信息时发生异常: {}", e)
+        return fail("获取所有试剂信息失败", 500)

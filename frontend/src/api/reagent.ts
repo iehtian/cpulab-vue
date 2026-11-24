@@ -57,3 +57,8 @@ export async function getCommonUsedReagents(userId: number): Promise<ReagentTime
   const response = await service.get(`/api/reagent/get_common_used_reagents/${userId}`)
   return response.data.reagents || []
 }
+
+export async function getAllReagents(): Promise<Reagent[]> {
+  const response = await service.get('/api/reagent/all')
+  return response.data.reagents || []
+}

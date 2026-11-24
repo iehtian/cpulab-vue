@@ -17,6 +17,7 @@ from .reagent_usage import (
 )
 from .reagents import (
     delete_reagent_by_id,
+    get_all_reagents,
     get_frequently_used_reagents,
     get_need2restock_reagents,
     get_reagents_by_zone,
@@ -82,4 +83,5 @@ __all__ = [
     "delete_zone_by_id",
     "get_duty_log",
     "get_duty_roster",
+    "get_all_reagents",
 ]

@@ -281,3 +281,45 @@ def get_frequently_used_reagents(user_id):
             for row in rows
         ]
         return reagents
+
+
+def get_all_reagents():
+    """获取所有试剂信息"""
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            dynamic_sql(f"""
+            SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
+                r.bottle_count,  r.need2restock,
+                u.usage_count, u.user_name, u.remaining_after
+            FROM {REAGENT_TABLE} AS r
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) OVER () AS usage_count,
+                    u.user_name,
+                    ru.remaining_after
+                FROM {REAGENT_USAGE_TABLE} ru
+                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
+                WHERE ru.reagent_id = r.id
+                ORDER BY ru.usage_time DESC
+                LIMIT 1
+            ) AS u ON TRUE
+            ORDER BY r.id
+            """)
+        )
+        rows = cur.fetchall()
+        reagents = [
+            {
+                "id": row[0],
+                "zoneId": row[1],
+                "name": row[2],
+                "casNumber": row[3],
+                "category": row[4],
+                "capacity": float(row[5]) if row[5] is not None else None,
+                "bottleCount": row[6],
+                "need2restock": row[7],
+                "usageLength": row[8],
+                "lastUserName": row[9],
+                "lastRemainder": row[10],
+            }
+            for row in rows
+        ]
+        return reagents

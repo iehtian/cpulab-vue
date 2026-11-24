@@ -1,9 +1,15 @@
 <template>
   <div>
     <van-grid
-      column-num="2"
+      column-num="3"
       clickable
     >
+      <van-grid-item
+        text="搜索"
+        to="/reagent-search"
+      >
+        <template #icon> <Search /> </template>
+      </van-grid-item>
       <van-grid-item
         text="常用试剂"
         to="/common-used"
@@ -110,7 +116,7 @@ import { getAllSpaces, addSpace, deleteSpaceById, updateSpaceName } from '@/api/
 import type { Space } from '@/api/spaces'
 import { addZone, getZonesBySpace, deleteZoneById } from '@/api/zones'
 import type { Zone } from '@/api/zones'
-import { FlaskConical, PackagePlus } from '@lucide/vue'
+import { FlaskConical, PackagePlus, Search } from '@lucide/vue'
 import { getNeed2RestockReagents } from '@/api/reagent'
 import { getReagentsByZone } from '@/api/reagent'
 import { showSuccessToast, showFailToast } from 'vant'
