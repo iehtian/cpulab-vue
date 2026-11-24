@@ -1,7 +1,6 @@
 from database.pgsql_config import (
     REAGENT_TABLE,
     REAGENT_USAGE_TABLE,
-    USER_TABLE,
     ZONE_TABLE,
     dynamic_sql,
     get_connection,
@@ -119,17 +118,11 @@ def get_reagents_by_zone(zone_id):
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count,  r.need2restock,
-                u.usage_count, u.user_name, u.remaining_after,  -- 子查询结果列
-                (SELECT COUNT(*) FROM {REAGENT_USAGE_TABLE} ru2
-                 WHERE ru2.reagent_id = r.id
-                   AND ru2.event_type = {EVENT_USE}) AS use_count
+                 u.remaining_after
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS usage_count,
-                    u.user_name,
-                    ru.remaining_after
+                  SELECT   ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
-                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
                 WHERE ru.reagent_id = r.id
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
@@ -149,10 +142,7 @@ def get_reagents_by_zone(zone_id):
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
                 "need2restock": row[7],
-                "usageLength": row[8],
-                "lastUserName": row[9],
-                "lastRemainder": row[10],
-                "useCount": row[11],
+                "lastRemainder": row[8],
             }
             for row in rows
         ]
@@ -196,14 +186,11 @@ def get_need2restock_reagents():
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count,  r.need2restock,
-                u.usage_count, u.user_name, u.remaining_after
+                u.remaining_after
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS usage_count,
-                    u.user_name,
-                    ru.remaining_after
+                SELECT ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
-                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
                 WHERE ru.reagent_id = r.id
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
@@ -223,9 +210,7 @@ def get_need2restock_reagents():
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
                 "need2restock": row[7],
-                "usageLength": row[8],
-                "lastUserName": row[9],
-                "lastRemainder": row[10],
+                "lastRemainder": row[8],
             }
             for row in rows
         ]
@@ -240,7 +225,7 @@ def get_frequently_used_reagents(user_id):
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count,  r.need2restock,
                 t.use_count,
-                u.usage_count, u.user_name, u.remaining_after
+                u.remaining_after
             FROM (
                 SELECT reagent_id, COUNT(*) AS use_count
                 FROM {REAGENT_USAGE_TABLE}
@@ -249,11 +234,8 @@ def get_frequently_used_reagents(user_id):
             ) AS t
             JOIN {REAGENT_TABLE} AS r ON r.id = t.reagent_id
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS usage_count,
-                    u.user_name,
-                    ru.remaining_after
+                SELECT ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
-                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
                 WHERE ru.reagent_id = r.id AND ru.event_type = {EVENT_USE}
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
@@ -274,9 +256,7 @@ def get_frequently_used_reagents(user_id):
                 "bottleCount": row[6],
                 "need2restock": row[7],
                 "times": row[8],
-                "usageLength": row[9],
-                "lastUserName": row[10],
-                "lastRemainder": row[11],
+                "lastRemainder": row[9],
             }
             for row in rows
         ]
@@ -290,14 +270,11 @@ def get_all_reagents():
             dynamic_sql(f"""
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
                 r.bottle_count,  r.need2restock,
-                u.usage_count, u.user_name, u.remaining_after
+                u.remaining_after
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
-                SELECT COUNT(*) OVER () AS usage_count,
-                    u.user_name,
-                    ru.remaining_after
+                SELECT ru.remaining_after
                 FROM {REAGENT_USAGE_TABLE} ru
-                LEFT JOIN {USER_TABLE} u ON u.id = ru.user_id
                 WHERE ru.reagent_id = r.id
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
@@ -316,9 +293,7 @@ def get_all_reagents():
                 "capacity": float(row[5]) if row[5] is not None else None,
                 "bottleCount": row[6],
                 "need2restock": row[7],
-                "usageLength": row[8],
-                "lastUserName": row[9],
-                "lastRemainder": row[10],
+                "lastRemainder": row[8],
             }
             for row in rows
         ]

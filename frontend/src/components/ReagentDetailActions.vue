@@ -23,7 +23,7 @@
         >使用记录
       </van-button>
       <van-button
-        v-if="showEdit && !reagent?.useCount"
+        v-if="showEdit && editable"
         type="danger"
         @click="emit('edit')"
       >
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
 import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
@@ -191,6 +191,19 @@ const UsageOnLoad = async () => {
 }
 
 const showAmountCols = computed(() => props.reagent?.category === ReagentCategory.CHROMATOGRAPHY)
+const editable = ref(false)
+watch(
+  () => props.reagent,
+  async () => {
+    editable.value = false
+    if (!props.reagent) return
+    const usageListData: ReagentUsageList = await getReagentUsage(
+      props.reagent?.id,
+      usagePage.value,
+    )
+    editable.value = !usageListData.total
+  },
+)
 </script>
 
 <style scoped>
