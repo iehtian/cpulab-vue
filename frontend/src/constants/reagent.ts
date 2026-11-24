@@ -10,10 +10,10 @@ export const CATEGORY_MAP: Record<
   ReagentCategory,
   { text: string; type: 'primary' | 'danger' | 'warning' | 'success' }
 > = {
-  [ReagentCategory.NORMAL]: { text: '普通试剂', type: 'primary' },
+  [ReagentCategory.NORMAL]: { text: '普通', type: 'primary' },
   [ReagentCategory.HAZARDOUS]: { text: '危化品', type: 'danger' },
-  [ReagentCategory.BIOLOGICAL]: { text: '生物试剂', type: 'warning' },
-  [ReagentCategory.CHROMATOGRAPHY]: { text: '色谱级试剂', type: 'success' },
+  [ReagentCategory.BIOLOGICAL]: { text: '生物', type: 'warning' },
+  [ReagentCategory.CHROMATOGRAPHY]: { text: '色谱级', type: 'success' },
 }
 
 export const categoryColumns = Object.entries(CATEGORY_MAP).map(([value, { text }]) => ({
