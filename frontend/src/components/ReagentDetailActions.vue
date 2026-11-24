@@ -5,7 +5,7 @@
   >
     <template #action-buttons>
       <van-button
-        v-if="reagent?.category !== 1"
+        v-if="reagent?.category !== ReagentCategory.NORMAL"
         type="primary"
         @click="reagent && requestUse(reagent)"
       >
@@ -16,6 +16,11 @@
         @click="reagent && requestRestock(reagent.id, !reagent.need2restock)"
       >
         {{ reagent?.need2restock ? '完成补货' : '需要补货' }}
+      </van-button>
+      <van-button
+        type="primary"
+        @click="openUsageList"
+        >使用记录
       </van-button>
       <van-button
         v-if="showEdit && !reagent?.useCount"
@@ -42,10 +47,45 @@
     v-model:visible="showDeleteDialog"
     @confirm="confirmDelete"
   />
+  <van-popup
+    v-model:show="showUsageListPopup"
+    position="bottom"
+    height="70%"
+  >
+    <van-list
+      v-model:loading="usageLoading"
+      :finished="usageFinished"
+      finished-text="没有更多了"
+      @load="UsageOnLoad"
+    >
+      <div
+        class="usage-row usage-header"
+        :class="{ 'usage-row--compact': !showAmountCols }"
+      >
+        <span>使用人</span>
+        <span>使用时间</span>
+        <span v-if="showAmountCols">使用量</span>
+        <span v-if="showAmountCols">剩余量</span>
+      </div>
+      <div
+        v-for="item in usageList"
+        :key="item.id"
+        class="usage-row"
+        :class="{ 'usage-row--compact': !showAmountCols }"
+      >
+        <span>{{ item.user_name }}</span>
+        <span>{{ item.usage_time.slice(5, 16) }}</span>
+        <span v-if="showAmountCols">{{ item.amount != null ? item.amount + 'ml' : '—' }}</span>
+        <span v-if="showAmountCols">{{
+          item.remaining_after != null ? item.remaining_after + 'ml' : '—'
+        }}</span>
+      </div>
+    </van-list>
+  </van-popup>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import ReagentDetailPopup from '@/components/ReagentDetailPopup.vue'
 import ReagentUsePopup from '@/components/ReagentUsePopup.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
@@ -53,7 +93,9 @@ import { deleteReagentById, markReagentNeed2Restock } from '@/api/reagent'
 import type { Reagent } from '@/api/reagent'
 import { addReagentUsage } from '@/api/reagentusage'
 import { useUserStore } from '@/stores/user'
-import { COUNT_BASED_CATEGORIES } from '@/constants/reagent'
+import { COUNT_BASED_CATEGORIES, ReagentCategory } from '@/constants/reagent'
+import { getReagentUsage, type ReagentUsage, type ReagentUsageList } from '@/api/reagentusage'
+const showUsageListPopup = ref(false)
 
 const props = withDefaults(
   defineProps<{
@@ -118,4 +160,59 @@ const confirmDelete = async () => {
   visible.value = false
   emit('refresh')
 }
+
+// van-list 在 van-popup 里 immediate-check 时机不可靠（挂载时弹窗还在滑入动画中），
+// 改为打开弹窗时手动加载第一页，同时重置状态避免混入上一个试剂的记录
+const openUsageList = () => {
+  usageList.value = []
+  usagePage.value = 1
+  usageFinished.value = false
+  showUsageListPopup.value = true
+  UsageOnLoad()
+}
+const usageList = ref<ReagentUsage[]>([])
+const usagePage = ref(1)
+const usageLoading = ref(false)
+const usageFinished = ref(false)
+const UsageOnLoad = async () => {
+  if (!props.reagent) return
+  usageLoading.value = true
+  try {
+    const usageListData: ReagentUsageList = await getReagentUsage(props.reagent.id, usagePage.value)
+    usageList.value.push(...usageListData.records)
+    usagePage.value += 1
+    usageFinished.value = usageListData.records.length < 20
+  } catch {
+    // 请求失败时停止 van-list 继续触发 load，避免 loading 卡死
+    usageFinished.value = true
+  } finally {
+    usageLoading.value = false
+  }
+}
+
+const showAmountCols = computed(() => props.reagent?.category === ReagentCategory.CHROMATOGRAPHY)
 </script>
+
+<style scoped>
+.usage-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #ebedf0;
+  text-align: center;
+  align-items: center;
+}
+
+.usage-row--compact {
+  grid-template-columns: 1fr 2fr;
+}
+
+.usage-header {
+  position: sticky;
+  top: 0;
+  background: #f7f8fa;
+  font-weight: 600;
+  z-index: 1;
+}
+</style>

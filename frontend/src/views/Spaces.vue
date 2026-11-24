@@ -107,41 +107,6 @@
       @cancel="showCategoryPicker = false"
     />
   </van-popup>
-  <van-popup
-    v-model:show="showUsageListPopup"
-    position="bottom"
-    height="70%"
-  >
-    <van-list
-      v-model:loading="usageLoading"
-      :finished="usageFinished"
-      finished-text="没有更多了"
-      @load="UsageOnLoad"
-    >
-      <div
-        class="usage-row usage-header"
-        :class="{ 'usage-row--compact': !showAmountCols }"
-      >
-        <span>使用人</span>
-        <span>使用时间</span>
-        <span v-if="showAmountCols">使用量</span>
-        <span v-if="showAmountCols">剩余量</span>
-      </div>
-      <div
-        v-for="item in usageList"
-        :key="item.id"
-        class="usage-row"
-        :class="{ 'usage-row--compact': !showAmountCols }"
-      >
-        <span>{{ item.user_name }}</span>
-        <span>{{ item.usage_time.slice(5, 16) }}</span>
-        <span v-if="showAmountCols">{{ item.amount != null ? item.amount + 'ml' : '—' }}</span>
-        <span v-if="showAmountCols">{{
-          item.remaining_after != null ? item.remaining_after + 'ml' : '—'
-        }}</span>
-      </div>
-    </van-list>
-  </van-popup>
 </template>
 
 <script setup lang="ts">
@@ -156,7 +121,7 @@ import { getZonesBySpace } from '@/api/zones'
 import type { Zone } from '@/api/zones'
 import { upsertReagent, getReagentsByZone } from '@/api/reagent'
 import type { Reagent, ReagentPayload } from '@/api/reagent'
-import { getReagentUsage, type ReagentUsage, type ReagentUsageList } from '@/api/reagentusage'
+
 import { useUserStore } from '@/stores/user'
 
 const spaceId = Number(useRoute().params.id as string)
@@ -165,7 +130,7 @@ const zones = ref<Zone[]>([])
 const reagents = ref<Reagent[]>([])
 const selectedZoneId = ref(-1)
 const activePath = ref<number[]>([])
-const showUsageListPopup = ref(false)
+
 const showFormPopup = ref(false)
 const initialForm = () => ({
   name: '',
@@ -192,38 +157,6 @@ const onCategoryConfirm = ({ selectedValues }: any) => {
   form.category = selectedValues[0] as ReagentCategory
   showCategoryPicker.value = false
 }
-const usageList = ref<ReagentUsage[]>([])
-const usagePage = ref(1)
-const usageLoading = ref(false)
-const usageFinished = ref(false)
-const UsageOnLoad = async () => {
-  if (!currentReagent.value) return
-  usageLoading.value = true
-  try {
-    const usageListData: ReagentUsageList = await getReagentUsage(
-      currentReagent.value.id,
-      usagePage.value,
-    )
-    usageList.value.push(...usageListData.records)
-    usagePage.value += 1
-    usageFinished.value = usageListData.records.length < 20
-  } catch {
-    // 请求失败时停止 van-list 继续触发 load，避免 loading 卡死
-    usageFinished.value = true
-  } finally {
-    usageLoading.value = false
-  }
-}
-
-// van-list 在 van-popup 里 immediate-check 时机不可靠（挂载时弹窗还在滑入动画中），
-// 改为打开弹窗时手动加载第一页，同时重置状态避免混入上一个试剂的记录
-const openUsageList = () => {
-  usageList.value = []
-  usagePage.value = 1
-  usageFinished.value = false
-  showUsageListPopup.value = true
-  UsageOnLoad()
-}
 
 const fetchReagents = async () => {
   reagents.value = await getReagentsByZone(selectedZoneId.value)
@@ -234,10 +167,6 @@ const currentReagentId = ref(-1)
 
 const currentReagent = computed(
   () => reagents.value.find((r) => r.id === currentReagentId.value) ?? undefined,
-)
-
-const showAmountCols = computed(
-  () => currentReagent.value?.category === ReagentCategory.CHROMATOGRAPHY,
 )
 
 const openDetailById = (id: number) => {
@@ -311,26 +240,4 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.usage-row {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr;
-  padding: 10px 16px;
-  font-size: 14px;
-  border-bottom: 1px solid #ebedf0;
-  text-align: center;
-  align-items: center;
-}
-
-.usage-row--compact {
-  grid-template-columns: 1fr 2fr;
-}
-
-.usage-header {
-  position: sticky;
-  top: 0;
-  background: #f7f8fa;
-  font-weight: 600;
-  z-index: 1;
-}
-</style>
+<style scoped></style>
