@@ -11,10 +11,20 @@
     >
       <h3>{{ currentReagent.name }}</h3>
       <p><span class="label">CAS 号：</span>{{ currentReagent.casNumber || '-' }}</p>
-      <p v-if="currentReagent.category === ReagentCategory.CHROMATOGRAPHY">
+      <p
+        v-if="
+          currentReagent.category === ReagentCategory.CHROMATOGRAPHY ||
+          currentReagent.category === ReagentCategory.HAZARDOUS
+        "
+      >
         <span class="label">容量：</span>{{ currentReagent.capacity ?? '-' }}
       </p>
-      <p v-if="currentReagent.category === ReagentCategory.CHROMATOGRAPHY">
+      <p
+        v-if="
+          currentReagent.category === ReagentCategory.CHROMATOGRAPHY ||
+          currentReagent.category === ReagentCategory.HAZARDOUS
+        "
+      >
         <span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}
       </p>
       <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>

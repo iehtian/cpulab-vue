@@ -21,8 +21,5 @@ export const categoryColumns = Object.entries(CATEGORY_MAP).map(([value, { text 
   value: Number(value),
 }))
 
-/** 按次计数的类别（危化品/生物试剂）：取用时不录入用量，只累计次数 */
-export const COUNT_BASED_CATEGORIES = new Set<ReagentCategory>([
-  ReagentCategory.HAZARDOUS,
-  ReagentCategory.BIOLOGICAL,
-])
+/** 生物试剂）：取用时不录入用量，只累计次数 */
+export const COUNT_BASED_CATEGORIES = new Set<ReagentCategory>([ReagentCategory.BIOLOGICAL])

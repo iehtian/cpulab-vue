@@ -61,7 +61,10 @@
             @click="openCategoryPicker"
           />
           <van-field
-            v-if="form.category === ReagentCategory.CHROMATOGRAPHY"
+            v-if="
+              form.category === ReagentCategory.CHROMATOGRAPHY ||
+              form.category === ReagentCategory.HAZARDOUS
+            "
             v-model="form.capacity"
             name="capacity"
             label="单瓶容量"
@@ -71,7 +74,10 @@
             :rules="[{ validator: validatePositive, message: '容量必须大于0' }]"
           />
           <van-field
-            v-if="form.category === ReagentCategory.CHROMATOGRAPHY"
+            v-if="
+              form.category === ReagentCategory.CHROMATOGRAPHY ||
+              form.category === ReagentCategory.HAZARDOUS
+            "
             v-model="form.bottleCount"
             name="bottleCount"
             label="瓶数"

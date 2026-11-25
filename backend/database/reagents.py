@@ -20,14 +20,14 @@ def create_reagent_table():
                 CAS_number TEXT,
                 -- 试剂类别: 1=普通试剂, 2=危化品, 3=生物试剂, 4=色谱级试剂
                 category INTEGER NOT NULL,
-                -- 仅色谱级试剂(category=4)使用, 其余类别必须为 NULL
+                -- 仅色谱级试剂和危化品使用, 其余类别必须为 NULL
                 capacity NUMERIC CHECK (capacity > 0),
                 bottle_count INTEGER CHECK (bottle_count > 0),
                 need2restock BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '8 hours'),
                 UNIQUE (zone_id, name),
-                -- 容量和瓶数仅允许出现在色谱级试剂上
-                CHECK (category = 4 OR (capacity IS NULL AND bottle_count IS NULL))
+                -- 容量和瓶数仅允许出现在色谱级试剂和危化品上
+                CHECK (category = 4 OR category = 2 OR (capacity IS NULL AND bottle_count IS NULL))
             )
             """)
         )

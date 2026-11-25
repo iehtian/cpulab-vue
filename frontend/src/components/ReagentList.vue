@@ -24,7 +24,10 @@
           </van-tag>
         </div>
         <div
-          v-if="reagent.category === ReagentCategory.CHROMATOGRAPHY"
+          v-if="
+            reagent.category === ReagentCategory.CHROMATOGRAPHY ||
+            reagent.category === ReagentCategory.HAZARDOUS
+          "
           class="usage-info"
         >
           {{ reagent.lastRemainder ?? '-' }}ml

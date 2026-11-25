@@ -190,7 +190,11 @@ const UsageOnLoad = async () => {
   }
 }
 
-const showAmountCols = computed(() => props.reagent?.category === ReagentCategory.CHROMATOGRAPHY)
+const showAmountCols = computed(
+  () =>
+    props.reagent?.category === ReagentCategory.CHROMATOGRAPHY ||
+    props.reagent?.category === ReagentCategory.HAZARDOUS,
+)
 const editable = ref(false)
 watch(
   () => props.reagent,
