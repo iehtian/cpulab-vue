@@ -14,8 +14,8 @@ export const DEVICES: DeviceInfo[] = [
     name: '细胞房',
     description: '细胞房',
     enabled: true,
-    daystarthour: 8,
-    totalSlots: 32,
+    daystarthour: 6,
+    totalSlots: 36,
     hasDuty: true,
   },
   {
