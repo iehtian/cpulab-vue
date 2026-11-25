@@ -74,7 +74,7 @@
         :class="{ 'usage-row--compact': !showAmountCols }"
       >
         <span>{{ item.user_name }}</span>
-        <span>{{ item.usage_time.slice(5, 16) }}</span>
+        <span>{{ item.usage_time.slice(0, 16) }}</span>
         <span v-if="showAmountCols">{{ item.amount != null ? item.amount + 'ml' : '—' }}</span>
         <span v-if="showAmountCols">{{
           item.remaining_after != null ? item.remaining_after + 'ml' : '—'
