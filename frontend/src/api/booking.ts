@@ -15,7 +15,7 @@ export async function getBookings(
 
 export async function submitBookings(
   instrument: string,
-  submitData: { date: Date; slots: number[] },
+  submitData: { date: string; slots: number[] },
 ) {
   const thisDate = submitData.date
   const slots = submitData.slots
@@ -43,7 +43,7 @@ export async function submitBookings(
 
 export async function cancelBookings(
   instrument: string,
-  cancelData: { date: Date; slots: number[] },
+  cancelData: { date: string; slots: number[] },
 ) {
   const thisDate = cancelData.date
   const slots = cancelData.slots

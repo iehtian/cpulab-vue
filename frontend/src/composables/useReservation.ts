@@ -22,7 +22,7 @@ export function useReservation(deviceId: Ref<string>, date: Ref<Date>) {
   async function submit() {
     if (bookingSlots.value.length === 0) return
     const ok = await submitBookings(deviceId.value, {
-      date: date.value,
+      date: dateStr(date.value),
       slots: bookingSlots.value,
     })
     if (ok === false) return
@@ -34,7 +34,7 @@ export function useReservation(deviceId: Ref<string>, date: Ref<Date>) {
   async function cancel() {
     if (cancelingSlots.value.length === 0) return
     const ok = await cancelBookings(deviceId.value, {
-      date: date.value,
+      date: dateStr(date.value),
       slots: cancelingSlots.value,
     })
     if (ok === false) return
