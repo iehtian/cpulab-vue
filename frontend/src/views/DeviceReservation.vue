@@ -153,7 +153,7 @@ const submit = () => {
     const slots = (selectedSlots.value[i] ??= [])
     if (slots.length) {
       const date = weekDays.value[i]!
-      submitBookings('a', { date, slots })
+      // submitBookings('a', { date, slots })
     }
   }
 }
