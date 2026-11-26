@@ -268,9 +268,23 @@ def get_all_reagents():
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(
             dynamic_sql(f"""
+            WITH RECURSIVE zone_chain AS (
+                SELECT z.id AS start_zone, z.id, z.name, z.parent_id, 1 AS lvl
+                FROM {ZONE_TABLE} z
+                WHERE z.id IN (SELECT zone_id FROM {REAGENT_TABLE} WHERE zone_id IS NOT NULL)
+                UNION ALL
+                SELECT c.start_zone, z.id, z.name, z.parent_id, c.lvl + 1
+                FROM {ZONE_TABLE} z
+                JOIN zone_chain c ON c.parent_id = z.id
+            ),
+            zone_sites AS (
+                SELECT start_zone, array_agg(name ORDER BY lvl DESC) AS sites
+                FROM zone_chain
+                GROUP BY start_zone
+            )
             SELECT r.id, r.zone_id, r.name, r.CAS_number, r.category, r.capacity,
-                r.bottle_count,  r.need2restock,
-                u.remaining_after
+                r.bottle_count, r.need2restock,
+                u.remaining_after, s.sites
             FROM {REAGENT_TABLE} AS r
             LEFT JOIN LATERAL (
                 SELECT ru.remaining_after
@@ -279,11 +293,12 @@ def get_all_reagents():
                 ORDER BY ru.usage_time DESC
                 LIMIT 1
             ) AS u ON TRUE
+            LEFT JOIN zone_sites s ON s.start_zone = r.zone_id
             ORDER BY r.id
             """)
         )
         rows = cur.fetchall()
-        reagents = [
+        return [
             {
                 "id": row[0],
                 "zoneId": row[1],
@@ -294,7 +309,7 @@ def get_all_reagents():
                 "bottleCount": row[6],
                 "need2restock": row[7],
                 "lastRemainder": row[8],
+                "sites": row[9] if row[9] is not None else [],
             }
             for row in rows
         ]
-        return reagents

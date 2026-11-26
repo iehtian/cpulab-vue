@@ -28,6 +28,9 @@
         <span class="label">瓶数：</span>{{ currentReagent.bottleCount ?? '-' }}
       </p>
       <p><span class="label">需要补货：</span>{{ currentReagent.need2restock ?? '-' }}</p>
+      <p v-if="currentReagent.sites">
+        <span class="label">存放地点：</span>{{ currentReagent.sites.join('/') }}
+      </p>
     </div>
     <div class="action-buttons">
       <slot name="action-buttons" />

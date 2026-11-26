@@ -19,7 +19,7 @@
 import { ref, onMounted, computed } from 'vue'
 import ReagentList from '@/components/ReagentList.vue'
 import ReagentDetailActions from '@/components/ReagentDetailActions.vue'
-import { getAllReagents ,type Reagent} from '@/api/reagent'
+import { getAllReagents, type Reagent } from '@/api/reagent'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -30,6 +30,7 @@ const fetchallReagents = async () => {
   if (userStore.userId === null) return
   try {
     allReagents.value = await getAllReagents()
+    console.log('allReagents', allReagents.value)
   } catch (err) {
     console.error('获取常用试剂失败:', err)
   }
