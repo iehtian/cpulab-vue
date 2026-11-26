@@ -13,8 +13,6 @@
     <ReagentDetailActions
       v-model:show="showDetailPopup"
       :reagent="currentReagent"
-      show-edit
-      show-delete
       @refresh="fetchReagents"
       @edit="onReagentEdit"
     />
