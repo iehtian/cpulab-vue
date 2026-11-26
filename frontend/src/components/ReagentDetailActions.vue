@@ -23,14 +23,13 @@
         >使用记录
       </van-button>
       <van-button
-        v-if="showEdit && editable"
+        v-if="editable"
         type="danger"
         @click="emit('edit')"
       >
         编辑
       </van-button>
       <van-button
-        v-if="showDelete"
         type="danger"
         @click="showDeleteDialog = true"
       >
@@ -97,14 +96,9 @@ import { COUNT_BASED_CATEGORIES, ReagentCategory } from '@/constants/reagent'
 import { getReagentUsage, type ReagentUsage, type ReagentUsageList } from '@/api/reagentusage'
 const showUsageListPopup = ref(false)
 
-const props = withDefaults(
-  defineProps<{
-    reagent?: Reagent
-    showEdit?: boolean
-    showDelete?: boolean
-  }>(),
-  { showEdit: false, showDelete: false },
-)
+const props = defineProps<{
+  reagent?: Reagent
+}>()
 
 const emit = defineEmits<{
   refresh: []
