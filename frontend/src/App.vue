@@ -34,12 +34,6 @@
   >
     <van-tabbar-item
       replace
-      to="/home"
-      icon="home-o"
-      >首页</van-tabbar-item
-    >
-    <van-tabbar-item
-      replace
       to="/devices"
       icon="calendar-o"
       >仪器</van-tabbar-item

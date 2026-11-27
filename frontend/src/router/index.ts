@@ -8,11 +8,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: () => import('../views/HomePage.vue'),
-      meta: {
-        title: '首页',
-        isTabPage: true,
-      },
+      redirect: '/devices',
     },
     {
       path: '/devices',
