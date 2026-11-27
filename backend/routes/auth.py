@@ -250,3 +250,46 @@ def send_reset_code():
     except Exception as e:  # noqa: BLE001
         logger.exception("发送重置验证码时发生异常: {}", e)
         return fail("验证码发送失败", 500)
+
+
+@bp.route("/reset_password", methods=["POST"])
+def reset_password():
+    """忘记密码 - 免登录通过验证码重置密码"""
+    try:
+        data = request.get_json()
+        user_name = data.get("user_name")
+        verification_code = data.get("verify_code")
+        new_password = data.get("new_password")
+
+        if not user_name:
+            return fail("请输入姓名")
+        if not verification_code:
+            return fail("请输入验证码")
+        if not new_password or len(new_password) < 6:
+            return fail("新密码长度不能少于 6 位")
+
+        user = db_api.search_user_by_name(user_name)
+        if not user:
+            logger.warning("重置密码失败 - 用户 [{}] 不存在", user_name)
+            return fail("该用户不存在", 404)
+
+        if not verify_code.verify_reset_code(user_name, verification_code):
+            logger.warning(
+                "重置密码失败 - 用户 [{}] 提供的验证码无效或已过期",
+                user_name,
+            )
+            return fail("验证码错误或已过期，请重新获取")
+
+        db_api.upsert_user(
+            user_name,
+            hash_password(new_password),
+            user.get("color"),
+            user.get("email"),
+            user.get("phone"),
+        )
+        logger.info("用户 [{}] 通过验证码重置密码成功", user_name)
+        return jsonify({"message": "密码重置成功，请使用新密码登录"})
+
+    except Exception as e:  # noqa: BLE001
+        logger.exception("重置密码时发生异常: {}", e)
+        return fail("密码重置失败", 500)

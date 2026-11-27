@@ -93,12 +93,16 @@ def send_reset(user_name=None, phone=None, email=None):
 
 
 def verify_reset_code(user_name, code):
-    """验证用户提供的重置验证码是否正确"""
+    """验证用户提供的重置验证码是否正确（验证成功后一次性消费）"""
     try:
-        stored_code = r.get(f"reset_code:{user_name}")
+        key = f"reset_code:{user_name}"
+        stored_code = r.get(key)
         if stored_code is None:
             return False  # 验证码不存在或已过期
-        return stored_code == code
+        if stored_code == code:
+            r.delete(key)
+            return True
+        return False
     except ResponseError as e:
         print(f"Redis错误: {e}")
         return False
