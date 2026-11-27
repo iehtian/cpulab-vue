@@ -107,7 +107,7 @@ function toggleMode() {
 }
 
 const goFeedback = () => {
-  window.location.href = 'https://fider.cpulab.cn/'
+  window.location.href = 'https://feedback.cpulab.cn/'
 }
 
 async function onSubmit() {
