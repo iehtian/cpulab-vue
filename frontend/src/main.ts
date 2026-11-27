@@ -18,7 +18,7 @@ const app = createApp(App)
 app.use(createPinia())
 
 const userStore = useUserStore()
-userStore.checkAuth()
+await userStore.checkAuth()
 
 app.use(ElementPlus, {
   locale: zhCn,
