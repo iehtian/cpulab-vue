@@ -9,7 +9,7 @@ DB_CONFIG: dict[str, Any] = {
     "host": "localhost",
     "user": "user_order_user",
     "password": "user_order_pass",
-    "database": "user_order",
+    "dbname": "user_order",
     "port": 5434,
 }
 
