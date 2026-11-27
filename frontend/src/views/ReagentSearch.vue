@@ -20,14 +20,11 @@ import { ref, onMounted, computed } from 'vue'
 import ReagentList from '@/components/ReagentList.vue'
 import ReagentDetailActions from '@/components/ReagentDetailActions.vue'
 import { getAllReagents, type Reagent } from '@/api/reagent'
-import { useUserStore } from '@/stores/user'
 
-const userStore = useUserStore()
 const searchKeyword = ref('')
 const allReagents = ref<Reagent[]>([])
 
 const fetchallReagents = async () => {
-  if (userStore.userId === null) return
   try {
     allReagents.value = await getAllReagents()
     console.log('allReagents', allReagents.value)

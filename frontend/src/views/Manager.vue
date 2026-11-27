@@ -31,6 +31,7 @@
         <van-cell title="空间管理">
           <template #value>
             <div
+              v-permission
               class="add-space"
               @click="onAddSpace"
             >
@@ -51,6 +52,7 @@
           >
             <template #right-icon>
               <van-icon
+                v-permission
                 name="ellipsis"
                 class="more-icon"
                 @click.stop="((showSpaceActions = true), (selectedSpaceId = space.id))"

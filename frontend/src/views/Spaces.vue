@@ -20,6 +20,7 @@
   <van-submit-bar
     v-if="selectedZoneId !== -1"
     style="bottom: 50px"
+    v-permission
     button-text="入库新物品"
     button-color="#1989fa"
     :loading="false"

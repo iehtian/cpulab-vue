@@ -1,6 +1,6 @@
 import './assets/main.css'
 import './assets/vantbottombutton.css'
-
+import { permission } from './directive/permission.ts'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -25,5 +25,6 @@ app.use(ElementPlus, {
 })
 app.use(Vant)
 app.use(router)
+app.directive('permission', permission)
 
 app.mount('#app')

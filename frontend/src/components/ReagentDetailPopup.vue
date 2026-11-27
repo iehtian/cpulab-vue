@@ -32,7 +32,10 @@
         <span class="label">存放地点：</span>{{ currentReagent.sites.join('/') }}
       </p>
     </div>
-    <div class="action-buttons">
+    <div
+      v-permission
+      class="action-buttons"
+    >
       <slot name="action-buttons" />
     </div>
   </van-popup>
