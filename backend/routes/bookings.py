@@ -20,7 +20,7 @@ def create_bookings():
         current_user_name = get_jwt_identity()
         data = request.get_json()
 
-        instrument = data.get("instrument") or "a_instrument"
+        instrument = data.get("instrument") or "CellRoom"
         date = data.get("date")
         slot_ids = data.get("slots")
 
@@ -96,7 +96,7 @@ def cancel_booking():
         current_user_name = get_jwt_identity()
         data = request.get_json()
 
-        instrument = data.get("instrument") or "a_instrument"
+        instrument = data.get("instrument") or "CellRoom"
         date = data.get("date")
         slots = data.get("slots")
 
@@ -168,7 +168,7 @@ def cancel_booking():
 @bp.route("/bookings", methods=["GET"])
 def get_bookings():
     """获取指定日期的预约信息"""
-    instrument = request.args.get("instrument") or "a_instrument"
+    instrument = request.args.get("instrument") or "CellRoom"
     date = request.args.get("date")
 
     if not date:
@@ -236,7 +236,7 @@ def get_user_bookings():
 @jwt_required()
 def get_booking_users_by_range():
     """查询某仪器在日期范围内预约过的去重用户名与颜色。"""
-    instrument = request.args.get("instrument") or "a_instrument"
+    instrument = request.args.get("instrument") or "CellRoom"
     start = request.args.get("start")
     end = request.args.get("end")
 

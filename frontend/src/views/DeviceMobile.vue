@@ -54,18 +54,18 @@
       clickable
     >
       <van-grid-item
-        v-for="id of devicesInfo?.totalSlots ?? 0"
-        :key="id"
+        v-for="sid of visibleSlots"
+        :key="sid"
         class="booking-slot"
         :class="{
-          ispast: isPastBlock({ date: 0, id: id - 1 }),
-          selected: isSelected({ date: 0, id: id - 1 }),
+          ispast: isPastBlock({ date: 0, id: sid }),
+          selected: isSelected({ date: 0, id: sid }),
         }"
-        :style="{ '--slot-bg': dayBookings?.[id - 1]?.color }"
-        @click="toggleSelect(id - 1)"
+        :style="{ '--slot-bg': dayBookings?.[sid]?.color }"
+        @click="toggleSelect(sid)"
       >
         <span class="slot-time">
-          {{ dayBookings?.[id - 1]?.user_name ?? timeLabels.at(id - 1) }}
+          {{ dayBookings?.[sid]?.user_name ?? timeLabels.at(sid) }}
         </span>
       </van-grid-item>
     </van-grid>
@@ -162,9 +162,16 @@ const { isPastBlock, isSelected, makeTimeLabels } = useSlotTime(
   cancelingSlots,
 )
 
-const timeLabels = computed(() =>
-  makeTimeLabels(devicesInfo.value?.daystarthour ?? 0, devicesInfo.value?.totalSlots ?? 0),
-)
+const visibleSlots = computed(() => {
+  const device = devicesInfo.value
+  if (!device) return []
+  return Array.from(
+    { length: device.visibleTo - device.visibleFrom },
+    (_, i) => device.visibleFrom + i,
+  )
+})
+
+const timeLabels = computed(() => makeTimeLabels(devicesInfo.value?.totalSlots ?? 0))
 
 const hasSelection = computed(
   () => bookingSlots.value.length > 0 || cancelingSlots.value.length > 0,

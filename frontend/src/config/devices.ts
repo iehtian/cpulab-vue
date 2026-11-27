@@ -3,8 +3,9 @@ export interface DeviceInfo {
   name: string
   description: string
   enabled: boolean
-  daystarthour: number
-  totalSlots: number
+  totalSlots: number // 轴长：slot 0 = 00:00，每格 step = 1440 / totalSlots 分钟
+  visibleFrom: number // 可见起始 slot id（含）
+  visibleTo: number // 可见结束 slot id（不含）
   hasDuty: boolean
 }
 
@@ -14,8 +15,9 @@ export const DEVICES: DeviceInfo[] = [
     name: '细胞房',
     description: '细胞房',
     enabled: true,
-    daystarthour: 6,
-    totalSlots: 36,
+    totalSlots: 48,
+    visibleFrom: 12,
+    visibleTo: 48,
     hasDuty: true,
   },
   {
@@ -23,8 +25,9 @@ export const DEVICES: DeviceInfo[] = [
     name: '安捷伦液相预约',
     description: '高效液相色谱分析仪',
     enabled: true,
-    daystarthour: 0,
     totalSlots: 24,
+    visibleFrom: 0,
+    visibleTo: 24,
     hasDuty: false,
   },
   {
@@ -32,8 +35,9 @@ export const DEVICES: DeviceInfo[] = [
     name: '岛津液相预约',
     description: '高效液相色谱分析仪',
     enabled: true,
-    daystarthour: 0,
     totalSlots: 24,
+    visibleFrom: 0,
+    visibleTo: 24,
     hasDuty: false,
   },
 ]
