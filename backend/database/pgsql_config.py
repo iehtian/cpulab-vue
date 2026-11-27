@@ -7,10 +7,10 @@ from psycopg import sql as _sql
 
 DB_CONFIG: dict[str, Any] = {
     "host": "localhost",
-    "user": "cpulab_user",
-    "password": "cpulab_pass",
-    "dbname": "cpulab",
-    "port": 5435,
+    "user": "user_order_user",
+    "password": "user_order_pass",
+    "database": "user_order",
+    "port": 5434,
 }
 
 USER_TABLE = "users"
