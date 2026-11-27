@@ -1,6 +1,7 @@
 """每日计划相关路由：更新字段、查询某日全部计划。"""
 
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 import database as db_api
 from config import SKIP_NAMES
@@ -11,6 +12,7 @@ bp = Blueprint("daily_plan", __name__)
 
 
 @bp.route("/daily_plan/update", methods=["POST"])
+@jwt_required()
 def update_daily_plan():
     """更新每日计划字段"""
     try:

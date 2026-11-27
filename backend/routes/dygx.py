@@ -1,6 +1,7 @@
 """DYGX LIMS 对接路由：抓取、预约、修改、删除、CAS 登录。"""
 
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 from dygx import (
     dygx_book,
@@ -37,6 +38,7 @@ def dygx_fetch_api():
 
 
 @bp.route("/dygx_book", methods=["POST"])
+@jwt_required()
 def dygx_book_api():
     """向 LIMS 提交一条预约"""
     try:
@@ -69,6 +71,7 @@ def dygx_book_api():
 
 
 @bp.route("/dygx_modify", methods=["POST"])
+@jwt_required()
 def dygx_modify_api():
     """修改一条 LIMS 预约的起止时间。"""
     try:
@@ -104,6 +107,7 @@ def dygx_modify_api():
 
 
 @bp.route("/dygx_delete", methods=["POST"])
+@jwt_required()
 def dygx_delete_api():
     """删除一条 LIMS 预约。"""
     try:

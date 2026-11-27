@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 import database as db_api
 from log_config import logger
@@ -8,6 +9,7 @@ bp = Blueprint("reagents", __name__)
 
 
 @bp.route("/reagent/upsert", methods=["POST"])
+@jwt_required()
 def upsert_reagent_api():
     """添加或更新试剂信息"""
     try:
@@ -68,6 +70,7 @@ def get_reagents_by_zone_api(zone_id):
 
 
 @bp.route("/reagent/delete/<int:reagent_id>", methods=["DELETE"])
+@jwt_required()
 def delete_reagent_by_id_api(reagent_id):
     """根据试剂 ID 删除试剂信息"""
     try:
@@ -80,6 +83,7 @@ def delete_reagent_by_id_api(reagent_id):
 
 
 @bp.route("/reagent/mark_need2restock", methods=["POST"])
+@jwt_required()
 def mark_reagent_needs_restock_api():
     """标记试剂需要补货"""
     try:

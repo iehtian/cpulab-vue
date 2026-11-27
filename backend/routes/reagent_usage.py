@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 import database as db_api
 from log_config import logger
@@ -8,6 +9,7 @@ bp = Blueprint("reagent_usage", __name__)
 
 
 @bp.route("/reagent/usage/add", methods=["POST"])
+@jwt_required()
 def add_reagent_usage_api():
     """添加试剂使用记录"""
     try:

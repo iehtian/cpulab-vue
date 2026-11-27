@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 import database as db_api
 from log_config import logger
@@ -8,6 +9,7 @@ bp = Blueprint("zones", __name__)
 
 
 @bp.route("/zone/add", methods=["POST"])
+@jwt_required()
 def add_zone_api():
     """添加或更新区域信息"""
     try:

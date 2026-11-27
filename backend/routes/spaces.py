@@ -1,6 +1,7 @@
 """空间管理路由：添加/更新空间、获取全部空间。"""
 
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 import database as db_api
 from log_config import logger
@@ -10,6 +11,7 @@ bp = Blueprint("spaces", __name__)
 
 
 @bp.route("/space/add", methods=["POST"])
+@jwt_required()
 def add_space_api():
     """添加或更新空间信息"""
     try:
@@ -29,6 +31,7 @@ def add_space_api():
 
 
 @bp.route("/space/update/<int:space_id>", methods=["PUT"])
+@jwt_required()
 def update_space_name_api(space_id):
     """更新空间名称"""
     try:
@@ -48,6 +51,7 @@ def update_space_name_api(space_id):
 
 
 @bp.route("/space/delete/<int:space_id>", methods=["DELETE"])
+@jwt_required()
 def delete_space_api(space_id):
     """根据空间 ID 删除空间信息"""
     try:
